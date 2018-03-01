@@ -118,12 +118,11 @@ func main() {
 	log.Println(`|_____\__,_|\__, |\___/ \___/|_| |_|`)
 	log.Println(`            |___/                   `)
 
-	log.Println(` ____  _             _            `)
-	log.Println(`/ ___|| |_ __ _ _ __| |_ ___ _ __ `)
-	log.Println(`\___ \| __/ _  | '__| __/ _ \ '__|`)
-	log.Println(` ___) | || (_| | |  | ||  __/ |   `)
-	log.Println(`|____/ \__\__,_|_|   \__\___|_|   `)
-	log.Println("")
+	log.Println(`  ____ _     ___ `)
+	log.Println(` / ___| |   |_ _|`)
+	log.Println(`| |   | |    | | `)
+	log.Println(`| |___| |___ | | `)
+	log.Println(` \____|_____|___|`)
 
 	flag.StringVar(&CertPath, certPathFlagKey, "", "The location of the docker certificates")
 	flag.StringVar(&APIVersion, apiVersionFlagKey, "", "The version of the docker API")
