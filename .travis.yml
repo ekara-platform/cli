@@ -2,7 +2,7 @@ language: go
 go: "1.10"
 
 env:
-  - DEP_VERSION="v0.4.1"
+  - DEP_VERSION="0.4.1"
 
 before_install:
   # Download the binary to bin folder in $GOPATH
