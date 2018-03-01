@@ -39,13 +39,13 @@ var (
 func checkEnv() {
 	// The environment descriptor is always required
 	if EnvironmentDescriptor == "" {
-		panic(fmt.Errorf(ERROR_REQUIRED_CONFIG))
+		log.Fatal(fmt.Errorf(ERROR_REQUIRED_CONFIG))
 	} else {
 		log.Printf(LOG_CONFIG_CONFIRMATION, configFlagKey, EnvironmentDescriptor)
 	}
 
 	if _, err := url.ParseRequestURI(EnvironmentDescriptor); err != nil {
-		panic(err)
+		log.Fatal(err.Error())
 	}
 
 	// check if we should use the flags content
@@ -62,7 +62,6 @@ func checkEnv() {
 		// if the flags are not used then we will ensure
 		// that the environment variables are well definned
 		checkEnvVar(envCertPath)
-		//checkEnvVar(envApiVersion)
 		checkEnvVar(envDockerHost)
 		log.Printf(LOG_INIT_DOCKER_CLIENT)
 		initClient()
@@ -71,13 +70,13 @@ func checkEnv() {
 
 func checkFlag(val string, flagKey string) {
 	if val == "" {
-		panic(fmt.Errorf(ERROR_REQUIRED_FLAG, flagKey))
+		log.Fatal(fmt.Errorf(ERROR_REQUIRED_FLAG, flagKey))
 	}
 }
 
 func checkEnvVar(key string) {
 	if os.Getenv(key) == "" {
-		panic(fmt.Errorf(ERROR_REQUIRED_ENV, key))
+		log.Fatal(fmt.Errorf(ERROR_REQUIRED_ENV, key))
 	}
 }
 
