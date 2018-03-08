@@ -1,4 +1,4 @@
-# Lagoon Starter
+# Lagoon CLI
 ___
 
 **Lagoon CLI** is the command line interface tool used to build a Lagoon environment.
