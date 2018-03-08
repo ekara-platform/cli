@@ -38,7 +38,7 @@ func (l *Login) checkLoginParams(c *kingpin.ParseContext) error {
 		}
 		fmt.Printf(PROMPT_PASSWORD, l.user)
 		bytePassword, err := terminal.ReadPassword(int(syscall.Stdin))
-		log.Println("\n")
+		log.Printf("\n")
 		if err != nil {
 			log.Fatal(ERROR_READING_PASSWORD)
 		}
