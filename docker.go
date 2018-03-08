@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"path/filepath"
@@ -11,6 +12,8 @@ import (
 	"docker.io/go-docker/api/types/container"
 	"github.com/docker/go-connections/tlsconfig"
 	"golang.org/x/net/context"
+
+	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 // The docker client used within the whole application
@@ -104,7 +107,12 @@ func stopContainerById(id string, done chan bool) {
 // Once built the container will be started.
 // The method will wait until the container is started and
 // will notify it using the chanel
-func startContainer(imageName string, done chan bool) {
+func startContainer(imageName string, done chan bool, create bool) {
+	if create {
+		log.Printf(LOG_START_CREATION)
+	} else {
+		log.Printf(LOG_START_UPDATE)
+	}
 	resp, err := cli.ContainerCreate(context.Background(), &container.Config{
 		Image: imageName,
 	}, nil, nil, "")
@@ -175,4 +183,45 @@ func imagePull(taggedName string, done chan bool) {
 			return
 		}
 	}
+}
+
+type DockerParams struct {
+	url  string
+	cert string
+	api  string
+	host string
+}
+
+// checkDockerParams checks the coherence of the parameters received do deal with docker
+// using the flags and/or the environment variables
+func (n *DockerParams) checkDockerParams(c *kingpin.ParseContext) error {
+	log.Printf("Create or update of:%v\n", n.url)
+	log.Printf("Lauched to run docker with cert:%v, api:%v, on daemon:%v\n", n.cert, n.api, n.host)
+
+	// The environment descriptor is always required
+	if n.url == "" {
+		log.Fatal(fmt.Errorf(ERROR_REQUIRED_CONFIG))
+	} else {
+		log.Printf(LOG_CONFIG_CONFIRMATION, descriptorFlagKey, n.url)
+	}
+
+	// If we use flags then these 3 are required
+	if n.host != "" || n.api != "" || n.cert != "" {
+		checkFlag(n.cert, certPathFlagKey)
+		checkFlag(n.host, dockerHostFlagKey)
+		checkFlag(n.api, apiVersionFlagKey)
+		log.Printf(LOG_FLAG_CONFIRMATION, certPathFlagKey, n.cert)
+		log.Printf(LOG_FLAG_CONFIRMATION, dockerHostFlagKey, n.host)
+		log.Printf(LOG_FLAG_CONFIRMATION, apiVersionFlagKey, n.api)
+		log.Printf(LOG_INIT_FLAGGED_DOCKER_CLIENT)
+		initFlaggedClient(n.host, n.api, n.cert)
+	} else {
+		// if the flags are not used then we will ensure
+		// that the environment variables are well definned
+		checkEnvVar(envCertPath)
+		checkEnvVar(envDockerHost)
+		log.Printf(LOG_INIT_DOCKER_CLIENT)
+		initClient()
+	}
+	return nil
 }

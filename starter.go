@@ -2,12 +2,13 @@ package main
 
 import (
 	"bufio"
-	"flag"
 	"fmt"
 	"log"
-	"net/url"
+
 	"os"
 	"strings"
+
+	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 const (
@@ -17,70 +18,111 @@ const (
 	envApiVersion string = "DOCKER_API_VERSION"
 	envDockerHost string = "DOCKER_HOST"
 
-	// Flags keys
-	certPathFlagKey   = "cert"
-	apiVersionFlagKey = "api"
-	dockerHostFlagKey = "host"
-	configFlagKey     = "config"
+	// Flags keys for Commands
+	deployFlagKey = "create"
+	updateFlagKey = "update"
+	loginFlagKey  = "login"
+	logoutFlagKey = "logout"
+	statusFlagKey = "status"
 
-	// Name of lagoon starter image
+	// Flags keys for Arguments
+	descriptorFlagKey     = "descriptor"
+	environmentUrlFlagKey = "url"
+	certPathFlagKey       = "cert"
+	apiVersionFlagKey     = "api"
+	dockerHostFlagKey     = "host"
+	userFlagKey           = "user"
+	apiUrlFlagKey         = "url"
+
+	// Name of the lagoon starter image
 	starterImageName string = "redis:latest"
+
+	// Name of the lagoon persisted session file
+	sessionFileName string = "lagoon_session.cli"
 )
 
 var (
-	CertPath              string
-	APIVersion            string
-	DockerHost            string
-	EnvironmentDescriptor string
+	// Commands
+	deploy *kingpin.CmdClause
+	update *kingpin.CmdClause
+	login  *kingpin.CmdClause
+	logout *kingpin.CmdClause
+	status *kingpin.CmdClause
+
+	fullSessionFileName string
+
+	// Arguments
+	p *DockerParams
+	l *Login
 )
 
-// checkEnv checks the coherence of the parameters received
-// using the flags and/or the environment variables
-func checkEnv() {
-	// The environment descriptor is always required
-	if EnvironmentDescriptor == "" {
-		log.Fatal(fmt.Errorf(ERROR_REQUIRED_CONFIG))
-	} else {
-		log.Printf(LOG_CONFIG_CONFIRMATION, configFlagKey, EnvironmentDescriptor)
-	}
+func initFlags(app *kingpin.Application) {
 
-	if _, err := url.ParseRequestURI(EnvironmentDescriptor); err != nil {
-		log.Fatal(err.Error())
-	}
+	p = &DockerParams{}
+	deploy = app.Command(deployFlagKey, "Deploy an environment.")
+	deploy.Arg(descriptorFlagKey, "The environment descriptor url").Required().StringVar(&p.url)
+	deploy.Flag(certPathFlagKey, "The location of the docker certificates").StringVar(&p.cert)
+	deploy.Flag(apiVersionFlagKey, "The version of the docker API").StringVar(&p.api)
+	deploy.Flag(dockerHostFlagKey, "The url of the docker host").StringVar(&p.host)
+	deploy.Action(p.checkDockerParams)
 
-	// check if we should use the flags content
-	if DockerHost != "" || APIVersion != "" || CertPath != "" {
-		checkFlag(CertPath, certPathFlagKey)
-		checkFlag(DockerHost, dockerHostFlagKey)
-		checkFlag(APIVersion, apiVersionFlagKey)
-		log.Printf(LOG_FLAG_CONFIRMATION, certPathFlagKey, CertPath)
-		log.Printf(LOG_FLAG_CONFIRMATION, dockerHostFlagKey, DockerHost)
-		log.Printf(LOG_FLAG_CONFIRMATION, apiVersionFlagKey, APIVersion)
-		log.Printf(LOG_INIT_FLAGGED_DOCKER_CLIENT)
-		initFlaggedClient(DockerHost, APIVersion, CertPath)
-	} else {
-		// if the flags are not used then we will ensure
-		// that the environment variables are well definned
-		checkEnvVar(envCertPath)
-		checkEnvVar(envDockerHost)
-		log.Printf(LOG_INIT_DOCKER_CLIENT)
-		initClient()
-	}
+	update = app.Command(updateFlagKey, "Update an environment.")
+	update.Flag(descriptorFlagKey, "The environment descriptor url").Required().StringVar(&p.url)
+	update.Flag(certPathFlagKey, "The location of the docker certificates").StringVar(&p.cert)
+	update.Flag(apiVersionFlagKey, "The version of the docker API").StringVar(&p.api)
+	update.Flag(dockerHostFlagKey, "The url of the docker host").StringVar(&p.host)
+	deploy.Action(p.checkDockerParams)
+
+	l = &Login{}
+	login = app.Command(loginFlagKey, "Login into an environment.")
+	login.Arg(apiUrlFlagKey, "The url of the environment manager API").Required().StringVar(&l.url)
+	login.Flag(userFlagKey, "The user").StringVar(&l.user)
+	login.Action(l.checkLoginParams)
+
+	logout = app.Command(logoutFlagKey, "Logout from an environment.")
+
+	status = app.Command(statusFlagKey, "Status of the environment.")
 }
 
-func checkFlag(val string, flagKey string) {
-	if val == "" {
-		log.Fatal(fmt.Errorf(ERROR_REQUIRED_FLAG, flagKey))
+func main() {
+
+	fullSessionFileName = "./" + sessionFileName
+	// this comes from http://www.kammerl.de/ascii/AsciiSignature.php
+	// the font used id "standard"
+	if _, err := os.Stat(fullSessionFileName); os.IsNotExist(err) {
+		log.Println(` _                                  `)
+		log.Println(`| |    __ _  __ _  ___   ___  _ __  `)
+		log.Println(`| |   / _  |/ _  |/ _ \ / _ \| '_ \ `)
+		log.Println(`| |__| (_| | (_| | (_) | (_) | | | |`)
+		log.Println(`|_____\__,_|\__, |\___/ \___/|_| |_|`)
+		log.Println(`            |___/                   `)
+
+		log.Println(`  ____ _     ___ `)
+		log.Println(` / ___| |   |_ _|`)
+		log.Println(`| |   | |    | | `)
+		log.Println(`| |___| |___ | | `)
+		log.Println(` \____|_____|___|`)
 	}
+
+	app := kingpin.New("CLI", CLI_DESCRIPTION)
+	initFlags(app)
+	switch kingpin.MustParse(app.Parse(os.Args[1:])) {
+
+	case deploy.FullCommand():
+		runCreate()
+	case update.FullCommand():
+		runUpdate()
+	case login.FullCommand():
+		runLogin()
+	case logout.FullCommand():
+		runLogout()
+	case status.FullCommand():
+		runStatus()
+	}
+	log.Println(LOG_COMMAND_COMPLETED)
 }
 
-func checkEnvVar(key string) {
-	if os.Getenv(key) == "" {
-		log.Fatal(fmt.Errorf(ERROR_REQUIRED_ENV, key))
-	}
-}
-
-func starterStart() {
+func starterStart(create bool) {
 	log.Printf(LOG_GET_IMAGE)
 	done := make(chan bool, 1)
 	go imagePull(starterImageName, done)
@@ -101,34 +143,19 @@ func starterStart() {
 	}
 
 	done = make(chan bool, 1)
-	startContainer(starterImageName, done)
+	startContainer(starterImageName, done, create)
 	<-done
 	log.Printf(LOG_OK_STARTED)
 }
 
-func main() {
+func checkFlag(val string, flagKey string) {
+	if val == "" {
+		log.Fatal(fmt.Errorf(ERROR_REQUIRED_FLAG, flagKey))
+	}
+}
 
-	// this comes from http://www.kammerl.de/ascii/AsciiSignature.php
-	// the font used id "standard"
-	log.Println(` _                                  `)
-	log.Println(`| |    __ _  __ _  ___   ___  _ __  `)
-	log.Println(`| |   / _  |/ _  |/ _ \ / _ \| '_ \ `)
-	log.Println(`| |__| (_| | (_| | (_) | (_) | | | |`)
-	log.Println(`|_____\__,_|\__, |\___/ \___/|_| |_|`)
-	log.Println(`            |___/                   `)
-
-	log.Println(`  ____ _     ___ `)
-	log.Println(` / ___| |   |_ _|`)
-	log.Println(`| |   | |    | | `)
-	log.Println(`| |___| |___ | | `)
-	log.Println(` \____|_____|___|`)
-
-	flag.StringVar(&CertPath, certPathFlagKey, "", "The location of the docker certificates")
-	flag.StringVar(&APIVersion, apiVersionFlagKey, "", "The version of the docker API")
-	flag.StringVar(&DockerHost, dockerHostFlagKey, "", "The docker host")
-	flag.StringVar(&EnvironmentDescriptor, configFlagKey, "", "The http location of the environment descriptor")
-	flag.Parse()
-
-	checkEnv()
-	starterStart()
+func checkEnvVar(key string) {
+	if os.Getenv(key) == "" {
+		log.Fatal(fmt.Errorf(ERROR_REQUIRED_ENV, key))
+	}
 }

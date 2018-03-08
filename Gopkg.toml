@@ -25,10 +25,22 @@
 #   unused-packages = true
 
 
-[prune]
-  go-tests = true
-  unused-packages = true
+[[constraint]]
+  name = "docker.io/go-docker"
+  version = "1.0.0"
+
+[[constraint]]
+  name = "github.com/docker/go-connections"
+  version = "0.3.0"
 
 [[constraint]]
   branch = "master"
   name = "golang.org/x/net"
+
+[[constraint]]
+  name = "gopkg.in/alecthomas/kingpin.v2"
+  version = "2.2.6"
+
+[prune]
+  go-tests = true
+  unused-packages = true
