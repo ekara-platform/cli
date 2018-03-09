@@ -56,29 +56,29 @@ var (
 func initFlags(app *kingpin.Application) {
 
 	p = &DockerParams{}
-	deploy = app.Command(deployFlagKey, "Deploy an environment.")
+	deploy = app.Command(deployFlagKey, "Create a new environment.")
 	deploy.Arg(descriptorFlagKey, "The environment descriptor url").Required().StringVar(&p.url)
-	deploy.Flag(certPathFlagKey, "The location of the docker certificates").StringVar(&p.cert)
-	deploy.Flag(apiVersionFlagKey, "The version of the docker API").StringVar(&p.api)
-	deploy.Flag(dockerHostFlagKey, "The url of the docker host").StringVar(&p.host)
+	deploy.Flag(certPathFlagKey, "The location of the docker certificates (optional)").StringVar(&p.cert)
+	deploy.Flag(apiVersionFlagKey, "The version of the docker API (optional)").StringVar(&p.api)
+	deploy.Flag(dockerHostFlagKey, "The url of the docker host (optional)").StringVar(&p.host)
 	deploy.Action(p.checkDockerParams)
 
-	update = app.Command(updateFlagKey, "Update an environment.")
-	update.Flag(descriptorFlagKey, "The environment descriptor url").Required().StringVar(&p.url)
-	update.Flag(certPathFlagKey, "The location of the docker certificates").StringVar(&p.cert)
-	update.Flag(apiVersionFlagKey, "The version of the docker API").StringVar(&p.api)
-	update.Flag(dockerHostFlagKey, "The url of the docker host").StringVar(&p.host)
+	update = app.Command(updateFlagKey, "Update an existing environment.")
+	update.Arg(descriptorFlagKey, "The environment descriptor url").Required().StringVar(&p.url)
+	update.Flag(certPathFlagKey, "The location of the docker certificates (optional)").StringVar(&p.cert)
+	update.Flag(apiVersionFlagKey, "The version of the docker API (optional)").StringVar(&p.api)
+	update.Flag(dockerHostFlagKey, "The url of the docker host (optional)").StringVar(&p.host)
 	deploy.Action(p.checkDockerParams)
 
 	l = &Login{}
-	login = app.Command(loginFlagKey, "Login into an environment.")
+	login = app.Command(loginFlagKey, "Login into an environment manager API.")
 	login.Arg(apiUrlFlagKey, "The url of the environment manager API").Required().StringVar(&l.url)
-	login.Flag(userFlagKey, "The user").StringVar(&l.user)
+	login.Flag(userFlagKey, "The user (optional)").StringVar(&l.user)
 	login.Action(l.checkLoginParams)
 
-	logout = app.Command(logoutFlagKey, "Logout from an environment.")
+	logout = app.Command(logoutFlagKey, "Logout from an environment manager API.")
 
-	status = app.Command(statusFlagKey, "Status of the environment.")
+	status = app.Command(statusFlagKey, "Status of the environment manager API.")
 }
 
 func main() {
@@ -101,7 +101,7 @@ func main() {
 		log.Println(` \____|_____|___|`)
 	}
 
-	app := kingpin.New("CLI", CLI_DESCRIPTION)
+	app := kingpin.New("lagoon", CLI_DESCRIPTION)
 	initFlags(app)
 	switch kingpin.MustParse(app.Parse(os.Args[1:])) {
 
