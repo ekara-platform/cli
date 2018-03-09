@@ -4,6 +4,7 @@ import (
 	"log"
 )
 
+// runStatus returns the status of the environment API wherein the user is logged
 func runStatus() {
 	b, url, _ := isLogged()
 	if !b {

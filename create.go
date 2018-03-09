@@ -4,6 +4,7 @@ import (
 	"log"
 )
 
+// runCreate starts the installer in order to create an environement
 func runCreate() {
 	b, url, user := isLogged()
 	if b {

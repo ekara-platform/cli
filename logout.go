@@ -6,6 +6,7 @@ import (
 	"os"
 )
 
+// runLogout performs a logout of the environment manager API
 func runLogout() {
 	b, _, _ := isLogged()
 	if !b {

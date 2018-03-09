@@ -11,14 +11,15 @@ import (
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
+// Parameters required to login into the envirment manager API
 type Login struct {
 	url      string
 	user     string
 	password string
 }
 
-// checkLoginParams checks the coherence of the parameters received do deal with the
-// environment api
+// checkLoginParams checks the coherence of the parameters received to deal with the
+// environment API
 func (l *Login) checkLoginParams(c *kingpin.ParseContext) error {
 	b, _, _ := isLogged()
 	if !b {
@@ -38,7 +39,7 @@ func (l *Login) checkLoginParams(c *kingpin.ParseContext) error {
 		}
 		fmt.Printf(PROMPT_PASSWORD, l.user)
 		bytePassword, err := terminal.ReadPassword(int(syscall.Stdin))
-		log.Println("\n")
+		log.Printf("\n")
 		if err != nil {
 			log.Fatal(ERROR_READING_PASSWORD)
 		}
@@ -48,6 +49,7 @@ func (l *Login) checkLoginParams(c *kingpin.ParseContext) error {
 	return nil
 }
 
+// runLogin performs a login into the environment manager API
 func runLogin() {
 	b, url, user := isLogged()
 	if b {
@@ -55,7 +57,7 @@ func runLogin() {
 	} else {
 		log.Printf(LOG_LOGGING_INTO, l.url)
 		// TODO
-		// - Connect to the api with the received url with user/password
+		// - Connect to the api with the received url/user/password
 		// - Save received token into the session file
 		s := &Session{
 			Url:   l.url,

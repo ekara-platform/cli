@@ -36,9 +36,6 @@ const (
 
 	// Name of the lagoon starter image
 	starterImageName string = "redis:latest"
-
-	// Name of the lagoon persisted session file
-	sessionFileName string = "lagoon_session.cli"
 )
 
 var (

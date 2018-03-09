@@ -19,8 +19,7 @@ import (
 // The docker client used within the whole application
 var cli docker.Client
 
-// initFlaggedClient initializes the docker client
-// using the flaged values
+// initFlaggedClient initializes the docker client using the flaged values
 func initFlaggedClient(host string, api string, path string) {
 
 	options := tlsconfig.Options{
@@ -49,8 +48,7 @@ func initFlaggedClient(host string, api string, path string) {
 	cli = *c
 }
 
-// initClient initializes the docker client
-// using the environment variables
+// initClient initializes the docker client using the environment variables
 func initClient() {
 	c, err := docker.NewEnvClient()
 	if err != nil {
@@ -71,8 +69,7 @@ func containerRunningByImageName(name string) (string, bool) {
 	return "", false
 }
 
-//containerRunningById returns true if a container with
-// the given id is running
+//containerRunningById returns true if a container with the given id is running
 func containerRunningById(id string) bool {
 	containers := getContainers()
 	for _, container := range containers {
@@ -83,8 +80,7 @@ func containerRunningById(id string) bool {
 	return false
 }
 
-//stopContainerById stops a container corresponding
-// to the provider id
+//stopContainerById stops a container corresponding to the provider id
 func stopContainerById(id string, done chan bool) {
 	if err := cli.ContainerStop(context.Background(), id, nil); err != nil {
 		panic(err)
@@ -103,7 +99,7 @@ func stopContainerById(id string, done chan bool) {
 	}
 }
 
-// startContainer builds a container base on the provided image name
+// startContainer builds or updates a container base on the provided image name
 // Once built the container will be started.
 // The method will wait until the container is started and
 // will notify it using the chanel
@@ -156,8 +152,7 @@ func imageExistsByName(name string) bool {
 	return false
 }
 
-// getImages returns the summary of all images
-// already downloaded
+// getImages returns the summary of all images already downloaded
 func getImages() []types.ImageSummary {
 	images, err := cli.ImageList(context.Background(), types.ImageListOptions{})
 	if err != nil {
@@ -167,9 +162,9 @@ func getImages() []types.ImageSummary {
 }
 
 // imagePull pulls the image corresponding to th given name
-// and wait for the download to be complete.
+// and wait for the download to be completed.
 //
-// The completion of the download will be notify using the chanel
+// The completion of the download will be notified using the chanel
 func imagePull(taggedName string, done chan bool) {
 	if _, err := cli.ImagePull(context.Background(), taggedName, types.ImagePullOptions{}); err != nil {
 		panic(err)
@@ -185,6 +180,7 @@ func imagePull(taggedName string, done chan bool) {
 	}
 }
 
+// Parameters required to connect with the docker API
 type DockerParams struct {
 	url  string
 	cert string
@@ -192,7 +188,7 @@ type DockerParams struct {
 	host string
 }
 
-// checkDockerParams checks the coherence of the parameters received do deal with docker
+// checkDockerParams checks the coherence of the parameters received to deal with docker
 // using the flags and/or the environment variables
 func (n *DockerParams) checkDockerParams(c *kingpin.ParseContext) error {
 	log.Printf("Create or update of:%v\n", n.url)
@@ -217,7 +213,7 @@ func (n *DockerParams) checkDockerParams(c *kingpin.ParseContext) error {
 		initFlaggedClient(n.host, n.api, n.cert)
 	} else {
 		// if the flags are not used then we will ensure
-		// that the environment variables are well definned
+		// that the environment variables are well defined
 		checkEnvVar(envCertPath)
 		checkEnvVar(envDockerHost)
 		log.Printf(LOG_INIT_DOCKER_CLIENT)
