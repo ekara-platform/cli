@@ -103,7 +103,8 @@ func stopContainerById(id string, done chan bool) {
 // Once built the container will be started.
 // The method will wait until the container is started and
 // will notify it using the chanel
-func startContainer(imageName string, done chan bool, create bool) {
+func startContainer(imageName string, done chan bool, create bool, descriptor []byte) {
+
 	if create {
 		log.Printf(LOG_START_CREATION)
 	} else {
@@ -111,6 +112,7 @@ func startContainer(imageName string, done chan bool, create bool) {
 	}
 	resp, err := cli.ContainerCreate(context.Background(), &container.Config{
 		Image: imageName,
+		Env:   []string{starterEnvVariableKey + "=" + string(descriptor)},
 	}, nil, nil, "")
 	if err != nil {
 		panic(err)
@@ -186,6 +188,13 @@ type DockerParams struct {
 	cert string
 	api  string
 	host string
+}
+
+// Parameters required to check the environment descriptor contant
+type CheckParams struct {
+	url    string
+	file   string
+	output bool
 }
 
 // checkDockerParams checks the coherence of the parameters received to deal with docker

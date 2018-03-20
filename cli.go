@@ -40,7 +40,10 @@ const (
 	chekOutputFlagKey     = "output"
 
 	// Name of the lagoon starter image
-	starterImageName      string = "redis:latest"
+	starterImageName string = "redis:latest"
+
+	// The environment variable used to pass the environment descriptor
+	// content to the installer image.
 	starterEnvVariableKey string = "LAGOON_ENV_DESCR"
 )
 
@@ -171,6 +174,7 @@ func runUpdate() {
 	}
 }
 
+// runCheck checks the validity of the environment descriptor content
 func runCheck() {
 	log.Printf(LOG_CHECKING_FROM, c.url)
 	d, err := parseDescriptor(c.url)
@@ -200,6 +204,7 @@ func runCheck() {
 
 func parseDescriptor(location string) ([]byte, error) {
 	log.Printf(LOG_PARSING)
+
 	lagoon, e := engine.Create(logger, location)
 	if e != nil {
 		return nil, e

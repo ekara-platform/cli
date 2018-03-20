@@ -9,6 +9,7 @@ It will be compiled in order to provide a file which will be executed on the mac
 
 * **create** Create a new environment.
 * **update** Update an existing environment.
+* **check**  Check the validy of an environment descriptor.
 * **login**  Login into an environment manager API.
 * **logout** Logout from an environment manager API.
 * **status** Status of the environment manager API.
@@ -75,6 +76,27 @@ Or environment variables :
 Example :
 
 `$ lagoon update http://patth.to.my.project/my_descriptor.yml --cert ./cert_location --host tcp://192.168.99.100:2376 --api 1.30`
+
+
+## Command "check"
+This command allows to check the validity of an environment descriptor. 
+
+Command type: **Docker**
+
+Argument(s):
+
+* descriptor : The location of the descriptor of the environment to validate. This location can be an ULR or a path to the file system.
+
+
+Flags: 
+
+* `--output`
+* `--file`
+
+Example :
+
+`$ lagoon check http://patth.to.my.project/my_descriptor.yml --output --file my_descriptor.yml`
+
 
 ## Command "login"
 This command performs a login into an environment manager API.
