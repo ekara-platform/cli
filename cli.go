@@ -174,6 +174,13 @@ func runUpdate() {
 	}
 }
 
+// Parameters required to check the environment descriptor contant
+type CheckParams struct {
+	url    string
+	file   string
+	output bool
+}
+
 // runCheck checks the validity of the environment descriptor content
 func runCheck() {
 	log.Printf(LOG_CHECKING_FROM, c.url)

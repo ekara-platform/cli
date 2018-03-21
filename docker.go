@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 
@@ -187,10 +188,12 @@ func startContainer(imageName string, done chan bool, create bool, descriptor []
 // to /c/Users/e518546/goPathRoot/src/github.com/lagoon-platform/cli
 func adaptPath(in string) string {
 	s := in
-	if strings.Index(s, "c:\\") == 0 {
-		s = "/c" + s[2:]
+	if runtime.GOOS == "windows" {
+		if strings.Index(s, "c:\\") == 0 {
+			s = "/c" + s[2:]
+		}
+		s = strings.Replace(s, "\\", "/", -1)
 	}
-	s = strings.Replace(s, "\\", "/", -1)
 	return s
 }
 
@@ -256,13 +259,6 @@ type DockerParams struct {
 	host   string
 	output bool
 	file   string
-}
-
-// Parameters required to check the environment descriptor contant
-type CheckParams struct {
-	url    string
-	file   string
-	output bool
 }
 
 // checkDockerParams checks the coherence of the parameters received to deal with docker
