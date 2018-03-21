@@ -40,11 +40,7 @@ const (
 	chekOutputFlagKey     = "output"
 
 	// Name of the lagoon starter image
-	starterImageName string = "redis:latest"
-
-	// The environment variable used to pass the environment descriptor
-	// content to the installer image.
-	starterEnvVariableKey string = "LAGOON_ENV_DESCR"
+	starterImageName string = "lagoon-platform/installer:latest"
 )
 
 var (

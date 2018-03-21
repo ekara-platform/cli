@@ -14,6 +14,8 @@ import (
 	"golang.org/x/net/context"
 
 	"gopkg.in/alecthomas/kingpin.v2"
+
+	"github.com/lagoon-platform/engine"
 )
 
 // The docker client used within the whole application
@@ -112,22 +114,27 @@ func startContainer(imageName string, done chan bool, create bool, descriptor []
 	}
 	resp, err := cli.ContainerCreate(context.Background(), &container.Config{
 		Image: imageName,
-		Env:   []string{starterEnvVariableKey + "=" + string(descriptor)},
+		Env:   []string{engine.StarterEnvVariableKey + "=" + string(descriptor)},
 	}, nil, nil, "")
 	if err != nil {
 		panic(err)
 	}
+
+	okChan, errChan := cli.ContainerWait(context.Background(), resp.ID, container.WaitConditionNotRunning)
+
 	if err := cli.ContainerStart(context.Background(), resp.ID, types.ContainerStartOptions{}); err != nil {
 		panic(err)
 	}
-	for {
-		log.Printf(LOG_WAITING_START)
-		time.Sleep(500 * time.Millisecond)
-		if _, isRunning := containerRunningByImageName(imageName); isRunning {
-			log.Printf(LOG_STARTED)
-			done <- true
-			return
-		}
+
+	select {
+	case msg := <-okChan:
+		log.Printf("Container started, status code:%d", msg.StatusCode)
+		done <- true
+	case err := <-errChan:
+		log.Printf("Error starting the container %s", err.Error())
+		done <- true
+	default:
+		fmt.Println("no activity")
 	}
 }
 
@@ -168,18 +175,21 @@ func getImages() []types.ImageSummary {
 //
 // The completion of the download will be notified using the chanel
 func imagePull(taggedName string, done chan bool) {
-	if _, err := cli.ImagePull(context.Background(), taggedName, types.ImagePullOptions{}); err != nil {
-		panic(err)
-	}
-	for {
-		log.Printf(LOG_WAITING_DOWNLOAD)
-		time.Sleep(500 * time.Millisecond)
-		if img := imageExistsByName(starterImageName); img {
-			log.Printf(LOG_DOWNLOAD_COMPLETED)
-			done <- true
-			return
+	if img := imageExistsByName(starterImageName); !img {
+		if _, err := cli.ImagePull(context.Background(), taggedName, types.ImagePullOptions{}); err != nil {
+			panic(err)
+		}
+		for {
+			log.Printf(LOG_WAITING_DOWNLOAD)
+			time.Sleep(500 * time.Millisecond)
+			if img := imageExistsByName(starterImageName); img {
+				log.Printf(LOG_DOWNLOAD_COMPLETED)
+				done <- true
+				return
+			}
 		}
 	}
+	done <- true
 }
 
 // Parameters required to connect with the docker API
