@@ -49,4 +49,7 @@ const (
 	LOG_LOGGING_INTO   string = "Logging into: %s \n"
 
 	LOG_PARSING string = "Parsing the descriptor \n"
+
+	LOG_CONTAINER_LOG_WRITTEN      string = "The container logs have been written into %s\n"
+	LOG_DESCRIPTOR_CONTENT_WRITTEN string = "The environment descriptor has been deserialized into %s\n"
 )

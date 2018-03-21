@@ -2,14 +2,17 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"net/http"
+	"os"
 	"path/filepath"
 	"time"
 
 	"docker.io/go-docker"
 	"docker.io/go-docker/api/types"
 	"docker.io/go-docker/api/types/container"
+	_ "docker.io/go-docker/api/types/mount"
 	"github.com/docker/go-connections/tlsconfig"
 	"golang.org/x/net/context"
 
@@ -112,10 +115,25 @@ func startContainer(imageName string, done chan bool, create bool, descriptor []
 	} else {
 		log.Printf(LOG_START_UPDATE)
 	}
+	/**
+	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	if err != nil {
+		log.Fatal(err)
+	}
+	*/
+
 	resp, err := cli.ContainerCreate(context.Background(), &container.Config{
 		Image: imageName,
 		Env:   []string{engine.StarterEnvVariableKey + "=" + string(descriptor)},
-	}, nil, nil, "")
+	}, /* &container.HostConfig{
+			Mounts: []mount.Mount{
+				{
+					Type:   mount.TypeBind,
+					Source: dir,
+					Target: "/opt/lagoon/output",
+				},
+			},
+		}*/nil, nil, "")
 	if err != nil {
 		panic(err)
 	}
@@ -135,6 +153,32 @@ func startContainer(imageName string, done chan bool, create bool, descriptor []
 		done <- true
 	default:
 		fmt.Println("no activity")
+	}
+
+	log.Printf("Container logs")
+	out, err := cli.ContainerLogs(context.Background(), resp.ID, types.ContainerLogsOptions{ShowStdout: true, ShowStderr: true})
+	if err != nil {
+		panic(err)
+	}
+
+	if p.output {
+		var fileName string
+		if p.file == "" {
+			fileName = "./container.log"
+		} else {
+			fileName = "./" + p.file
+		}
+		f, err := os.Create(fileName)
+		if err != nil {
+			panic(err)
+		}
+		defer f.Close()
+
+		_, err = io.Copy(f, out)
+		if err != nil {
+			panic(err)
+		}
+		log.Printf(LOG_CONTAINER_LOG_WRITTEN, fileName)
 	}
 }
 
@@ -194,10 +238,12 @@ func imagePull(taggedName string, done chan bool) {
 
 // Parameters required to connect with the docker API
 type DockerParams struct {
-	url  string
-	cert string
-	api  string
-	host string
+	url    string
+	cert   string
+	api    string
+	host   string
+	output bool
+	file   string
 }
 
 // Parameters required to check the environment descriptor contant

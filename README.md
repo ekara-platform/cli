@@ -31,9 +31,11 @@ Argument(s):
 
 Flags: 
 
-* `--cert`
-* `--api`
-* `--host`
+* `--cert` (can be substituted by an environment variable) 
+* `--api`  (can be substituted by an environment variable)
+* `--host` (can be substituted by an environment variable)
+* `--output`
+* `--file`
 
 Or environment variables :
 
@@ -45,6 +47,13 @@ Example :
 
 `$ lagoon create http://patth.to.my.project/my_descriptor.yml --cert ./cert_location --host tcp://192.168.99.100:2376 --api 1.30`
 
+Example writing the container logs into `container.log`:
+
+`$ lagoon create http://patth.to.my.project/my_descriptor.yml --cert ./cert_location --host tcp://192.168.99.100:2376 --api 1.30 --output`
+
+Example writing the container logs into a specific file:
+
+`$ lagoon create http://patth.to.my.project/my_descriptor.yml --cert ./cert_location --host tcp://192.168.99.100:2376 --api 1.30 --output --file myLogFile.log `
 
 
 ## Command "update"

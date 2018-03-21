@@ -19,3 +19,9 @@
 
 # Lagoon session file
 *.cli
+
+# Container logs
+*.log
+
+# Descriptor serialization
+*.yml

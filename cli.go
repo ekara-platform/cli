@@ -29,15 +29,17 @@ const (
 	statusFlagKey = "status"
 
 	// Flags keys for Arguments
-	descriptorFlagKey     = "descriptor"
-	environmentUrlFlagKey = "url"
-	certPathFlagKey       = "cert"
-	apiVersionFlagKey     = "api"
-	dockerHostFlagKey     = "host"
-	userFlagKey           = "user"
-	apiUrlFlagKey         = "url"
-	chekFileFlagKey       = "file"
-	chekOutputFlagKey     = "output"
+	descriptorFlagKey      = "descriptor"
+	environmentUrlFlagKey  = "url"
+	certPathFlagKey        = "cert"
+	apiVersionFlagKey      = "api"
+	dockerHostFlagKey      = "host"
+	userFlagKey            = "user"
+	apiUrlFlagKey          = "url"
+	chekFileFlagKey        = "file"
+	chekOutputFlagKey      = "output"
+	containerFileFlagKey   = "file"
+	containerOutputFlagKey = "output"
 
 	// Name of the lagoon starter image
 	starterImageName string = "lagoon-platform/installer:latest"
@@ -69,6 +71,8 @@ func initFlags(app *kingpin.Application) {
 	deploy.Flag(certPathFlagKey, "The location of the docker certificates (optional)").StringVar(&p.cert)
 	deploy.Flag(apiVersionFlagKey, "The version of the docker API (optional)").StringVar(&p.api)
 	deploy.Flag(dockerHostFlagKey, "The url of the docker host (optional)").StringVar(&p.host)
+	deploy.Flag(containerOutputFlagKey, "\"true\" to write the container logs into a local file, defaulted to  \"false\"").BoolVar(&p.output)
+	deploy.Flag(containerFileFlagKey, "The output file where to write the logs, if missing the content will be written in \"container.log\"").StringVar(&p.file)
 	deploy.Action(p.checkDockerParams)
 
 	update = app.Command(updateFlagKey, "Update an existing environment.")
@@ -195,6 +199,7 @@ func runCheck() {
 		if err != nil {
 			panic(err)
 		}
+		log.Printf(LOG_DESCRIPTOR_CONTENT_WRITTEN, fileName)
 	}
 }
 
