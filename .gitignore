@@ -20,8 +20,10 @@
 # Lagoon session file
 *.cli
 
-# Container logs
+# Container logs/output
 *.log
+container_output.json
 
 # Descriptor serialization
 *.yml
+
