@@ -112,6 +112,11 @@ func stopContainerById(id string, done chan bool) {
 // will notify it using the chanel
 func startContainer(imageName string, done chan bool, create bool, descriptor []byte) {
 
+	envVar := []string{}
+	envVar = append(envVar, engine.StarterEnvVariableKey+"="+string(descriptor))
+	envVar = append(envVar, "http_proxy="+getHttpProxy())
+	envVar = append(envVar, "https_proxy="+getHttpsProxy())
+
 	if create {
 		log.Printf(LOG_START_CREATION)
 	} else {
@@ -126,7 +131,7 @@ func startContainer(imageName string, done chan bool, create bool, descriptor []
 	resp, err := cli.ContainerCreate(context.Background(), &container.Config{
 		Image:      imageName,
 		WorkingDir: "/opt/lagoon/output",
-		Env:        []string{engine.StarterEnvVariableKey + "=" + string(descriptor)},
+		Env:        envVar,
 	}, &container.HostConfig{
 		Mounts: []mount.Mount{
 			{
@@ -253,12 +258,14 @@ func imagePull(taggedName string, done chan bool) {
 
 // Parameters required to connect with the docker API
 type DockerParams struct {
-	url    string
-	cert   string
-	api    string
-	host   string
-	output bool
-	file   string
+	url        string
+	cert       string
+	api        string
+	host       string
+	output     bool
+	file       string
+	httpProxy  string
+	httpsProxy string
 }
 
 // checkDockerParams checks the coherence of the parameters received to deal with docker
@@ -291,6 +298,13 @@ func (n *DockerParams) checkDockerParams(c *kingpin.ParseContext) error {
 		checkEnvVar(envDockerHost)
 		log.Printf(LOG_INIT_DOCKER_CLIENT)
 		initClient()
+	}
+
+	if n.httpProxy == "" {
+		checkEnvVar(envHttpProxy)
+	}
+	if n.httpsProxy == "" {
+		checkEnvVar(envHttpsProxy)
 	}
 	return nil
 }

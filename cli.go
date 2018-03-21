@@ -19,6 +19,8 @@ const (
 	envCertPath   string = "DOCKER_CERT_PATH"
 	envApiVersion string = "DOCKER_API_VERSION"
 	envDockerHost string = "DOCKER_HOST"
+	envHttpProxy  string = "HTTP_PROXY"
+	envHttpsProxy string = "HTTPS_PROXY"
 
 	// Flags keys for Commands
 	deployFlagKey = "create"
@@ -34,6 +36,8 @@ const (
 	certPathFlagKey        = "cert"
 	apiVersionFlagKey      = "api"
 	dockerHostFlagKey      = "host"
+	httpProxyFlagKey       = "http_proxy"
+	httpsProxyFlagKey      = "https_proxy"
 	userFlagKey            = "user"
 	apiUrlFlagKey          = "url"
 	chekFileFlagKey        = "file"
@@ -71,6 +75,8 @@ func initFlags(app *kingpin.Application) {
 	deploy.Flag(certPathFlagKey, "The location of the docker certificates (optional)").StringVar(&p.cert)
 	deploy.Flag(apiVersionFlagKey, "The version of the docker API (optional)").StringVar(&p.api)
 	deploy.Flag(dockerHostFlagKey, "The url of the docker host (optional)").StringVar(&p.host)
+	deploy.Flag(httpProxyFlagKey, "The http proxy(optional)").StringVar(&p.httpProxy)
+	deploy.Flag(httpsProxyFlagKey, "The https proxy (optional)").StringVar(&p.httpsProxy)
 	deploy.Flag(containerOutputFlagKey, "\"true\" to write the container logs into a local file, defaulted to  \"false\"").BoolVar(&p.output)
 	deploy.Flag(containerFileFlagKey, "The output file where to write the logs, if missing the content will be written in \"container.log\"").StringVar(&p.file)
 	deploy.Action(p.checkDockerParams)
@@ -249,6 +255,20 @@ func starterStart(descriptor []byte, create bool) {
 	startContainer(starterImageName, done, create, descriptor)
 	<-done
 	log.Printf(LOG_OK_STARTED)
+}
+
+func getHttpProxy() string {
+	if p.httpProxy == "" {
+		return os.Getenv(envHttpProxy)
+	}
+	return p.httpProxy
+}
+
+func getHttpsProxy() string {
+	if p.httpsProxy == "" {
+		return os.Getenv(envHttpsProxy)
+	}
+	return p.httpsProxy
 }
 
 func checkFlag(val string, flagKey string) {
