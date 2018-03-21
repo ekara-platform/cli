@@ -7,12 +7,13 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"docker.io/go-docker"
 	"docker.io/go-docker/api/types"
 	"docker.io/go-docker/api/types/container"
-	_ "docker.io/go-docker/api/types/mount"
+	"docker.io/go-docker/api/types/mount"
 	"github.com/docker/go-connections/tlsconfig"
 	"golang.org/x/net/context"
 
@@ -115,25 +116,25 @@ func startContainer(imageName string, done chan bool, create bool, descriptor []
 	} else {
 		log.Printf(LOG_START_UPDATE)
 	}
-	/**
+
 	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
 	if err != nil {
 		log.Fatal(err)
 	}
-	*/
 
 	resp, err := cli.ContainerCreate(context.Background(), &container.Config{
-		Image: imageName,
-		Env:   []string{engine.StarterEnvVariableKey + "=" + string(descriptor)},
-	}, /* &container.HostConfig{
-			Mounts: []mount.Mount{
-				{
-					Type:   mount.TypeBind,
-					Source: dir,
-					Target: "/opt/lagoon/output",
-				},
+		Image:      imageName,
+		WorkingDir: "/opt/lagoon/output",
+		Env:        []string{engine.StarterEnvVariableKey + "=" + string(descriptor)},
+	}, &container.HostConfig{
+		Mounts: []mount.Mount{
+			{
+				Type:   mount.TypeBind,
+				Source: adaptPath(dir),
+				Target: "/opt/lagoon/output",
 			},
-		}*/nil, nil, "")
+		},
+	}, nil, "")
 	if err != nil {
 		panic(err)
 	}
@@ -180,6 +181,17 @@ func startContainer(imageName string, done chan bool, create bool, descriptor []
 		}
 		log.Printf(LOG_CONTAINER_LOG_WRITTEN, fileName)
 	}
+}
+
+// Adapt from c:\Users\e518546\goPathRoot\src\github.com\lagoon-platform\cli
+// to /c/Users/e518546/goPathRoot/src/github.com/lagoon-platform/cli
+func adaptPath(in string) string {
+	s := in
+	if strings.Index(s, "c:\\") == 0 {
+		s = "/c" + s[2:]
+	}
+	s = strings.Replace(s, "\\", "/", -1)
+	return s
 }
 
 // getContainers returns the detail of all running containers
