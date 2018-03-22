@@ -141,28 +141,24 @@ func startContainer(imageName string, done chan bool, create bool, descriptor []
 			},
 		},
 	}, nil, "")
+
 	if err != nil {
 		panic(err)
 	}
-
-	okChan, errChan := cli.ContainerWait(context.Background(), resp.ID, container.WaitConditionNotRunning)
 
 	if err := cli.ContainerStart(context.Background(), resp.ID, types.ContainerStartOptions{}); err != nil {
 		panic(err)
 	}
 
+	statusCh, errCh := cli.ContainerWait(context.Background(), resp.ID, container.WaitConditionNotRunning)
 	select {
-	case msg := <-okChan:
-		log.Printf("Container started, status code:%d", msg.StatusCode)
-		done <- true
-	case err := <-errChan:
-		log.Printf("Error starting the container %s", err.Error())
-		done <- true
-	default:
-		fmt.Println("no activity")
+	case err := <-errCh:
+		if err != nil {
+			panic(err)
+		}
+	case <-statusCh:
 	}
 
-	log.Printf("Container logs")
 	out, err := cli.ContainerLogs(context.Background(), resp.ID, types.ContainerLogsOptions{ShowStdout: true, ShowStderr: true})
 	if err != nil {
 		panic(err)
@@ -187,6 +183,7 @@ func startContainer(imageName string, done chan bool, create bool, descriptor []
 		}
 		log.Printf(LOG_CONTAINER_LOG_WRITTEN, fileName)
 	}
+	done <- true
 }
 
 // Adapt from c:\Users\e518546\goPathRoot\src\github.com\lagoon-platform\cli
