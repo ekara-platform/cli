@@ -1,0 +1,12 @@
+[
+    {
+        "ErrorType": 1,
+        "Message": "no node specified",
+        "Location": "nodes"
+    },
+    {
+        "ErrorType": 1,
+        "Message": "no stack specified",
+        "Location": "stacks"
+    }
+]

@@ -3,6 +3,9 @@ package main
 const (
 	CLI_DESCRIPTION string = "Lagoon Command Line Interface."
 
+	ERROR_CREATING_REPORT_FILE string = "Error creating the report file  %s"
+	LOG_SEE_REPORT_IN          string = "See the details in : %s"
+
 	ERROR_REQUIRED_CONFIG string = "the flag \"config\" should be defined"
 	ERROR_REQUIRED_ENV    string = "the environment variable \"%s\" should be defined"
 	ERROR_REQUIRED_FLAG   string = "the flag \"%s\" should be defined"
@@ -12,8 +15,7 @@ const (
 	ERROR_READING_PASSWORD   string = "Error reading the password"
 
 	ERROR_PARSING_ENVIRONMENT string = "Error parsing the environment: %s"
-
-	ERROR_PARSING_DESCRIPTOR string = "Error parsing the descriptor %s"
+	ERROR_PARSING_DESCRIPTOR  string = "Error parsing the descriptor %s"
 
 	PROMPT_RESTART  string = "Are you sure you want to recreate the starter container now (Y/N) "
 	PROMPT_PASSWORD string = "Please enter password for %s:"

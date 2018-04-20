@@ -99,9 +99,6 @@ Argument(s):
 
 Flags: 
 
-* `--output`
-* `--file`
-
 Example :
 
 `$ lagoon check http://patth.to.my.project/my_descriptor.yml --output --file my_descriptor.yml`

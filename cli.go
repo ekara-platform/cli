@@ -9,11 +9,14 @@ import (
 	"strings"
 
 	"github.com/lagoon-platform/engine"
+	"github.com/lagoon-platform/model"
 
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 const (
+	VALIDATION_OUTPUT_FILE = "validation_output.json"
+
 	// Environment variables used by default by the docker client
 	// "github.com/docker/docker/client"
 	envCertPath   string = "DOCKER_CERT_PATH"
@@ -31,17 +34,16 @@ const (
 	statusFlagKey = "status"
 
 	// Flags keys for Arguments
-	descriptorFlagKey      = "descriptor"
-	environmentUrlFlagKey  = "url"
-	certPathFlagKey        = "cert"
-	apiVersionFlagKey      = "api"
-	dockerHostFlagKey      = "host"
-	httpProxyFlagKey       = "http_proxy"
-	httpsProxyFlagKey      = "https_proxy"
-	userFlagKey            = "user"
-	apiUrlFlagKey          = "url"
-	chekFileFlagKey        = "file"
-	chekOutputFlagKey      = "output"
+	descriptorFlagKey     = "descriptor"
+	environmentUrlFlagKey = "url"
+	certPathFlagKey       = "cert"
+	apiVersionFlagKey     = "api"
+	dockerHostFlagKey     = "host"
+	httpProxyFlagKey      = "http_proxy"
+	httpsProxyFlagKey     = "https_proxy"
+	userFlagKey           = "user"
+	apiUrlFlagKey         = "url"
+
 	containerFileFlagKey   = "file"
 	containerOutputFlagKey = "output"
 
@@ -91,8 +93,6 @@ func initFlags(app *kingpin.Application) {
 	c = &CheckParams{}
 	check = app.Command(checkFlagKey, "Valid an existing environment descriptor.")
 	check.Arg(descriptorFlagKey, "The environment descriptor url").Required().StringVar(&c.url)
-	check.Flag(chekOutputFlagKey, "\"true\" to write the serialized content of the descriptor into a file, defaulted to  \"false\"").BoolVar(&c.output)
-	check.Flag(chekFileFlagKey, "The output file where to write the serialized descriptor, if missing the content will be written in \"raw.yml\"").StringVar(&c.file)
 
 	l = &Login{}
 	login = app.Command(loginFlagKey, "Login into an environment manager API.")
@@ -154,9 +154,9 @@ func runCreate() {
 		log.Printf(LOG_LOGOUT_REQUIRED)
 	} else {
 		log.Printf(LOG_DEPLOYING_FROM, p.url)
-		d, err := parseDescriptor(p.url)
+		err := parseLocation(p.url)
 		if err == nil {
-			starterStart(d, true)
+			starterStart(p.url, true)
 		} else {
 			log.Fatalf(ERROR_PARSING_ENVIRONMENT, err.Error())
 		}
@@ -169,9 +169,9 @@ func runUpdate() {
 	b, url, _ := isLogged()
 	if b {
 		log.Printf(LOG_UPDATING_FROM, url)
-		d, err := parseDescriptor(p.url)
+		err := parseLocation(p.url)
 		if err == nil {
-			starterStart(d, false)
+			starterStart(p.url, false)
 		} else {
 			log.Fatalf(ERROR_PARSING_ENVIRONMENT, err.Error())
 		}
@@ -190,48 +190,50 @@ type CheckParams struct {
 // runCheck checks the validity of the environment descriptor content
 func runCheck() {
 	log.Printf(LOG_CHECKING_FROM, c.url)
-	d, err := parseDescriptor(c.url)
+	err := parseLocation(c.url)
 	if err != nil {
 		log.Fatalf(ERROR_PARSING_ENVIRONMENT, err.Error())
 	}
-
-	if c.output {
-		var fileName string
-		if c.file == "" {
-			fileName = "./raw.yml"
-		} else {
-			fileName = "./" + c.file
-		}
-		f, err := os.Create(fileName)
-		if err != nil {
-			panic(err)
-		}
-		defer f.Close()
-
-		_, err = f.Write(d)
-		if err != nil {
-			panic(err)
-		}
-		log.Printf(LOG_DESCRIPTOR_CONTENT_WRITTEN, fileName)
-	}
 }
 
-func parseDescriptor(location string) ([]byte, error) {
+func parseLocation(location string) error {
 	log.Printf(LOG_PARSING)
 
-	lagoon, e := engine.Create(logger, location)
-	if e != nil {
-		return nil, e
+	_, e := engine.Create(logger, location)
+
+	vErrs, ok := e.(model.ValidationErrors)
+
+	// if the error is not a "validation error" then we return it
+	if e != nil && !ok {
+		return e
 	}
 
-	content, err := lagoon.GetContent()
-	if err != nil {
-		return nil, err
+	if ok {
+		// print both errors and warnings into the report file
+		log.Printf(e.Error())
+		log.Printf(LOG_SEE_REPORT_IN, VALIDATION_OUTPUT_FILE)
+		f, e := os.Create(VALIDATION_OUTPUT_FILE)
+		if e != nil {
+			logger.Fatal(fmt.Errorf(ERROR_CREATING_REPORT_FILE, VALIDATION_OUTPUT_FILE))
+		}
+		defer f.Close()
+		b, e := vErrs.JSonContent()
+		if e != nil {
+			logger.Fatal(e)
+		}
+		_, e = f.Write(b)
+		if e != nil {
+			logger.Fatal(e)
+		}
+		if vErrs.HasErrors() {
+			// in case of validation error we also return the error
+			return e
+		}
 	}
-	return content, nil
+	return nil
 }
 
-func starterStart(descriptor []byte, create bool) {
+func starterStart(location string, create bool) {
 	log.Printf(LOG_GET_IMAGE)
 	done := make(chan bool, 1)
 	go imagePull(starterImageName, done)
@@ -252,7 +254,7 @@ func starterStart(descriptor []byte, create bool) {
 	}
 
 	done = make(chan bool, 1)
-	startContainer(starterImageName, done, create, descriptor)
+	startContainer(starterImageName, done, create, location)
 	<-done
 	log.Printf(LOG_OK_STARTED)
 }

@@ -110,10 +110,10 @@ func stopContainerById(id string, done chan bool) {
 // Once built the container will be started.
 // The method will wait until the container is started and
 // will notify it using the chanel
-func startContainer(imageName string, done chan bool, create bool, descriptor []byte) {
+func startContainer(imageName string, done chan bool, create bool, location string) {
 
 	envVar := []string{}
-	envVar = append(envVar, engine.StarterEnvVariableKey+"="+string(descriptor))
+	envVar = append(envVar, engine.StarterEnvVariableKey+"="+location)
 	envVar = append(envVar, "http_proxy="+getHttpProxy())
 	envVar = append(envVar, "https_proxy="+getHttpsProxy())
 
