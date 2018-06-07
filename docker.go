@@ -1,13 +1,16 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"io"
+	_ "io/ioutil"
 	"log"
 	"net/http"
-	"os"
+	"path"
 	"path/filepath"
-	"runtime"
+	_ "runtime"
+	"strconv"
 	"strings"
 	"time"
 
@@ -110,47 +113,41 @@ func stopContainerById(id string, done chan bool) {
 // Once built the container will be started.
 // The method will wait until the container is started and
 // will notify it using the chanel
-func startContainer(imageName string, done chan bool, create bool, location string) {
+func startContainer(imageName string, done chan bool, descriptor string, ef engine.ExchangeFolder, client string, p ContainerParam) {
 
 	envVar := []string{}
-	envVar = append(envVar, engine.StarterEnvVariableKey+"="+location)
-	envVar = append(envVar, "http_proxy="+getHttpProxy())
-	envVar = append(envVar, "https_proxy="+getHttpsProxy())
+	envVar = append(envVar, engine.ClientEnvVariableKey+"="+client)
+	envVar = append(envVar, engine.StarterEnvVariableKey+"="+descriptor)
+	envVar = append(envVar, "http_proxy="+getHttpProxy(p.httpProxy))
+	envVar = append(envVar, "https_proxy="+getHttpsProxy(p.httpsProxy))
+	envVar = append(envVar, "no_proxy="+getNoProxy(p.noProxy))
 
-	if create {
-		log.Printf(LOG_START_CREATION)
-	} else {
-		log.Printf(LOG_START_UPDATE)
-	}
-
-	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	awsDir, err := filepath.Abs(string(path.Join(path.Dir(""), ".aws")))
 	if err != nil {
 		log.Fatal(err)
 	}
+	log.Printf("Adapted output dir %s", engine.AdaptPath(awsDir))
 
-	resp, err := cli.ContainerCreate(context.Background(), &container.Config{
-		Image:      imageName,
-		WorkingDir: "/opt/lagoon/output",
-		Env:        envVar,
+	// **************************************************************************
+	// Time added stuff - start
+	// Taken from here https://blog.shameerc.com/2017/03/quick-tip-fixing-time-drift-issue-on-docker-for-mac
+	// Where the working solution ws : "docker run --rm --privileged alpine hwclock -s"
+
+	syncTime, err := cli.ContainerCreate(context.Background(), &container.Config{
+		Image: "alpine",
+		Cmd:   []string{"hwclock", "-s"},
 	}, &container.HostConfig{
-		Mounts: []mount.Mount{
-			{
-				Type:   mount.TypeBind,
-				Source: adaptPath(dir),
-				Target: "/opt/lagoon/output",
-			},
-		},
+		AutoRemove: true,
+		Privileged: true,
 	}, nil, "")
-
 	if err != nil {
 		panic(err)
 	}
 
-	if err := cli.ContainerStart(context.Background(), resp.ID, types.ContainerStartOptions{}); err != nil {
+	if err := cli.ContainerStart(context.Background(), syncTime.ID, types.ContainerStartOptions{}); err != nil {
 		panic(err)
 	}
-
-	statusCh, errCh := cli.ContainerWait(context.Background(), resp.ID, container.WaitConditionNotRunning)
+	statusCh, errCh := cli.ContainerWait(context.Background(), syncTime.ID, container.WaitConditionNotRunning)
 	select {
 	case err := <-errCh:
 		if err != nil {
@@ -159,44 +156,131 @@ func startContainer(imageName string, done chan bool, create bool, location stri
 	case <-statusCh:
 	}
 
+	// Time added stuff - end
+	// **************************************************************************
+
+	startedAt := time.Now().UTC()
+	startedAt = startedAt.Add(time.Second * -2)
+	resp, err := cli.ContainerCreate(context.Background(), &container.Config{
+		Image:      imageName,
+		WorkingDir: engine.InstallerVolume,
+		Env:        envVar,
+	}, &container.HostConfig{
+		Mounts: []mount.Mount{
+			{
+				Type:   mount.TypeBind,
+				Source: ef.Location.AdaptedPath(),
+				Target: engine.InstallerVolume,
+			},
+			{
+				Type:   mount.TypeBind,
+				Source: engine.AdaptPath(awsDir),
+				// TODO Removed this mounting point
+				Target: "/root/.aws",
+			},
+		},
+	}, nil, "")
+
+	if err != nil {
+		panic(err)
+	}
+
+	// Chan used to turn off the rolling log
+	exitCh := make(chan bool)
+	if p.output {
+		// Rolling output of the container logs
+		go func(start time.Time, exit chan bool) {
+			logMap := make(map[string]string)
+			// Trick to avoid tracing twice the same log line
+			notExist := func(s string) (bool, string) {
+				tab := strings.Split(s, engine.InstallerLogPrefix)
+				if len(tab) > 1 {
+					sTrim := strings.Trim(tab[1], " ")
+					if _, ok := logMap[sTrim]; ok {
+						return false, ""
+					}
+					logMap[sTrim] = ""
+					return true, engine.InstallerLogPrefix + sTrim
+				} else {
+					return true, s
+				}
+			}
+
+			// Request to get the logs content from the container
+			req := func(sr string) {
+				out, err := cli.ContainerLogs(context.Background(), resp.ID, types.ContainerLogsOptions{Since: sr, ShowStdout: true, ShowStderr: true})
+				if err != nil {
+					panic(err)
+				}
+				s := bufio.NewScanner(out)
+				for s.Scan() {
+					str := s.Text()
+					if b, sTrim := notExist(str); b {
+						log.Print(sTrim)
+					}
+				}
+				out.Close()
+			}
+		Loop:
+			for {
+				select {
+				case <-exit:
+					// Last call to be sure to get the end of the logs content
+					now := time.Now()
+					now = now.Add(time.Second * -1)
+					sinceReq := strconv.FormatInt(now.Unix(), 10)
+					req(sinceReq)
+					break Loop
+				default:
+					// Running call to trace the container logs every 500ms
+					sinceReq := strconv.FormatInt(start.Unix(), 10)
+					start = start.Add(time.Millisecond * 500)
+					req(sinceReq)
+					time.Sleep(time.Millisecond * 500)
+				}
+			}
+		}(startedAt, exitCh)
+	}
+
+	if err := cli.ContainerStart(context.Background(), resp.ID, types.ContainerStartOptions{}); err != nil {
+		panic(err)
+	}
+
+	statusCh, errCh = cli.ContainerWait(context.Background(), resp.ID, container.WaitConditionNotRunning)
+
+	select {
+	case err := <-errCh:
+		if p.output {
+			exitCh <- true
+		}
+		if err != nil {
+			panic(err)
+		}
+	case <-statusCh:
+		if p.output {
+			exitCh <- true
+		}
+	}
+
 	out, err := cli.ContainerLogs(context.Background(), resp.ID, types.ContainerLogsOptions{ShowStdout: true, ShowStderr: true})
 	if err != nil {
 		panic(err)
 	}
 
 	if p.output {
-		var fileName string
-		if p.file == "" {
-			fileName = "./container.log"
-		} else {
-			fileName = "./" + p.file
-		}
-		f, err := os.Create(fileName)
+		logFile, err := ContainerLog(ef, p.file)
 		if err != nil {
 			panic(err)
 		}
-		defer f.Close()
+		defer logFile.Close()
 
-		_, err = io.Copy(f, out)
+		_, err = io.Copy(logFile, out)
 		if err != nil {
 			panic(err)
 		}
-		log.Printf(LOG_CONTAINER_LOG_WRITTEN, fileName)
+		log.Printf(LOG_CONTAINER_LOG_WRITTEN, logFile.Name())
 	}
 	done <- true
-}
-
-// Adapt from c:\Users\e518546\goPathRoot\src\github.com\lagoon-platform\cli
-// to /c/Users/e518546/goPathRoot/src/github.com/lagoon-platform/cli
-func adaptPath(in string) string {
-	s := in
-	if runtime.GOOS == "windows" {
-		if strings.Index(s, "c:\\") == 0 {
-			s = "/c" + s[2:]
-		}
-		s = strings.Replace(s, "\\", "/", -1)
-	}
-	return s
 }
 
 // getContainers returns the detail of all running containers
@@ -253,41 +337,81 @@ func imagePull(taggedName string, done chan bool) {
 	done <- true
 }
 
-// Parameters required to connect with the docker API
-type DockerParams struct {
-	url        string
-	cert       string
-	api        string
-	host       string
-	output     bool
-	file       string
-	httpProxy  string
-	httpsProxy string
+// Parameters required to connect with the docker API; in creation mode
+type DockerCreateParams struct {
+	url       string
+	cert      string
+	api       string
+	host      string
+	client    string
+	container ContainerParam
 }
 
-// checkDockerParams checks the coherence of the parameters received to deal with docker
-// using the flags and/or the environment variables
-func (n *DockerParams) checkDockerParams(c *kingpin.ParseContext) error {
-	log.Printf("Create or update of:%v\n", n.url)
-	log.Printf("Lauched to run docker with cert:%v, api:%v, on daemon:%v\n", n.cert, n.api, n.host)
+// Parameters required to connect with the docker API; in update mode
+type DockerUpdateParams struct {
+	url       string
+	cert      string
+	api       string
+	host      string
+	container ContainerParam
+}
 
-	// The environment descriptor is always required
-	if n.url == "" {
-		log.Fatal(fmt.Errorf(ERROR_REQUIRED_CONFIG))
+type ContainerParam struct {
+	httpProxy  string
+	httpsProxy string
+	noProxy    string
+	output     bool
+	file       string
+}
+
+// checkCreateDockerParams checks the coherence of the parameters received to deal with docker
+// using the flags and/or the environment variables
+func (n *DockerCreateParams) checkParams(c *kingpin.ParseContext) error {
+	log.Printf("Creation of:%v\n", n.url)
+	log.Printf("Lauched to run docker with cert:%v, api:%v, on daemon:%v\n", n.cert, n.api, n.host)
+	checkDescriptor(n.url)
+	// The client name is always required
+	if n.client == "" {
+		log.Fatal(fmt.Errorf(ERROR_REQUIRED_CLIENT))
 	} else {
-		log.Printf(LOG_CONFIG_CONFIRMATION, descriptorFlagKey, n.url)
+		log.Printf(LOG_CLIENT_CONFIRMATION, n.client)
 	}
 
+	checkDockerStuff(n.cert, n.host, n.api)
+	return nil
+}
+
+// checkUpdateDockerParams checks the coherence of the parameters received to deal with docker
+// using the flags and/or the environment variables
+func (n *DockerUpdateParams) checkParams(c *kingpin.ParseContext) error {
+	log.Printf("Update of:%v\n", n.url)
+	checkDescriptor(n.url)
+	checkDockerStuff(n.cert, n.host, n.api)
+	return nil
+}
+
+func checkDescriptor(d string) {
+	// The environment descriptor is always required
+	if d == "" {
+		log.Fatal(fmt.Errorf(ERROR_REQUIRED_CONFIG))
+	} else {
+		log.Printf(LOG_CONFIG_CONFIRMATION, descriptorFlagKey, d)
+	}
+
+}
+
+func checkDockerStuff(cert string, host string, api string) {
+
 	// If we use flags then these 3 are required
-	if n.host != "" || n.api != "" || n.cert != "" {
-		checkFlag(n.cert, certPathFlagKey)
-		checkFlag(n.host, dockerHostFlagKey)
-		checkFlag(n.api, apiVersionFlagKey)
-		log.Printf(LOG_FLAG_CONFIRMATION, certPathFlagKey, n.cert)
-		log.Printf(LOG_FLAG_CONFIRMATION, dockerHostFlagKey, n.host)
-		log.Printf(LOG_FLAG_CONFIRMATION, apiVersionFlagKey, n.api)
+	if host != "" || api != "" || cert != "" {
+		checkFlag(cert, certPathFlagKey)
+		checkFlag(host, dockerHostFlagKey)
+		checkFlag(api, apiVersionFlagKey)
+		log.Printf(LOG_FLAG_CONFIRMATION, certPathFlagKey, cert)
+		log.Printf(LOG_FLAG_CONFIRMATION, dockerHostFlagKey, host)
+		log.Printf(LOG_FLAG_CONFIRMATION, apiVersionFlagKey, api)
 		log.Printf(LOG_INIT_FLAGGED_DOCKER_CLIENT)
-		initFlaggedClient(n.host, n.api, n.cert)
+		initFlaggedClient(host, api, cert)
 	} else {
 		// if the flags are not used then we will ensure
 		// that the environment variables are well defined
@@ -296,12 +420,4 @@ func (n *DockerParams) checkDockerParams(c *kingpin.ParseContext) error {
 		log.Printf(LOG_INIT_DOCKER_CLIENT)
 		initClient()
 	}
-
-	if n.httpProxy == "" {
-		checkEnvVar(envHttpProxy)
-	}
-	if n.httpsProxy == "" {
-		checkEnvVar(envHttpsProxy)
-	}
-	return nil
 }

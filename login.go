@@ -59,7 +59,7 @@ func runLogin() {
 		// TODO
 		// - Connect to the api with the received url/user/password
 		// - Save received token into the session file
-		s := &Session{
+		s := &ApiLogin{
 			Url:   l.url,
 			User:  l.user,
 			Token: "save token here",

@@ -77,6 +77,24 @@
   version = "v0.4"
 
 [[projects]]
+  name = "github.com/imdario/mergo"
+  packages = ["."]
+  revision = "9d5f1277e9a8ed20c3684bda8fde67c05628518c"
+  version = "v0.3.4"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/lagoon-platform/engine"
+  packages = ["."]
+  revision = "592ff56f356f361978e238582b86a0773bd33531"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/lagoon-platform/model"
+  packages = ["."]
+  revision = "2c7561d6b607865a0b37ade6593a64ef400d8e8b"
+
+[[projects]]
   name = "github.com/opencontainers/go-digest"
   packages = ["."]
   revision = "279bed98673dd5bef374d3b6e4b09e2af76183bf"
@@ -128,9 +146,15 @@
   revision = "947dcec5ba9c011838740e680966fd7087a71d0d"
   version = "v2.2.6"
 
+[[projects]]
+  name = "gopkg.in/yaml.v2"
+  packages = ["."]
+  revision = "5420a8b6744d3b0345ab293f6fcba19c978f1183"
+  version = "v2.2.1"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "b030cc4fb8e7c91e8bd0dd2c3e55336856a4379ff70037c699d26b35b18a6d24"
+  inputs-digest = "c9912dcf4185511f548e5e7fd03cbd01bd76581cd5c685bf7e13fd6ddc33abf6"
   solver-name = "gps-cdcl"
   solver-version = 1

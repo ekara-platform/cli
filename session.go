@@ -7,12 +7,12 @@ import (
 )
 
 const (
-	// Name of the lagoon persisted session file
-	sessionFileName string = "lagoon_session.cli"
+	// Name of the lagoon persisted login file
+	loginFileName string = "lagoon_login.cli"
 )
 
-// Structure of the file containing the session details
-type Session struct {
+// Structure of the file containing the session details against the API
+type ApiLogin struct {
 	Url   string `json:"api-url"`
 	User  string `json:"logged_user"`
 	Token string `json:"token"`
@@ -23,9 +23,9 @@ type Session struct {
 // and the logged user
 func isLogged() (logged bool, url string, user string) {
 
-	if _, err := os.Stat(fullSessionFileName); err == nil {
-		if data, err := os.Open(fullSessionFileName); err == nil {
-			var s Session
+	if _, err := os.Stat(fullLoginFileName); err == nil {
+		if data, err := os.Open(fullLoginFileName); err == nil {
+			var s ApiLogin
 			defer data.Close()
 			err = json.NewDecoder(data).Decode(&s)
 			if err != nil {
@@ -43,17 +43,16 @@ func isLogged() (logged bool, url string, user string) {
 	url = ""
 	user = ""
 	return
-
 }
 
 // saveLogged saves the session details into the session file
-func saveLogged(s Session) {
+func saveLogged(s ApiLogin) {
 	b, err := json.Marshal(s)
 	if err != nil {
 		// TODO add real error message here
 		log.Fatal(err.Error())
 	}
-	f, err := os.Create(fullSessionFileName)
+	f, err := os.Create(fullLoginFileName)
 	if err != nil {
 		// TODO add real error message here
 		log.Fatal(err.Error())

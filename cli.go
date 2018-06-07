@@ -4,8 +4,9 @@ import (
 	"bufio"
 	"fmt"
 	"log"
-
 	"os"
+	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/lagoon-platform/engine"
@@ -24,6 +25,7 @@ const (
 	envDockerHost string = "DOCKER_HOST"
 	envHttpProxy  string = "HTTP_PROXY"
 	envHttpsProxy string = "HTTPS_PROXY"
+	envNoProxy    string = "NO_PROXY"
 
 	// Flags keys for Commands
 	deployFlagKey = "create"
@@ -39,8 +41,10 @@ const (
 	certPathFlagKey       = "cert"
 	apiVersionFlagKey     = "api"
 	dockerHostFlagKey     = "host"
+	clientFlagKey         = "client"
 	httpProxyFlagKey      = "http_proxy"
 	httpsProxyFlagKey     = "https_proxy"
+	noProxyFlagKey        = "no_proxy"
 	userFlagKey           = "user"
 	apiUrlFlagKey         = "url"
 
@@ -60,45 +64,50 @@ var (
 	logout *kingpin.CmdClause
 	status *kingpin.CmdClause
 
-	fullSessionFileName string
+	fullLoginFileName string
 
 	// Arguments
-	p      *DockerParams
-	c      *CheckParams
+	cr     *DockerCreateParams
+	up     *DockerUpdateParams
+	ch     *CheckParams
 	l      *Login
 	logger *log.Logger
 )
 
 func initFlags(app *kingpin.Application) {
 
-	p = &DockerParams{}
+	cr = &DockerCreateParams{}
 	deploy = app.Command(deployFlagKey, "Create a new environment.")
-	deploy.Arg(descriptorFlagKey, "The environment descriptor url").Required().StringVar(&p.url)
-	deploy.Flag(certPathFlagKey, "The location of the docker certificates (optional)").StringVar(&p.cert)
-	deploy.Flag(apiVersionFlagKey, "The version of the docker API (optional)").StringVar(&p.api)
-	deploy.Flag(dockerHostFlagKey, "The url of the docker host (optional)").StringVar(&p.host)
-	deploy.Flag(httpProxyFlagKey, "The http proxy(optional)").StringVar(&p.httpProxy)
-	deploy.Flag(httpsProxyFlagKey, "The https proxy (optional)").StringVar(&p.httpsProxy)
-	deploy.Flag(containerOutputFlagKey, "\"true\" to write the container logs into a local file, defaulted to  \"false\"").BoolVar(&p.output)
-	deploy.Flag(containerFileFlagKey, "The output file where to write the logs, if missing the content will be written in \"container.log\"").StringVar(&p.file)
-	deploy.Action(p.checkDockerParams)
+	deploy.Arg(descriptorFlagKey, "The environment descriptor url (the root folder location)").Required().StringVar(&cr.url)
+	deploy.Flag(clientFlagKey, "The name of the environment client (required)").StringVar(&cr.client)
+	deploy.Flag(certPathFlagKey, "The location of the docker certificates (optional)").StringVar(&cr.cert)
+	deploy.Flag(apiVersionFlagKey, "The version of the docker API (optional)").StringVar(&cr.api)
+	deploy.Flag(dockerHostFlagKey, "The url of the docker host (optional)").StringVar(&cr.host)
+	deploy.Flag(httpProxyFlagKey, "The http proxy(optional)").StringVar(&cr.container.httpProxy)
+	deploy.Flag(httpsProxyFlagKey, "The https proxy (optional)").StringVar(&cr.container.httpsProxy)
+	deploy.Flag(noProxyFlagKey, "The no proxy (optional)").StringVar(&cr.container.noProxy)
+	deploy.Flag(containerOutputFlagKey, "\"true\" to write the container logs into a local file, defaulted to  \"false\"").BoolVar(&cr.container.output)
+	deploy.Flag(containerFileFlagKey, "The output file where to write the logs, if missing the content will be written in \"container.log\"").StringVar(&cr.container.file)
+	deploy.Action(cr.checkParams)
 
+	up = &DockerUpdateParams{}
 	update = app.Command(updateFlagKey, "Update an existing environment.")
-	update.Arg(descriptorFlagKey, "The environment descriptor url").Required().StringVar(&p.url)
-	update.Flag(certPathFlagKey, "The location of the docker certificates (optional)").StringVar(&p.cert)
-	update.Flag(apiVersionFlagKey, "The version of the docker API (optional)").StringVar(&p.api)
-	update.Flag(dockerHostFlagKey, "The url of the docker host (optional)").StringVar(&p.host)
-	deploy.Action(p.checkDockerParams)
+	update.Arg(descriptorFlagKey, "The environment descriptor url (the root folder location)").Required().StringVar(&up.url)
+	update.Flag(containerOutputFlagKey, "\"true\" to write the container logs into a local file, defaulted to  \"false\"").BoolVar(&up.container.output)
+	update.Flag(containerFileFlagKey, "The output file where to write the logs, if missing the content will be written in \"container.log\"").StringVar(&up.container.file)
+	update.Action(up.checkParams)
 
-	c = &CheckParams{}
+	// TODO THE Check is supposed to be moved to the installer
+	ch = &CheckParams{}
 	check = app.Command(checkFlagKey, "Valid an existing environment descriptor.")
-	check.Arg(descriptorFlagKey, "The environment descriptor url").Required().StringVar(&c.url)
+	check.Arg(descriptorFlagKey, "The environment descriptor url (the root folder location)").Required().StringVar(&ch.url)
+	//check.Action(ch.checkParams)
 
 	l = &Login{}
 	login = app.Command(loginFlagKey, "Login into an environment manager API.")
 	login.Arg(apiUrlFlagKey, "The url of the environment manager API").Required().StringVar(&l.url)
 	login.Flag(userFlagKey, "The user (optional)").StringVar(&l.user)
-	login.Action(l.checkLoginParams)
+	//login.Action(l.checkParams)
 
 	logout = app.Command(logoutFlagKey, "Logout from an environment manager API.")
 
@@ -108,10 +117,10 @@ func initFlags(app *kingpin.Application) {
 func main() {
 	logger = log.New(os.Stdout, "Lagoon CLI: ", log.Ldate|log.Ltime)
 
-	fullSessionFileName = "./" + sessionFileName
+	fullLoginFileName = path.Join("", loginFileName)
 	// this comes from http://www.kammerl.de/ascii/AsciiSignature.php
 	// the font used id "standard"
-	if _, err := os.Stat(fullSessionFileName); os.IsNotExist(err) {
+	if _, err := os.Stat(fullLoginFileName); os.IsNotExist(err) {
 		log.Println(` _                                  `)
 		log.Println(`| |    __ _  __ _  ___   ___  _ __  `)
 		log.Println(`| |   / _  |/ _  |/ _ \ / _ \| '_ \ `)
@@ -135,7 +144,7 @@ func main() {
 	case update.FullCommand():
 		runUpdate()
 	case check.FullCommand():
-		runCheck()
+		runCheck(ch.url)
 	case login.FullCommand():
 		runLogin()
 	case logout.FullCommand():
@@ -153,13 +162,30 @@ func runCreate() {
 		log.Printf(LOG_LOGGED_AS, user, url)
 		log.Printf(LOG_LOGOUT_REQUIRED)
 	} else {
-		log.Printf(LOG_DEPLOYING_FROM, p.url)
-		err := parseLocation(p.url)
-		if err == nil {
-			starterStart(p.url, true)
-		} else {
-			log.Fatalf(ERROR_PARSING_ENVIRONMENT, err.Error())
+		ef, e := engine.ClientExchangeFolder("out", cr.client)
+		if e != nil {
+			logger.Fatal(fmt.Errorf(ERROR_CREATING_EXCHANGE_FOLDER, cr.client))
 		}
+		ef.Create()
+
+		log.Printf(LOG_DEPLOYING_FROM, cr.url)
+		b, session := engine.HasCreationSession(ef)
+		log.Printf("Has the session for client %v", b)
+		if b {
+			reader := bufio.NewReader(os.Stdin)
+			c := session.CreationSession.Client
+			fmt.Printf(PROMPT_UPDATE_SESSION, c)
+			text, _ := reader.ReadString('\n')
+			if strings.TrimSpace(text) != "Y" {
+				log.Printf("Cleaning the session for client %s", c)
+				if err := os.Remove(session.File); err != nil {
+					log.Fatal(fmt.Errorf(ERROR_CLIENT_SESSION_NOT_CLOSED, c, session.File))
+				}
+				ef.CleanAllFiles()
+			}
+		}
+		runCheck(cr.url)
+		starterStart(ef, cr.url, cr.client)
 	}
 }
 
@@ -169,12 +195,15 @@ func runUpdate() {
 	b, url, _ := isLogged()
 	if b {
 		log.Printf(LOG_UPDATING_FROM, url)
-		err := parseLocation(p.url)
-		if err == nil {
-			starterStart(p.url, false)
-		} else {
-			log.Fatalf(ERROR_PARSING_ENVIRONMENT, err.Error())
+		runCheck(up.url)
+		// TODO GET REAL CLIENT NAME FROM LOGGIN
+		dummyClientName := "DUMMY_CLIENT_NAME"
+		ef, e := engine.ClientExchangeFolder("out", dummyClientName)
+		if e != nil {
+			logger.Fatal(fmt.Errorf(ERROR_CREATING_EXCHANGE_FOLDER, dummyClientName))
 		}
+		ef.Create()
+		// TODO CALL THE API HERE IN ORDER TO START THE ENVIRONMENT UPDATE
 	} else {
 		log.Printf(LOG_LOGIN_REQUIRED)
 	}
@@ -188,52 +217,43 @@ type CheckParams struct {
 }
 
 // runCheck checks the validity of the environment descriptor content
-func runCheck() {
-	log.Printf(LOG_CHECKING_FROM, c.url)
-	err := parseLocation(c.url)
-	if err != nil {
-		log.Fatalf(ERROR_PARSING_ENVIRONMENT, err.Error())
+func runCheck(location string) {
+	log.Printf(LOG_CHECKING_FROM, location)
+	_, ve := engine.Create(logger, ".", location, "")
+	if ve != nil {
+		vErrs, ok := ve.(model.ValidationErrors)
+		// if the error is not a "validation error" then we return it
+		if !ok {
+			log.Fatalf(ERROR_PARSING_ENVIRONMENT, ve.Error())
+		} else {
+			o := filepath.Join("ou", VALIDATION_OUTPUT_FILE)
+			// print both errors and warnings into the report file
+			log.Printf(ve.Error())
+			f, e := os.Create(o)
+			if e != nil {
+				logger.Fatal(fmt.Errorf(ERROR_CREATING_REPORT_FILE, o))
+			}
+			defer f.Close()
+			b, e := vErrs.JSonContent()
+			if e != nil {
+				logger.Fatal(e)
+			}
+			_, e = f.Write(b)
+			if e != nil {
+				logger.Fatal(e)
+			}
+			if vErrs.HasErrors() {
+				// in case of validation error we stop
+				log.Printf(LOG_VALIDATION_LOG_WRITTEN, f.Name())
+				log.Fatalf(ERROR_PARSING_ENVIRONMENT, ve.Error())
+			}
+		}
+	} else {
+		log.Printf(LOG_VALIDATION_SUCCESSFUL)
 	}
 }
 
-func parseLocation(location string) error {
-	log.Printf(LOG_PARSING)
-
-	_, e := engine.Create(logger, location)
-
-	vErrs, ok := e.(model.ValidationErrors)
-
-	// if the error is not a "validation error" then we return it
-	if e != nil && !ok {
-		return e
-	}
-
-	if ok {
-		// print both errors and warnings into the report file
-		log.Printf(e.Error())
-		log.Printf(LOG_SEE_REPORT_IN, VALIDATION_OUTPUT_FILE)
-		f, e := os.Create(VALIDATION_OUTPUT_FILE)
-		if e != nil {
-			logger.Fatal(fmt.Errorf(ERROR_CREATING_REPORT_FILE, VALIDATION_OUTPUT_FILE))
-		}
-		defer f.Close()
-		b, e := vErrs.JSonContent()
-		if e != nil {
-			logger.Fatal(e)
-		}
-		_, e = f.Write(b)
-		if e != nil {
-			logger.Fatal(e)
-		}
-		if vErrs.HasErrors() {
-			// in case of validation error we also return the error
-			return e
-		}
-	}
-	return nil
-}
-
-func starterStart(location string, create bool) {
+func starterStart(ef engine.ExchangeFolder, descriptor string, client string) {
 	log.Printf(LOG_GET_IMAGE)
 	done := make(chan bool, 1)
 	go imagePull(starterImageName, done)
@@ -254,25 +274,30 @@ func starterStart(location string, create bool) {
 	}
 
 	done = make(chan bool, 1)
-	startContainer(starterImageName, done, create, location)
+	startContainer(starterImageName, done, descriptor, ef, client, cr.container)
 	<-done
-	log.Printf(LOG_OK_STARTED)
 }
 
-func getHttpProxy() string {
-	if p.httpProxy == "" {
+func getHttpProxy(param string) string {
+	if param == "" {
 		return os.Getenv(envHttpProxy)
 	}
-	return p.httpProxy
+	return param
 }
 
-func getHttpsProxy() string {
-	if p.httpsProxy == "" {
+func getHttpsProxy(param string) string {
+	if param == "" {
 		return os.Getenv(envHttpsProxy)
 	}
-	return p.httpsProxy
+	return param
 }
 
+func getNoProxy(param string) string {
+	if param == "" {
+		return os.Getenv(envNoProxy)
+	}
+	return param
+}
 func checkFlag(val string, flagKey string) {
 	if val == "" {
 		log.Fatal(fmt.Errorf(ERROR_REQUIRED_FLAG, flagKey))

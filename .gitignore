@@ -27,3 +27,9 @@ container_output.json
 # Descriptor serialization
 *.yml
 
+# AWS credentials
+.aws/
+proxy/proxy_env.yml
+
+# Output content
+out/

@@ -45,15 +45,15 @@ Or environment variables :
 
 Example :
 
-`$ lagoon create http://patth.to.my.project/my_descriptor.yml --cert ./cert_location --host tcp://192.168.99.100:2376 --api 1.30`
+`$ lagoon create http://path.to.my.project/ --cert ./cert_location --host tcp://192.168.99.100:2376 --api 1.30`
 
 Example writing the container logs into `container.log`:
 
-`$ lagoon create http://patth.to.my.project/my_descriptor.yml --cert ./cert_location --host tcp://192.168.99.100:2376 --api 1.30 --output`
+`$ lagoon create http://path.to.my.project/ --cert ./cert_location --host tcp://192.168.99.100:2376 --api 1.30 --output`
 
 Example writing the container logs into a specific file:
 
-`$ lagoon create http://patth.to.my.project/my_descriptor.yml --cert ./cert_location --host tcp://192.168.99.100:2376 --api 1.30 --output --file myLogFile.log `
+`$ lagoon create http://path.to.my.project/ --cert ./cert_location --host tcp://192.168.99.100:2376 --api 1.30 --output --file myLogFile.log `
 
 
 ## Command "update"
@@ -84,7 +84,7 @@ Or environment variables :
 
 Example :
 
-`$ lagoon update http://patth.to.my.project/my_descriptor.yml --cert ./cert_location --host tcp://192.168.99.100:2376 --api 1.30`
+`$ lagoon update http://path.to.my.project/ --cert ./cert_location --host tcp://192.168.99.100:2376 --api 1.30`
 
 
 ## Command "check"
@@ -101,7 +101,7 @@ Flags:
 
 Example :
 
-`$ lagoon check http://patth.to.my.project/my_descriptor.yml --output --file my_descriptor.yml`
+`$ lagoon check http://path.to.my.project/`
 
 
 ## Command "login"
@@ -119,7 +119,7 @@ Flag(s):
 
 Example :
 
-`$ lagoon login http://patth.to.the.api --user usrXX`
+`$ lagoon login http://path.to.the.api --user usrXX`
 
 ## Command "logout"
 This command performs a logout from an environment manager API.
