@@ -67,8 +67,8 @@
 [[projects]]
   name = "github.com/docker/go-units"
   packages = ["."]
-  revision = "0dadbb0345b35ec7ef35e228dabb8de89a65bf52"
-  version = "v0.3.2"
+  revision = "47565b4f722fb6ceae66b95f853feed578a4a51c"
+  version = "v0.3.3"
 
 [[projects]]
   name = "github.com/emirpasic/gods"
@@ -117,7 +117,7 @@
   branch = "master"
   name = "github.com/lagoon-platform/model"
   packages = ["."]
-  revision = "2c7561d6b607865a0b37ade6593a64ef400d8e8b"
+  revision = "a79b49dea39eb6cefbda8a173a802068c258955f"
 
 [[projects]]
   branch = "master"
@@ -196,7 +196,7 @@
     "ssh/knownhosts",
     "ssh/terminal"
   ]
-  revision = "85f98707c97e11569271e4d9b3d397e079c4f4d0"
+  revision = "b47b1587369238182299fe4dad77d05b8b461e06"
 
 [[projects]]
   branch = "master"
@@ -204,9 +204,10 @@
   packages = [
     "context",
     "context/ctxhttp",
+    "internal/socks",
     "proxy"
   ]
-  revision = "07e8617a6db2368fa55d4616f371ee1b1403c817"
+  revision = "1e491301e022f8f977054da4c2d852decd59571f"
 
 [[projects]]
   branch = "master"
@@ -215,7 +216,7 @@
     "unix",
     "windows"
   ]
-  revision = "349b81fb5c64ec1734eb6ee148df25459ea48517"
+  revision = "9527bec2660bd847c050fda93a0f0c6dee0800bb"
 
 [[projects]]
   name = "golang.org/x/text"
@@ -310,6 +311,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "482f69907364dc5c9713db61cbbe7f21ab0aa901d9c68c57189938b8c78a6166"
+  inputs-digest = "0eec7a86275ecd16b3c9bca8d5df93ebafc6b9d80623ff56977d5f087ac0407f"
   solver-name = "gps-cdcl"
   solver-version = 1

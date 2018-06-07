@@ -35,6 +35,18 @@
 
 [[constraint]]
   branch = "master"
+  name = "github.com/lagoon-platform/engine"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/lagoon-platform/model"
+
+[[constraint]]
+  branch = "master"
+  name = "golang.org/x/crypto"
+
+[[constraint]]
+  branch = "master"
   name = "golang.org/x/net"
 
 [[constraint]]
