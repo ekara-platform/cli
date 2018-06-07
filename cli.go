@@ -6,17 +6,14 @@ import (
 	"log"
 	"os"
 	"path"
-	"path/filepath"
 	"strings"
 
 	"github.com/lagoon-platform/engine"
-	"github.com/lagoon-platform/model"
 
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 const (
-	VALIDATION_OUTPUT_FILE = "validation_output.json"
 
 	// Environment variables used by default by the docker client
 	// "github.com/docker/docker/client"
@@ -69,7 +66,7 @@ var (
 	// Arguments
 	cr     *DockerCreateParams
 	up     *DockerUpdateParams
-	ch     *CheckParams
+	ch     *DockerCheckParams
 	l      *Login
 	logger *log.Logger
 )
@@ -98,10 +95,18 @@ func initFlags(app *kingpin.Application) {
 	update.Action(up.checkParams)
 
 	// TODO THE Check is supposed to be moved to the installer
-	ch = &CheckParams{}
+	ch = &DockerCheckParams{}
 	check = app.Command(checkFlagKey, "Valid an existing environment descriptor.")
 	check.Arg(descriptorFlagKey, "The environment descriptor url (the root folder location)").Required().StringVar(&ch.url)
-	//check.Action(ch.checkParams)
+	check.Flag(certPathFlagKey, "The location of the docker certificates (optional)").StringVar(&ch.cert)
+	check.Flag(apiVersionFlagKey, "The version of the docker API (optional)").StringVar(&ch.api)
+	check.Flag(dockerHostFlagKey, "The url of the docker host (optional)").StringVar(&ch.host)
+	check.Flag(httpProxyFlagKey, "The http proxy(optional)").StringVar(&ch.container.httpProxy)
+	check.Flag(httpsProxyFlagKey, "The https proxy (optional)").StringVar(&ch.container.httpsProxy)
+	check.Flag(noProxyFlagKey, "The no proxy (optional)").StringVar(&ch.container.noProxy)
+	check.Flag(containerOutputFlagKey, "\"true\" to write the container logs into a local file, defaulted to  \"false\"").BoolVar(&ch.container.output)
+	check.Flag(containerFileFlagKey, "The output file where to write the logs, if missing the content will be written in \"container.log\"").StringVar(&ch.container.file)
+	check.Action(ch.checkParams)
 
 	l = &Login{}
 	login = app.Command(loginFlagKey, "Login into an environment manager API.")
@@ -144,7 +149,7 @@ func main() {
 	case update.FullCommand():
 		runUpdate()
 	case check.FullCommand():
-		runCheck(ch.url)
+		runCheck()
 	case login.FullCommand():
 		runLogin()
 	case logout.FullCommand():
@@ -184,8 +189,7 @@ func runCreate() {
 				ef.CleanAllFiles()
 			}
 		}
-		runCheck(cr.url)
-		starterStart(ef, cr.url, cr.client)
+		starterStart(ef, cr.url, cr.client, engine.ActionCreate, cr.container)
 	}
 }
 
@@ -195,7 +199,6 @@ func runUpdate() {
 	b, url, _ := isLogged()
 	if b {
 		log.Printf(LOG_UPDATING_FROM, url)
-		runCheck(up.url)
 		// TODO GET REAL CLIENT NAME FROM LOGGIN
 		dummyClientName := "DUMMY_CLIENT_NAME"
 		ef, e := engine.ClientExchangeFolder("out", dummyClientName)
@@ -209,51 +212,18 @@ func runUpdate() {
 	}
 }
 
-// Parameters required to check the environment descriptor contant
-type CheckParams struct {
-	url    string
-	file   string
-	output bool
-}
-
 // runCheck checks the validity of the environment descriptor content
-func runCheck(location string) {
-	log.Printf(LOG_CHECKING_FROM, location)
-	_, ve := engine.Create(logger, ".", location, "")
-	if ve != nil {
-		vErrs, ok := ve.(model.ValidationErrors)
-		// if the error is not a "validation error" then we return it
-		if !ok {
-			log.Fatalf(ERROR_PARSING_ENVIRONMENT, ve.Error())
-		} else {
-			o := filepath.Join("ou", VALIDATION_OUTPUT_FILE)
-			// print both errors and warnings into the report file
-			log.Printf(ve.Error())
-			f, e := os.Create(o)
-			if e != nil {
-				logger.Fatal(fmt.Errorf(ERROR_CREATING_REPORT_FILE, o))
-			}
-			defer f.Close()
-			b, e := vErrs.JSonContent()
-			if e != nil {
-				logger.Fatal(e)
-			}
-			_, e = f.Write(b)
-			if e != nil {
-				logger.Fatal(e)
-			}
-			if vErrs.HasErrors() {
-				// in case of validation error we stop
-				log.Printf(LOG_VALIDATION_LOG_WRITTEN, f.Name())
-				log.Fatalf(ERROR_PARSING_ENVIRONMENT, ve.Error())
-			}
-		}
-	} else {
-		log.Printf(LOG_VALIDATION_SUCCESSFUL)
+func runCheck() {
+	log.Printf(LOG_CHECKING_FROM, ch.url)
+	ef, e := engine.ClientExchangeFolder("out", "check")
+	if e != nil {
+		logger.Fatal(fmt.Errorf(ERROR_CREATING_EXCHANGE_FOLDER, cr.client))
 	}
+	ef.Create()
+	starterStart(ef, ch.url, "", engine.ActionCheck, ch.container)
 }
 
-func starterStart(ef engine.ExchangeFolder, descriptor string, client string) {
+func starterStart(ef engine.ExchangeFolder, descriptor string, client string, action engine.EngineAction, cp ContainerParam) {
 	log.Printf(LOG_GET_IMAGE)
 	done := make(chan bool, 1)
 	go imagePull(starterImageName, done)
@@ -274,7 +244,7 @@ func starterStart(ef engine.ExchangeFolder, descriptor string, client string) {
 	}
 
 	done = make(chan bool, 1)
-	startContainer(starterImageName, done, descriptor, ef, client, cr.container)
+	startContainer(starterImageName, done, descriptor, ef, client, cp, action)
 	<-done
 }
 

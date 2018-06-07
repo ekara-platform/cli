@@ -4,12 +4,10 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	_ "io/ioutil"
 	"log"
 	"net/http"
 	"path"
 	"path/filepath"
-	_ "runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -113,11 +111,12 @@ func stopContainerById(id string, done chan bool) {
 // Once built the container will be started.
 // The method will wait until the container is started and
 // will notify it using the chanel
-func startContainer(imageName string, done chan bool, descriptor string, ef engine.ExchangeFolder, client string, p ContainerParam) {
+func startContainer(imageName string, done chan bool, descriptor string, ef engine.ExchangeFolder, client string, p ContainerParam, action engine.EngineAction) {
 
 	envVar := []string{}
 	envVar = append(envVar, engine.ClientEnvVariableKey+"="+client)
 	envVar = append(envVar, engine.StarterEnvVariableKey+"="+descriptor)
+	envVar = append(envVar, engine.ActionEnvVariableKey+"="+action.String())
 	envVar = append(envVar, "http_proxy="+getHttpProxy(p.httpProxy))
 	envVar = append(envVar, "https_proxy="+getHttpsProxy(p.httpsProxy))
 	envVar = append(envVar, "no_proxy="+getNoProxy(p.noProxy))
@@ -356,6 +355,15 @@ type DockerUpdateParams struct {
 	container ContainerParam
 }
 
+// Parameters required to connect with the docker API; in Check mode
+type DockerCheckParams struct {
+	url       string
+	cert      string
+	api       string
+	host      string
+	container ContainerParam
+}
+
 type ContainerParam struct {
 	httpProxy  string
 	httpsProxy string
@@ -364,7 +372,7 @@ type ContainerParam struct {
 	file       string
 }
 
-// checkCreateDockerParams checks the coherence of the parameters received to deal with docker
+// checkParams checks the coherence of the parameters received to deal with docker
 // using the flags and/or the environment variables
 func (n *DockerCreateParams) checkParams(c *kingpin.ParseContext) error {
 	log.Printf("Creation of:%v\n", n.url)
@@ -381,7 +389,17 @@ func (n *DockerCreateParams) checkParams(c *kingpin.ParseContext) error {
 	return nil
 }
 
-// checkUpdateDockerParams checks the coherence of the parameters received to deal with docker
+// checkParams checks the coherence of the parameters received to deal with docker
+// using the flags and/or the environment variables
+func (n *DockerCheckParams) checkParams(c *kingpin.ParseContext) error {
+	log.Printf("Creation of:%v\n", n.url)
+	log.Printf("Lauched to run docker with cert:%v, api:%v, on daemon:%v\n", n.cert, n.api, n.host)
+	checkDescriptor(n.url)
+	checkDockerStuff(n.cert, n.host, n.api)
+	return nil
+}
+
+// checkParams checks the coherence of the parameters received to deal with docker
 // using the flags and/or the environment variables
 func (n *DockerUpdateParams) checkParams(c *kingpin.ParseContext) error {
 	log.Printf("Update of:%v\n", n.url)
