@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
 	"path"
 	"path/filepath"
 	"strconv"
@@ -120,6 +121,10 @@ func startContainer(imageName string, done chan bool, descriptor string, ef engi
 	envVar = append(envVar, "http_proxy="+getHttpProxy(p.httpProxy))
 	envVar = append(envVar, "https_proxy="+getHttpsProxy(p.httpsProxy))
 	envVar = append(envVar, "no_proxy="+getNoProxy(p.noProxy))
+
+	if p.envFile != "" {
+		envVar = loadExtraEnvVar(p.envFile, envVar)
+	}
 
 	awsDir, err := filepath.Abs(string(path.Join(path.Dir(""), ".aws")))
 	if err != nil {
@@ -368,6 +373,7 @@ type ContainerParam struct {
 	httpProxy  string
 	httpsProxy string
 	noProxy    string
+	envFile    string
 	output     bool
 	file       string
 }
@@ -438,4 +444,28 @@ func checkDockerStuff(cert string, host string, api string) {
 		log.Printf(LOG_INIT_DOCKER_CLIENT)
 		initClient()
 	}
+}
+
+func loadExtraEnvVar(envfile string, env []string) []string {
+	r := env
+	file, err := os.Open(envfile)
+	if err != nil {
+		panic(err)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		t := scanner.Text()
+		log.Printf("Reading env var %s" + t)
+		sp := strings.Split(t, ":")
+		if len(sp) > 1 {
+			r = append(r, sp[0]+"="+t[len(sp[0])+1:])
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		panic(err)
+	}
+	return r
 }
