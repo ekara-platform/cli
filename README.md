@@ -31,9 +31,14 @@ Argument(s):
 
 Flags: 
 
+* `--client` 
 * `--cert` (can be substituted by an environment variable) 
 * `--api`  (can be substituted by an environment variable)
 * `--host` (can be substituted by an environment variable)
+* `--env`
+* `--http_proxy` (can be substituted by an environment variable)
+* `--https_proxy` (can be substituted by an environment variable)
+* `--no_proxy` (can be substituted by an environment variable)
 * `--output`
 * `--file`
 
@@ -42,18 +47,21 @@ Or environment variables :
 * `DOCKER_CERT_PATH`
 * `DOCKER_HOST`
 * `DOCKER_API_VERSION`
+* `HTTP_PROXY`
+* `HTTPS_PROXY`
+* `NO_PROXY`
 
 Example :
 
-`$ lagoon create http://path.to.my.project/ --cert ./cert_location --host tcp://192.168.99.100:2376 --api 1.30`
+`$ cli create http://path.to.my.project/ --cert ./cert_location --host tcp://192.168.99.100:2376 --api 1.30 --client myClientName` 
 
 Example writing the container logs into `container.log`:
 
-`$ lagoon create http://path.to.my.project/ --cert ./cert_location --host tcp://192.168.99.100:2376 --api 1.30 --output`
+`$ cli create http://path.to.my.project/ --cert ./cert_location --host tcp://192.168.99.100:2376 --api 1.30 --client myClientName --output`
 
 Example writing the container logs into a specific file:
 
-`$ lagoon create http://path.to.my.project/ --cert ./cert_location --host tcp://192.168.99.100:2376 --api 1.30 --output --file myLogFile.log `
+`$ cli create http://path.to.my.project/ --cert ./cert_location --host tcp://192.168.99.100:2376 --api 1.30 --client myClientName --output --file myLogFile.log `
 
 
 ## Command "update"
@@ -61,7 +69,7 @@ This command allows to update an existing environment based on the provided desc
 
 In order to perform an update the user must be logged into the environment manager API corresponding to the environment to update.
 
-Command type: **Docker**
+Command type: **API**
 
 Argument(s):
 
@@ -70,21 +78,14 @@ Argument(s):
 
 Flags: 
 
-* `--cert`
-* `--api`
-* `--host`
-
-Or environment variables :
-
-* `DOCKER_CERT_PATH`
-* `DOCKER_HOST`
-* `DOCKER_API_VERSION`
+* `--output`
+* `--file`
 
 
 
 Example :
 
-`$ lagoon update http://path.to.my.project/ --cert ./cert_location --host tcp://192.168.99.100:2376 --api 1.30`
+`$ lagoon update http://path.to.my.project/ --output --file myLogFile.log `
 
 
 ## Command "check"
@@ -99,9 +100,37 @@ Argument(s):
 
 Flags: 
 
+* `--cert` (can be substituted by an environment variable) 
+* `--api`  (can be substituted by an environment variable)
+* `--host` (can be substituted by an environment variable)
+* `--env`
+* `--http_proxy` (can be substituted by an environment variable)
+* `--https_proxy` (can be substituted by an environment variable)
+* `--no_proxy` (can be substituted by an environment variable)
+* `--output`
+* `--file`
+
+Or environment variables :
+
+* `DOCKER_CERT_PATH`
+* `DOCKER_HOST`
+* `DOCKER_API_VERSION`
+* `HTTP_PROXY`
+* `HTTPS_PROXY`
+* `NO_PROXY`
+
 Example :
 
-`$ lagoon check http://path.to.my.project/`
+`$ cli check http://path.to.my.project/ --cert ./cert_location --host tcp://192.168.99.100:2376 --api 1.30 ` 
+
+Example writing the container logs into `container.log`:
+
+`$ cli check http://path.to.my.project/ --cert ./cert_location --host tcp://192.168.99.100:2376 --api 1.30 --output`
+
+Example writing the container logs into a specific file:
+
+`$ cli check http://path.to.my.project/ --cert ./cert_location --host tcp://192.168.99.100:2376 --api 1.30 --output --file myLogFile.log `
+
 
 
 ## Command "login"
@@ -152,9 +181,9 @@ In order to interact with docker **Lagoon CLI** requires the following configura
 
 
 ___
-### Configuration using `Flags`
+### Docker Configuration using `Flags`
 
-The flags exposed by **Lagoon CLI** are:
+The Docker flags exposed by **Lagoon CLI** are:
 
 * `--cert` : the Docker certificates location
 * `--api` : the Docker API version
@@ -164,7 +193,7 @@ The flags exposed by **Lagoon CLI** are:
 > If you decide to configure **Lagoon CLI** using flags then remember that all these 3 flags must be setted.
 
 ___
-### Configuration using `environment variables`
+### Docker Configuration using `environment variables`
 
 If you want to create an environment on your own docker host you can take advantage of these predefined environment variables.
 
@@ -177,6 +206,6 @@ You will need to create an enviroment variable
 
 
 ---
-### How Lagoon CLI will decide to use flags or environment variables
+### How Lagoon CLI will decide to use Docker flags or environment variables
 
 If any of `--cert` , `--api` or `--host` is setted then **Lagoon CLI** will use flags to establish the connection with the docker daemon, if not then the environment variables will be used.

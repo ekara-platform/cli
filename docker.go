@@ -457,7 +457,6 @@ func loadExtraEnvVar(envfile string, env []string) []string {
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		t := scanner.Text()
-		log.Printf("Reading env var %s" + t)
 		sp := strings.Split(t, ":")
 		if len(sp) > 1 {
 			r = append(r, sp[0]+"="+t[len(sp[0])+1:])
