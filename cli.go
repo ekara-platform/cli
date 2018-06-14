@@ -96,7 +96,6 @@ func initFlags(app *kingpin.Application) {
 	update.Flag(containerFileFlagKey, "The output file where to write the logs, if missing the content will be written in \"container.log\"").StringVar(&up.container.file)
 	update.Action(up.checkParams)
 
-	// TODO THE Check is supposed to be moved to the installer
 	ch = &DockerCheckParams{}
 	check = app.Command(checkFlagKey, "Valid an existing environment descriptor.")
 	check.Arg(descriptorFlagKey, "The environment descriptor url (the root folder location)").Required().StringVar(&ch.url)
@@ -178,7 +177,7 @@ func runCreate() {
 
 		log.Printf(LOG_DEPLOYING_FROM, cr.url)
 		b, session := engine.HasCreationSession(ef)
-		log.Printf("Has the session for client %v", b)
+		log.Printf("Has a session for client %v", b)
 		if b {
 			reader := bufio.NewReader(os.Stdin)
 			c := session.CreationSession.Client
