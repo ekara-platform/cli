@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -23,6 +24,8 @@ import (
 	"gopkg.in/alecthomas/kingpin.v2"
 
 	"github.com/lagoon-platform/engine"
+
+	"gopkg.in/yaml.v2"
 )
 
 // The docker client used within the whole application
@@ -112,16 +115,19 @@ func stopContainerById(id string, done chan bool) {
 // Once built the container will be started.
 // The method will wait until the container is started and
 // will notify it using the chanel
-func startContainer(imageName string, done chan bool, descriptor string, ef engine.ExchangeFolder, client string, p ContainerParam, action engine.EngineAction) {
+func startContainer(imageName string, done chan bool, descriptor string, file string, ef engine.ExchangeFolder, client string, p ContainerParam, action engine.EngineAction) {
 
 	envVar := []string{}
 	envVar = append(envVar, engine.ClientEnvVariableKey+"="+client)
 	envVar = append(envVar, engine.StarterEnvVariableKey+"="+descriptor)
+	envVar = append(envVar, engine.StarterEnvNameVariableKey+"="+file)
+
 	envVar = append(envVar, engine.ActionEnvVariableKey+"="+action.String())
 	envVar = append(envVar, "http_proxy="+getHttpProxy(p.httpProxy))
 	envVar = append(envVar, "https_proxy="+getHttpsProxy(p.httpsProxy))
 	envVar = append(envVar, "no_proxy="+getNoProxy(p.noProxy))
 
+	// Check if we need to load environment variables from the comand line
 	if p.envFile != "" {
 		envVar = loadExtraEnvVar(p.envFile, envVar)
 	}
@@ -131,37 +137,7 @@ func startContainer(imageName string, done chan bool, descriptor string, ef engi
 		log.Fatal(err)
 	}
 	log.Printf("Adapted output dir %s", engine.AdaptPath(awsDir))
-
-	// **************************************************************************
-	// Time added stuff - start
-	// Taken from here https://blog.shameerc.com/2017/03/quick-tip-fixing-time-drift-issue-on-docker-for-mac
-	// Where the working solution ws : "docker run --rm --privileged alpine hwclock -s"
-
-	syncTime, err := cli.ContainerCreate(context.Background(), &container.Config{
-		Image: "alpine",
-		Cmd:   []string{"hwclock", "-s"},
-	}, &container.HostConfig{
-		AutoRemove: true,
-		Privileged: true,
-	}, nil, "")
-	if err != nil {
-		panic(err)
-	}
-
-	if err := cli.ContainerStart(context.Background(), syncTime.ID, types.ContainerStartOptions{}); err != nil {
-		panic(err)
-	}
-	statusCh, errCh := cli.ContainerWait(context.Background(), syncTime.ID, container.WaitConditionNotRunning)
-	select {
-	case err := <-errCh:
-		if err != nil {
-			panic(err)
-		}
-	case <-statusCh:
-	}
-
-	// Time added stuff - end
-	// **************************************************************************
+	log.Printf("Adapted path: %s", ef.Location.AdaptedPath())
 
 	startedAt := time.Now().UTC()
 	startedAt = startedAt.Add(time.Second * -2)
@@ -175,12 +151,6 @@ func startContainer(imageName string, done chan bool, descriptor string, ef engi
 				Type:   mount.TypeBind,
 				Source: ef.Location.AdaptedPath(),
 				Target: engine.InstallerVolume,
-			},
-			{
-				Type:   mount.TypeBind,
-				Source: engine.AdaptPath(awsDir),
-				// TODO Removed this mounting point
-				Target: "/root/.aws",
 			},
 		},
 	}, nil, "")
@@ -245,12 +215,12 @@ func startContainer(imageName string, done chan bool, descriptor string, ef engi
 			}
 		}(startedAt, exitCh)
 	}
-
+	defer logAllFromContainer(resp.ID, ef, done, p)
 	if err := cli.ContainerStart(context.Background(), resp.ID, types.ContainerStartOptions{}); err != nil {
 		panic(err)
 	}
 
-	statusCh, errCh = cli.ContainerWait(context.Background(), resp.ID, container.WaitConditionNotRunning)
+	statusCh, errCh := cli.ContainerWait(context.Background(), resp.ID, container.WaitConditionNotRunning)
 
 	select {
 	case err := <-errCh:
@@ -265,13 +235,15 @@ func startContainer(imageName string, done chan bool, descriptor string, ef engi
 			exitCh <- true
 		}
 	}
+}
 
-	out, err := cli.ContainerLogs(context.Background(), resp.ID, types.ContainerLogsOptions{ShowStdout: true, ShowStderr: true})
-	if err != nil {
-		panic(err)
-	}
-
+func logAllFromContainer(id string, ef engine.ExchangeFolder, done chan bool, p ContainerParam) {
 	if p.output {
+		out, err := cli.ContainerLogs(context.Background(), id, types.ContainerLogsOptions{ShowStdout: true, ShowStderr: true})
+		if err != nil {
+			panic(err)
+		}
+
 		logFile, err := ContainerLog(ef, p.file)
 		if err != nil {
 			panic(err)
@@ -284,6 +256,7 @@ func startContainer(imageName string, done chan bool, descriptor string, ef engi
 		}
 		log.Printf(LOG_CONTAINER_LOG_WRITTEN, logFile.Name())
 	}
+	// We are done!
 	done <- true
 }
 
@@ -343,29 +316,55 @@ func imagePull(taggedName string, done chan bool) {
 
 // Parameters required to connect with the docker API; in creation mode
 type DockerCreateParams struct {
-	url       string
-	cert      string
-	api       string
-	host      string
-	client    string
+	// The url of the repository containing the environment descriptor
+	url string
+	// The name of the environment descriptor
+	file string
+	// The docker certificates location
+	cert string
+	// The docker api version
+	api string
+	// The docker host
+	host string
+	// The name of the client requesting the CRUD operation on the environment
+	client string
+	// The public SSH key used to log on the created environment
+	publicSSHKey string
+	// The private SSH key used to log on the created environment
+	privateSSHKey string
+	// The installer container parameters
 	container ContainerParam
 }
 
 // Parameters required to connect with the docker API; in update mode
 type DockerUpdateParams struct {
-	url       string
-	cert      string
-	api       string
-	host      string
+	// The url of the repository containing the environment descriptor
+	url string
+	// The name of the environment descriptor
+	file string
+	// The docker certificates location
+	cert string
+	// The docker api version
+	api string
+	// The docker host
+	host string
+	// The installer container parameters
 	container ContainerParam
 }
 
 // Parameters required to connect with the docker API; in Check mode
 type DockerCheckParams struct {
-	url       string
-	cert      string
-	api       string
-	host      string
+	// The url of the repository containing the environment descriptor
+	url string
+	// The name of the environment descriptor
+	file string
+	// The docker certificates location
+	cert string
+	// The docker api version
+	api string
+	// The docker host
+	host string
+	// The installer container parameters
 	container ContainerParam
 }
 
@@ -384,12 +383,25 @@ func (n *DockerCreateParams) checkParams(c *kingpin.ParseContext) error {
 	log.Printf("Creation of:%v\n", n.url)
 	log.Printf("Lauched to run docker with cert:%v, api:%v, on daemon:%v\n", n.cert, n.api, n.host)
 	checkDescriptor(n.url)
+
 	// The client name is always required
 	if n.client == "" {
 		log.Fatal(fmt.Errorf(ERROR_REQUIRED_CLIENT))
 	} else {
 		log.Printf(LOG_CLIENT_CONFIRMATION, n.client)
 	}
+
+	// The SSH public key always comes with the private
+	if n.privateSSHKey != "" && n.publicSSHKey == "" {
+		log.Fatal(fmt.Errorf(ERROR_REQUIRED_SSH_PUBLIC))
+	}
+
+	if n.privateSSHKey == "" && n.publicSSHKey != "" {
+		log.Fatal(fmt.Errorf(ERROR_REQUIRED_SSH_PRIVATE))
+	}
+
+	log.Printf(LOG_SSH_PUBLIC_CONFIRMATION, n.publicSSHKey)
+	log.Printf(LOG_SSH_PRIVATE_CONFIRMATION, n.privateSSHKey)
 
 	checkDockerStuff(n.cert, n.host, n.api)
 	return nil
@@ -448,23 +460,23 @@ func checkDockerStuff(cert string, host string, api string) {
 
 func loadExtraEnvVar(envfile string, env []string) []string {
 	r := env
-	file, err := os.Open(envfile)
+	b, err := ioutil.ReadFile(envfile)
 	if err != nil {
 		panic(err)
+		return nil
 	}
-	defer file.Close()
+	t := make(map[string]string)
 
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		t := scanner.Text()
-		sp := strings.Split(t, ":")
-		if len(sp) > 1 {
-			r = append(r, sp[0]+"="+t[len(sp[0])+1:])
-		}
-	}
-
-	if err := scanner.Err(); err != nil {
+	err = yaml.Unmarshal([]byte(b), &t)
+	if err != nil {
 		panic(err)
+		return nil
 	}
+	for k, v := range t {
+		os.Setenv(k, v)
+		log.Printf(LOG_LOADING_EXTRA_ENVARS, k, v)
+		r = append(r, k+"="+v)
+	}
+
 	return r
 }

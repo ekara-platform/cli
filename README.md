@@ -3,7 +3,7 @@ ___
 
 **Lagoon CLI** is the command line interface tool used to build and interact with Lagoon environments.
 
-It will be compiled in order to provide a file which will be executed on the machine where the environment creation will be launched
+It will be compiled in order to provide a file which will be executed on the machine where the environment creation will be launched.
 
 ## Available commands
 
@@ -14,7 +14,7 @@ It will be compiled in order to provide a file which will be executed on the mac
 * **logout** Logout from an environment manager API.
 * **status** Status of the environment manager API.
 
-We can distinguish two types of commands
+We can distinguish two types of commands:
 
 * **Docker** commands: In order to be executed these commands require a Docker configuration. Please refer to this [section](#docker-commands-required-configuration) to get the details of the configuration.
 * **API** commands: These commands can require specific parameters of flags
@@ -31,6 +31,9 @@ Argument(s):
 
 Flags: 
 
+> use `cli create --help` for the detail of all options.
+
+* `--file` 
 * `--client` 
 * `--cert` (can be substituted by an environment variable) 
 * `--api`  (can be substituted by an environment variable)
@@ -40,7 +43,7 @@ Flags:
 * `--https_proxy` (can be substituted by an environment variable)
 * `--no_proxy` (can be substituted by an environment variable)
 * `--output`
-* `--file`
+* `--logfile`
 
 Or environment variables :
 
@@ -61,7 +64,7 @@ Example writing the container logs into `container.log`:
 
 Example writing the container logs into a specific file:
 
-`$ cli create http://path.to.my.project/ --cert ./cert_location --host tcp://192.168.99.100:2376 --api 1.30 --client myClientName --output --file myLogFile.log `
+`$ cli create http://path.to.my.project/ --cert ./cert_location --host tcp://192.168.99.100:2376 --api 1.30 --client myClientName --output --logfile myLogFile.log `
 
 
 ## Command "update"
@@ -78,14 +81,16 @@ Argument(s):
 
 Flags: 
 
-* `--output`
-* `--file`
+> use `cli update --help` for the detail of all options.
 
+* `--file` 
+* `--output`
+* `--logfile`
 
 
 Example :
 
-`$ lagoon update http://path.to.my.project/ --output --file myLogFile.log `
+`$ lagoon update http://path.to.my.project/ --output --logfile myLogFile.log `
 
 
 ## Command "check"
@@ -100,6 +105,9 @@ Argument(s):
 
 Flags: 
 
+> use `cli check --help` for the detail of all options.
+
+* `--file` 
 * `--cert` (can be substituted by an environment variable) 
 * `--api`  (can be substituted by an environment variable)
 * `--host` (can be substituted by an environment variable)
@@ -108,7 +116,7 @@ Flags:
 * `--https_proxy` (can be substituted by an environment variable)
 * `--no_proxy` (can be substituted by an environment variable)
 * `--output`
-* `--file`
+* `--logfile`
 
 Or environment variables :
 
@@ -129,7 +137,7 @@ Example writing the container logs into `container.log`:
 
 Example writing the container logs into a specific file:
 
-`$ cli check http://path.to.my.project/ --cert ./cert_location --host tcp://192.168.99.100:2376 --api 1.30 --output --file myLogFile.log `
+`$ cli check http://path.to.my.project/ --cert ./cert_location --host tcp://192.168.99.100:2376 --api 1.30 --output --logfile myLogFile.log `
 
 
 

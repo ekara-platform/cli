@@ -15,7 +15,12 @@ const (
 	ERROR_CLIENT_SESSION_NOT_CLOSED string = "Unable to complete client \"%s\" logout! You can force it manually deleting the file \"%s\""
 	ERROR_NO_PROVIDED_USER          string = "No user has been provided using --%s and we cannot use the system user"
 	ERROR_READING_PASSWORD          string = "Error reading the password"
-	//	ERROR_PARSING_DESCRIPTOR        string = "Error parsing the descriptor %s"
+
+	ERROR_REQUIRED_SSH_PUBLIC  string = "the flag \"public_ssh\" must be defined"
+	ERROR_REQUIRED_SSH_PRIVATE string = "the flag \"private_ssh\" must be defined"
+
+	ERROR_COPYING_SSH_PUB  string = "Error copying the SSH public key %s"
+	ERROR_COPYING_SSH_PRIV string = "Error copying the SSH public key %s"
 
 	//	// Prompt messages
 	PROMPT_RESTART        string = "Are you sure you want to recreate the starter container now (Y/N) "
@@ -23,9 +28,12 @@ const (
 	PROMPT_PASSWORD       string = "Please enter password for %s:"
 
 	//	// Log messages
-	LOG_FAIL_ON_PROMPT_RESTART     string = "Cannot go further if you refuse to stop the running container!"
-	LOG_CONFIG_CONFIRMATION        string = "Launching lagoon CLI for %s:%s"
-	LOG_CLIENT_CONFIRMATION        string = "Launching lagoon CLI for the client %s"
+	LOG_FAIL_ON_PROMPT_RESTART   string = "Cannot go further if you refuse to stop the running container!"
+	LOG_CONFIG_CONFIRMATION      string = "Launching lagoon CLI for %s:%s"
+	LOG_CLIENT_CONFIRMATION      string = "Launching lagoon CLI for the client %s"
+	LOG_SSH_PUBLIC_CONFIRMATION  string = "Launching lagoon CLI with the public SSH key %s"
+	LOG_SSH_PRIVATE_CONFIRMATION string = "Launching lagoon CLI with the private SSH key %s"
+
 	LOG_FLAG_CONFIRMATION          string = "Flagged, %s %s"
 	LOG_INIT_FLAGGED_DOCKER_CLIENT string = "Flagged docker client initialization..."
 	LOG_INIT_DOCKER_CLIENT         string = "Docker client initialization..."
@@ -48,4 +56,6 @@ const (
 	LOG_GETTING_STATUS        string = "Getting the status of %s \n"
 	LOG_LOGGING_INTO          string = "Logging into: %s \n"
 	LOG_CONTAINER_LOG_WRITTEN string = "The container logs have been written into %s\n"
+
+	LOG_LOADING_EXTRA_ENVARS string = "Setting environment variables fron client: %s=%s"
 )
