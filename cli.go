@@ -47,10 +47,10 @@ const (
 	publicSSHKeyFlagKey  = "public_ssh"
 	privateSSHKeyFlagKey = "private_ssh"
 
-	noProxyFlagKey = "no_proxy"
-	userFlagKey    = "user"
-	apiUrlFlagKey  = "url"
-	envFileFlagKey = "env"
+	noProxyFlagKey   = "no_proxy"
+	userFlagKey      = "user"
+	apiUrlFlagKey    = "url"
+	paramFileFlagKey = "param"
 
 	containerFileFlagKey   = "logfile"
 	containerOutputFlagKey = "output"
@@ -88,7 +88,7 @@ func initFlags(app *kingpin.Application) {
 	deploy.Flag(certPathFlagKey, "The location of the docker certificates (optional)").StringVar(&cr.cert)
 	deploy.Flag(apiVersionFlagKey, "The version of the docker API (optional)").StringVar(&cr.api)
 	deploy.Flag(dockerHostFlagKey, "The url of the docker host (optional)").StringVar(&cr.host)
-	deploy.Flag(envFileFlagKey, "The environment variables file (optional)").StringVar(&cr.container.envFile)
+	deploy.Flag(paramFileFlagKey, "The parameters file (optional)").StringVar(&cr.container.paramFile)
 	deploy.Flag(httpProxyFlagKey, "The http proxy(optional)").StringVar(&cr.container.httpProxy)
 	deploy.Flag(httpsProxyFlagKey, "The https proxy (optional)").StringVar(&cr.container.httpsProxy)
 	deploy.Flag(noProxyFlagKey, "The no proxy (optional)").StringVar(&cr.container.noProxy)
@@ -114,7 +114,7 @@ func initFlags(app *kingpin.Application) {
 	check.Flag(certPathFlagKey, "The location of the docker certificates (optional)").StringVar(&ch.cert)
 	check.Flag(apiVersionFlagKey, "The version of the docker API (optional)").StringVar(&ch.api)
 	check.Flag(dockerHostFlagKey, "The url of the docker host (optional)").StringVar(&ch.host)
-	check.Flag(envFileFlagKey, "The environment variables file (optional)").StringVar(&ch.container.envFile)
+	check.Flag(paramFileFlagKey, "The environment variables file (optional)").StringVar(&ch.container.paramFile)
 	check.Flag(httpProxyFlagKey, "The http proxy(optional)").StringVar(&ch.container.httpProxy)
 	check.Flag(httpsProxyFlagKey, "The https proxy (optional)").StringVar(&ch.container.httpsProxy)
 	check.Flag(noProxyFlagKey, "The no proxy (optional)").StringVar(&ch.container.noProxy)

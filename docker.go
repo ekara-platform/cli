@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
 	"path"
 	"path/filepath"
 	"strconv"
@@ -24,8 +23,6 @@ import (
 	"gopkg.in/alecthomas/kingpin.v2"
 
 	"github.com/lagoon-platform/engine"
-
-	"gopkg.in/yaml.v2"
 )
 
 // The docker client used within the whole application
@@ -127,9 +124,9 @@ func startContainer(imageName string, done chan bool, descriptor string, file st
 	envVar = append(envVar, "https_proxy="+getHttpsProxy(p.httpsProxy))
 	envVar = append(envVar, "no_proxy="+getNoProxy(p.noProxy))
 
-	// Check if we need to load environment variables from the comand line
-	if p.envFile != "" {
-		envVar = loadExtraEnvVar(p.envFile, envVar)
+	// Check if we need to load parameters from the comand line
+	if p.paramFile != "" {
+		copyExtraParameters(p.paramFile, ef)
 	}
 
 	awsDir, err := filepath.Abs(string(path.Join(path.Dir(""), ".aws")))
@@ -372,7 +369,7 @@ type ContainerParam struct {
 	httpProxy  string
 	httpsProxy string
 	noProxy    string
-	envFile    string
+	paramFile  string
 	output     bool
 	file       string
 }
@@ -458,25 +455,15 @@ func checkDockerStuff(cert string, host string, api string) {
 	}
 }
 
-func loadExtraEnvVar(envfile string, env []string) []string {
-	r := env
+func copyExtraParameters(envfile string, ef engine.ExchangeFolder) {
 	b, err := ioutil.ReadFile(envfile)
 	if err != nil {
 		panic(err)
-		return nil
 	}
-	t := make(map[string]string)
 
-	err = yaml.Unmarshal([]byte(b), &t)
+	err = ef.Location.Write(b, engine.CliParametersFileName)
 	if err != nil {
 		panic(err)
-		return nil
-	}
-	for k, v := range t {
-		os.Setenv(k, v)
-		log.Printf(LOG_LOADING_EXTRA_ENVARS, k, v)
-		r = append(r, k+"="+v)
 	}
 
-	return r
 }

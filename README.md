@@ -38,7 +38,8 @@ Flags:
 * `--cert` (can be substituted by an environment variable) 
 * `--api`  (can be substituted by an environment variable)
 * `--host` (can be substituted by an environment variable)
-* `--env`
+* `--param` The [parameters file](./doc/param.md). (optional)
+
 * `--http_proxy` (can be substituted by an environment variable)
 * `--https_proxy` (can be substituted by an environment variable)
 * `--no_proxy` (can be substituted by an environment variable)
@@ -111,7 +112,7 @@ Flags:
 * `--cert` (can be substituted by an environment variable) 
 * `--api`  (can be substituted by an environment variable)
 * `--host` (can be substituted by an environment variable)
-* `--env`
+* `--param` The [parameters file](./doc/param.md). (optional)
 * `--http_proxy` (can be substituted by an environment variable)
 * `--https_proxy` (can be substituted by an environment variable)
 * `--no_proxy` (can be substituted by an environment variable)
