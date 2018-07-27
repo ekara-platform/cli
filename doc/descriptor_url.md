@@ -22,7 +22,7 @@ Using the simple URL we will look for a environment descriptor file named `lagoo
 Adding `@` to the URL allows you to specify a **tag** or a **branch** where to look for the descriptor 
 
 
-### Usage
+### example:
 
 `$ cli create http://path.to.your.project@yourTagOrBranchName ...`
 
