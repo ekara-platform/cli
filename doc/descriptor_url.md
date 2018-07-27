@@ -3,14 +3,12 @@ ___
 
 Some CLI commands require a environment descriptor. The URL of the descriptor will be passed to the CLI command through the `descriptor` argument.
 
-
-
-###usage: 
+### Usage: 
 
 `lagoon create [<flags>] <descriptor> `
 
 
-##using a simple url
+## Using a simple url
 
 `$ cli create http://path.to.your.project ...`
 
@@ -19,12 +17,12 @@ Using the simple URL we will look for a environment descriptor file named `lagoo
 > You can use the flag `--file` in order to specify a descriptor file name other than  `lagoon.yaml` 
 
 
-##Using tag or branch
+## Using tag or branch
 
 Adding `@` to the URL allows you to specify a **tag** or a **branch** where to look for the descriptor 
 
 
-###usage
+### Usage
 
 `$ cli create http://path.to.your.project@yourTagOrBranchName ...`
 
