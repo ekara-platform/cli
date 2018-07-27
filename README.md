@@ -26,25 +26,39 @@ Command type: **Docker**
 
 Argument(s):
 
-* descriptor : The location of the descriptor of the environment to create. This location can be an ULR or a path to the file system.
+* `descriptor` : The location of the descriptor of the environment to create. This location can be an ULR or a path to the file system.
+
+
 
 
 Flags: 
 
 > use `cli create --help` for the detail of all options.
 
-* `--file` 
-* `--client` 
-* `--cert` (can be substituted by an environment variable) 
-* `--api`  (can be substituted by an environment variable)
-* `--host` (can be substituted by an environment variable)
+* `--file` The name of the environment descriptor, (optional, if missing we will look for a descriptor named `lagoon.yaml`)
+
+* `--client` The name of the environment client (required)
+
+* `--cert` The location of the docker certificates (optional, can be substituted by an environment variable) 
+
+* `--api`  The version of the docker API (optional, can be substituted by an environment variable)
+
+* `--host` The url of the docker host(optional, can be substituted by an environment variable)
 * `--param` The [parameters file](./doc/param.md). (optional)
 
-* `--http_proxy` (can be substituted by an environment variable)
-* `--https_proxy` (can be substituted by an environment variable)
-* `--no_proxy` (can be substituted by an environment variable)
-* `--output`
-* `--logfile`
+* `--http_proxy` The http proxy (optional, can be substituted by an environment variable)
+
+* `--https_proxy` The https proxy (optional, can be substituted by an environment variable)
+
+* `--no_proxy` The no proxy list (optional, can be substituted by an environment variable)
+
+* `--output`   `true` to write the container logs into a local                              file, defaulted to `false`
+
+* `--logfile`  The output file where to write the logs, (optional, if missing                              the log content will be written in `container.log`)
+
+* `--public_ssh` The path to the public SSH key file to connect the created machines (optional, if missing the key will be generated)
+
+* `--private_ssh` The path to the private SSH key file to connect the created machines (optional, if missing the key will be generated)
 
 Or environment variables :
 
@@ -84,10 +98,11 @@ Flags:
 
 > use `cli update --help` for the detail of all options.
 
-* `--file` 
+* `--file`  
 * `--output`
 * `--logfile`
 
+*Refer to the `create` command for flags details*
 
 Example :
 
@@ -109,15 +124,17 @@ Flags:
 > use `cli check --help` for the detail of all options.
 
 * `--file` 
-* `--cert` (can be substituted by an environment variable) 
-* `--api`  (can be substituted by an environment variable)
-* `--host` (can be substituted by an environment variable)
-* `--param` The [parameters file](./doc/param.md). (optional)
-* `--http_proxy` (can be substituted by an environment variable)
-* `--https_proxy` (can be substituted by an environment variable)
-* `--no_proxy` (can be substituted by an environment variable)
+* `--cert` 
+* `--api`  
+* `--host` 
+* `--param` 
+* `--http_proxy` 
+* `--https_proxy`
+* `--no_proxy` 
 * `--output`
 * `--logfile`
+
+*Refer to the `create` command for flags details*
 
 Or environment variables :
 
