@@ -26,7 +26,7 @@ Command type: **Docker**
 
 Argument(s):
 
-* `descriptor` : The location of the descriptor of the environment to create. This location can be an ULR or a path to the file system.
+* `descriptor` : The location of the descriptor of the environment to create. This location can be an [URL](./doc/descriptor_url.md) or a path to the file system.
 
 
 
@@ -91,7 +91,7 @@ Command type: **API**
 
 Argument(s):
 
-* descriptor : The location of the descriptor of the environment to create. This location can be an ULR or a path to the file system.
+* descriptor : The location of the descriptor of the environment to create. This location can be an [URL](./doc/descriptor_url.md) or a path to the file system.
 
 
 Flags: 
@@ -116,7 +116,7 @@ Command type: **Docker**
 
 Argument(s):
 
-* descriptor : The location of the descriptor of the environment to validate. This location can be an ULR or a path to the file system.
+* descriptor : The location of the descriptor of the environment to validate. This location can be an [URL](./doc/descriptor_url.md) or a path to the file system.
 
 
 Flags: 
