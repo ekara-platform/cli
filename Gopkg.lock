@@ -111,7 +111,7 @@
   branch = "master"
   name = "github.com/lagoon-platform/engine"
   packages = ["."]
-  revision = "1ef908b4e8a52491731e74a5a62bb7e105277e3c"
+  revision = "593704c244bec55c51fc05ab1ca2c8fa4c714d44"
 
 [[projects]]
   branch = "master"
@@ -312,6 +312,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "501f871293999f658a21e436c7d14750af9217c8e01303f38e154135e19584dd"
+  inputs-digest = "397040717100a57777d97fe0737e250e93b99dd9e5abda1d02677b9e1fd1b8b8"
   solver-name = "gps-cdcl"
   solver-version = 1
