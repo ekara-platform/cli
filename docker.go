@@ -455,8 +455,8 @@ func checkDockerStuff(cert string, host string, api string) {
 	}
 }
 
-func copyExtraParameters(envfile string, ef engine.ExchangeFolder) {
-	b, err := ioutil.ReadFile(envfile)
+func copyExtraParameters(file string, ef engine.ExchangeFolder) {
+	b, err := ioutil.ReadFile(file)
 	if err != nil {
 		panic(err)
 	}
