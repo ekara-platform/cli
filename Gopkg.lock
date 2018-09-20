@@ -28,8 +28,8 @@
 [[projects]]
   name = "github.com/Microsoft/go-winio"
   packages = ["."]
-  revision = "a6d595ae73cf27a1b8fc32930668708f45ce1c85"
-  version = "v0.4.9"
+  revision = "97e4973ce50b2ff5f09635a57e2b88a037aae829"
+  version = "v0.4.11"
 
 [[projects]]
   branch = "master"
@@ -92,8 +92,8 @@
 [[projects]]
   name = "github.com/imdario/mergo"
   packages = ["."]
-  revision = "9316a62528ac99aaecb4e47eadd6dc8aa6533d58"
-  version = "v0.3.5"
+  revision = "9f23e2d6bd2a77f959b2bf6acdbefd708a83a4a4"
+  version = "v0.3.6"
 
 [[projects]]
   branch = "master"
@@ -104,26 +104,26 @@
 [[projects]]
   name = "github.com/kevinburke/ssh_config"
   packages = ["."]
-  revision = "9fc7bb800b555d63157c65a904c86a2cc7b4e795"
-  version = "0.4"
+  revision = "81db2a75821ed34e682567d48be488a1c3121088"
+  version = "0.5"
 
 [[projects]]
   branch = "master"
   name = "github.com/lagoon-platform/engine"
   packages = ["."]
-  revision = "593704c244bec55c51fc05ab1ca2c8fa4c714d44"
+  revision = "d557575a73870b00f47f85df28152d8a057df031"
 
 [[projects]]
   branch = "master"
   name = "github.com/lagoon-platform/model"
   packages = ["."]
-  revision = "0b6cab7795da453e047e7ec867174bde3e794b83"
+  revision = "1a700d86dfdc582ad91aa8605576d253ada0c155"
 
 [[projects]]
-  branch = "master"
   name = "github.com/mitchellh/go-homedir"
   packages = ["."]
-  revision = "3864e76763d94a6df2f9960b16a20a33da9f9a66"
+  revision = "ae18d6b8b3205b561c79e8e5f69bff09736185f4"
+  version = "v1.0.0"
 
 [[projects]]
   name = "github.com/opencontainers/go-digest"
@@ -197,7 +197,7 @@
     "ssh/knownhosts",
     "ssh/terminal"
   ]
-  revision = "a2144134853fc9a27a7b1e3eb4f19f1a76df13c9"
+  revision = "0e37d006457bf46f9e6692014ba72ef82c33022c"
 
 [[projects]]
   branch = "master"
@@ -208,7 +208,7 @@
     "internal/socks",
     "proxy"
   ]
-  revision = "a680a1efc54dd51c040b3b5ce4939ea3cf2ea0d1"
+  revision = "26e67e76b6c3f6ce91f7c52def5af501b4e0f3a2"
 
 [[projects]]
   branch = "master"
@@ -217,7 +217,7 @@
     "unix",
     "windows"
   ]
-  revision = "ac767d655b305d4e9612f5f6e33120b9176c4ad4"
+  revision = "1561086e645b2809fb9f8a1e2a38160bf8d53bf4"
 
 [[projects]]
   name = "golang.org/x/text"
@@ -247,8 +247,8 @@
     "osfs",
     "util"
   ]
-  revision = "83cf655d40b15b427014d7875d10850f96edba14"
-  version = "v4.2.0"
+  revision = "59952543636f55de3f860b477b615093d5c2c3e4"
+  version = "v4.2.1"
 
 [[projects]]
   name = "gopkg.in/src-d/go-git.v4"
@@ -294,8 +294,8 @@
     "utils/merkletrie/internal/frame",
     "utils/merkletrie/noder"
   ]
-  revision = "3bd5e82b2512d85becae9677fa06b5a973fd4cfb"
-  version = "v4.5.0"
+  revision = "d3cec13ac0b195bfb897ed038a08b5130ab9969e"
+  version = "v4.7.0"
 
 [[projects]]
   name = "gopkg.in/warnings.v0"

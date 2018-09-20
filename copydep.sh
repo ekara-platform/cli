@@ -7,4 +7,4 @@ cp ../model/*.go  ./vendor/github.com/lagoon-platform/model/
 rm -rf ./vendor/github.com/lagoon-platform/engine/*.go
 cp ../engine/*.go  ./vendor/github.com/lagoon-platform/engine/
 rm -rf ./vendor/github.com/lagoon-platform/engine/ssh/*.go
-cp ../engine/ssh/*.go  ./vendor/github.com/lagoon-platform/engine/ssh
+cp ../engine/ssh/*.go  ./vendor/github.com/lagoon-platform/engine/ssh/
