@@ -50,7 +50,7 @@ deploy:
   - logshare.linux.amd64
   on:
     # What to repository to build
-    repo: username/reponame
+    repo: lagoon-platform/cli
     # Only build binaries for tagged commits
     tags: true
     condition: $LATEST = true
