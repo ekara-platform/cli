@@ -15,6 +15,7 @@ import (
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
+
 //go:generate go run generate/generate.go
 
 const (
