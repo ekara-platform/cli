@@ -27,7 +27,7 @@ before_install:
   - chmod +x $GOPATH/bin/dep
 
 install:
-  - dep ensure
+  - # skip
 
 script:
   #- go get -t -v ./...
@@ -35,6 +35,7 @@ script:
   #- go vet $(go list ./... | grep -v /vendor/)
   #- go test -v -race ./...
   # Only build binaries from the latest Go release.
+  - dep ensure
   - if [ "${LATEST}" = "true" ]; then gox -os="linux darwin windows" -arch="amd64" -output="logshare.." -ldflags "-X main.Rev=`git rev-parse --short HEAD`" -verbose ./...; fi
 
 deploy:
