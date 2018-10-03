@@ -30,7 +30,6 @@ const (
 	//	// Log messages
 	LOG_FAIL_ON_PROMPT_RESTART   string = "Cannot go further if you refuse to stop the running container!"
 	LOG_CONFIG_CONFIRMATION      string = "Launching lagoon CLI for %s:%s"
-	LOG_CLIENT_CONFIRMATION      string = "Launching lagoon CLI for the client %s"
 	LOG_SSH_PUBLIC_CONFIRMATION  string = "Launching lagoon CLI with the public SSH key %s"
 	LOG_SSH_PRIVATE_CONFIRMATION string = "Launching lagoon CLI with the private SSH key %s"
 

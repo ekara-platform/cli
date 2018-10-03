@@ -36,28 +36,16 @@ Flags:
 > use `cli create --help` for the detail of all options.
 
 * `--file` The name of the environment descriptor, (optional, if missing we will look for a descriptor named `lagoon.yaml`)
-
-* `--client` The name of the environment client (required)
-
 * `--cert` The location of the docker certificates (optional, can be substituted by an environment variable) 
-
 * `--api`  The version of the docker API (optional, can be substituted by an environment variable)
-
 * `--host` The url of the docker host(optional, can be substituted by an environment variable)
 * `--param` The [parameters file](./doc/param.md). (optional)
-
 * `--http_proxy` The http proxy (optional, can be substituted by an environment variable)
-
 * `--https_proxy` The https proxy (optional, can be substituted by an environment variable)
-
 * `--no_proxy` The no proxy list (optional, can be substituted by an environment variable)
-
 * `--output`   `true` to write the container logs into a local                              file, defaulted to `false`
-
 * `--logfile`  The output file where to write the logs, (optional, if missing                              the log content will be written in `container.log`)
-
 * `--public_ssh` The path to the public SSH key file to connect the created machines (optional, if missing the key will be generated)
-
 * `--private_ssh` The path to the private SSH key file to connect the created machines (optional, if missing the key will be generated)
 
 Or environment variables :
@@ -71,15 +59,15 @@ Or environment variables :
 
 Example :
 
-`$ cli create http://path.to.my.project/ --cert ./cert_location --host tcp://192.168.99.100:2376 --api 1.30 --client myClientName` 
+`$ cli create http://path.to.my.project/ --cert ./cert_location --host tcp://192.168.99.100:2376 --api 1.30` 
 
 Example writing the container logs into `container.log`:
 
-`$ cli create http://path.to.my.project/ --cert ./cert_location --host tcp://192.168.99.100:2376 --api 1.30 --client myClientName --output`
+`$ cli create http://path.to.my.project/ --cert ./cert_location --host tcp://192.168.99.100:2376 --api 1.30 --output`
 
 Example writing the container logs into a specific file:
 
-`$ cli create http://path.to.my.project/ --cert ./cert_location --host tcp://192.168.99.100:2376 --api 1.30 --client myClientName --output --logfile myLogFile.log `
+`$ cli create http://path.to.my.project/ --cert ./cert_location --host tcp://192.168.99.100:2376 --api 1.30 --output --logfile myLogFile.log `
 
 
 ## Command "update"

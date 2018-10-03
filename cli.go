@@ -41,7 +41,6 @@ const (
 	certPathFlagKey      = "cert"
 	apiVersionFlagKey    = "api"
 	dockerHostFlagKey    = "host"
-	clientFlagKey        = "client"
 	httpProxyFlagKey     = "http_proxy"
 	httpsProxyFlagKey    = "https_proxy"
 	publicSSHKeyFlagKey  = "public_ssh"
@@ -56,7 +55,7 @@ const (
 	containerOutputFlagKey = "output"
 
 	// Name of the lagoon starter image
-	starterImageName string = "lagoonplatform/installer:alpha2"
+	starterImageName string = "lagoonplatform/installer:alpha3"
 )
 
 var (
@@ -84,7 +83,6 @@ func initFlags(app *kingpin.Application) {
 	deploy = app.Command(deployFlagKey, "Create a new environment.")
 	deploy.Arg(descriptorFlagKey, "The environment descriptor url (the root folder location)").Required().StringVar(&cr.url)
 	deploy.Flag(descriptorNameFlagKey, "The name of the environment descriptor, if missing we will look for a descriptor named \""+engine.DescriptorFileName+"\"").Default(engine.DescriptorFileName).StringVar(&cr.file)
-	deploy.Flag(clientFlagKey, "The name of the environment client (required)").StringVar(&cr.client)
 	deploy.Flag(certPathFlagKey, "The location of the docker certificates (optional)").StringVar(&cr.cert)
 	deploy.Flag(apiVersionFlagKey, "The version of the docker API (optional)").StringVar(&cr.api)
 	deploy.Flag(dockerHostFlagKey, "The url of the docker host (optional)").StringVar(&cr.host)
@@ -94,7 +92,6 @@ func initFlags(app *kingpin.Application) {
 	deploy.Flag(noProxyFlagKey, "The no proxy (optional)").StringVar(&cr.container.noProxy)
 	deploy.Flag(containerOutputFlagKey, "\"true\" to write the container logs into a local file, defaulted to  \"false\"").BoolVar(&cr.container.output)
 	deploy.Flag(containerFileFlagKey, "The output file where to write the logs, if missing the log content will be written in \""+DefaultContainerLogFileName+"\"").StringVar(&cr.container.file)
-
 	deploy.Flag(publicSSHKeyFlagKey, "The public SSH key to connect the created machines  (optional)").StringVar(&cr.publicSSHKey)
 	deploy.Flag(privateSSHKeyFlagKey, "The private SSH key to connect the created machines  (optional)").StringVar(&cr.privateSSHKey)
 	deploy.Action(cr.checkParams)
@@ -181,22 +178,22 @@ func runCreate() {
 		log.Printf(LOG_LOGGED_AS, user, url)
 		log.Printf(LOG_LOGOUT_REQUIRED)
 	} else {
-		ef, e := engine.CreateExchangeFolder("out", cr.client)
+		ef, e := engine.CreateExchangeFolder("out", "lagoon_installer")
 		if e != nil {
-			logger.Fatal(fmt.Errorf(ERROR_CREATING_EXCHANGE_FOLDER, cr.client))
+			logger.Fatal(fmt.Errorf(ERROR_CREATING_EXCHANGE_FOLDER, "lagoon_installer"))
 		}
 		ef.Create()
 
 		log.Printf(LOG_DEPLOYING_FROM, cr.url)
 		b, session := engine.HasCreationSession(*ef)
-		log.Printf("Has a session for client %v", b)
+		log.Printf("A session exists : %v", b)
 		if b {
 			reader := bufio.NewReader(os.Stdin)
 			c := session.CreationSession.Client
 			fmt.Printf(PROMPT_UPDATE_SESSION, c)
 			text, _ := reader.ReadString('\n')
 			if strings.TrimSpace(text) != "Y" {
-				log.Printf("Cleaning the session for client %s", c)
+				log.Printf("Cleaning the session for: %s", c)
 				if err := os.Remove(session.File); err != nil {
 					log.Fatal(fmt.Errorf(ERROR_CLIENT_SESSION_NOT_CLOSED, c, session.File))
 				}
@@ -216,8 +213,7 @@ func runCreate() {
 				logger.Fatal(fmt.Errorf(ERROR_COPYING_SSH_PRIV, cr.privateSSHKey))
 			}
 		}
-		starterStart(*ef, cr.url, cr.file, cr.client, engine.ActionCreate, cr.container)
-
+		starterStart(*ef, cr.url, cr.file, engine.ActionCreate, cr.container)
 	}
 }
 
@@ -245,13 +241,13 @@ func runCheck() {
 	log.Printf(LOG_CHECKING_FROM, ch.url)
 	ef, e := engine.CreateExchangeFolder("out", "check")
 	if e != nil {
-		logger.Fatal(fmt.Errorf(ERROR_CREATING_EXCHANGE_FOLDER, cr.client))
+		logger.Fatal(fmt.Errorf(ERROR_CREATING_EXCHANGE_FOLDER, "check"))
 	}
 	ef.Create()
-	starterStart(*ef, ch.url, ch.file, "", engine.ActionCheck, ch.container)
+	starterStart(*ef, ch.url, ch.file, engine.ActionCheck, ch.container)
 }
 
-func starterStart(ef engine.ExchangeFolder, descriptor string, file string, client string, action engine.EngineAction, cp ContainerParam) {
+func starterStart(ef engine.ExchangeFolder, descriptor string, file string, action engine.EngineAction, cp ContainerParam) {
 	log.Printf(LOG_GET_IMAGE)
 	done := make(chan bool, 1)
 	go imagePull(starterImageName, done)
@@ -272,7 +268,7 @@ func starterStart(ef engine.ExchangeFolder, descriptor string, file string, clie
 	}
 
 	done = make(chan bool, 1)
-	startContainer(starterImageName, done, descriptor, file, ef, client, cp, action)
+	startContainer(starterImageName, done, descriptor, file, ef, cp, action)
 	<-done
 }
 

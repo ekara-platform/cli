@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -112,10 +111,9 @@ func stopContainerById(id string, done chan bool) {
 // Once built the container will be started.
 // The method will wait until the container is started and
 // will notify it using the chanel
-func startContainer(imageName string, done chan bool, descriptor string, file string, ef engine.ExchangeFolder, client string, p ContainerParam, action engine.EngineAction) {
+func startContainer(imageName string, done chan bool, descriptor string, file string, ef engine.ExchangeFolder, p ContainerParam, action engine.EngineAction) {
 
 	envVar := []string{}
-	envVar = append(envVar, engine.ClientEnvVariableKey+"="+client)
 	envVar = append(envVar, engine.StarterEnvVariableKey+"="+descriptor)
 	envVar = append(envVar, engine.StarterEnvNameVariableKey+"="+file)
 
@@ -128,13 +126,6 @@ func startContainer(imageName string, done chan bool, descriptor string, file st
 	if p.paramFile != "" {
 		copyExtraParameters(p.paramFile, ef)
 	}
-
-	awsDir, err := filepath.Abs(string(path.Join(path.Dir(""), ".aws")))
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Printf("Adapted output dir %s", engine.AdaptPath(awsDir))
-	log.Printf("Adapted path: %s", ef.Location.AdaptedPath())
 
 	startedAt := time.Now().UTC()
 	startedAt = startedAt.Add(time.Second * -2)
@@ -158,6 +149,7 @@ func startContainer(imageName string, done chan bool, descriptor string, file st
 
 	// Chan used to turn off the rolling log
 	exitCh := make(chan bool)
+
 	if p.output {
 		// Rolling output of the container logs
 		go func(start time.Time, exit chan bool) {
@@ -323,8 +315,6 @@ type DockerCreateParams struct {
 	api string
 	// The docker host
 	host string
-	// The name of the client requesting the CRUD operation on the environment
-	client string
 	// The public SSH key used to log on the created environment
 	publicSSHKey string
 	// The private SSH key used to log on the created environment
@@ -380,13 +370,6 @@ func (n *DockerCreateParams) checkParams(c *kingpin.ParseContext) error {
 	log.Printf("Creation of:%v\n", n.url)
 	log.Printf("Lauched to run docker with cert:%v, api:%v, on daemon:%v\n", n.cert, n.api, n.host)
 	checkDescriptor(n.url)
-
-	// The client name is always required
-	if n.client == "" {
-		log.Fatal(fmt.Errorf(ERROR_REQUIRED_CLIENT))
-	} else {
-		log.Printf(LOG_CLIENT_CONFIRMATION, n.client)
-	}
 
 	// The SSH public key always comes with the private
 	if n.privateSSHKey != "" && n.publicSSHKey == "" {
@@ -465,5 +448,4 @@ func copyExtraParameters(file string, ef engine.ExchangeFolder) {
 	if err != nil {
 		panic(err)
 	}
-
 }
