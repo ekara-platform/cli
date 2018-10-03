@@ -40,4 +40,4 @@ deploy:
     repo: lagoon-platform/cli
     # Only build binaries for tagged commits
     tags: true
-    condition: $LATEST = true
+    
