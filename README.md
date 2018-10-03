@@ -37,7 +37,6 @@ Flags:
 
 * `--file` The name of the environment descriptor, (optional, if missing we will look for a descriptor named `lagoon.yaml`)
 * `--cert` The location of the docker certificates (optional, can be substituted by an environment variable) 
-* `--api`  The version of the docker API (optional, can be substituted by an environment variable)
 * `--host` The url of the docker host(optional, can be substituted by an environment variable)
 * `--param` The [parameters file](./doc/param.md). (optional)
 * `--http_proxy` The http proxy (optional, can be substituted by an environment variable)
@@ -52,22 +51,21 @@ Or environment variables :
 
 * `DOCKER_CERT_PATH`
 * `DOCKER_HOST`
-* `DOCKER_API_VERSION`
 * `HTTP_PROXY`
 * `HTTPS_PROXY`
 * `NO_PROXY`
 
 Example :
 
-`$ cli create http://path.to.my.project/ --cert ./cert_location --host tcp://192.168.99.100:2376 --api 1.30` 
+`$ cli create http://path.to.my.project/ --cert ./cert_location --host tcp://192.168.99.100:2376 ` 
 
 Example writing the container logs into `container.log`:
 
-`$ cli create http://path.to.my.project/ --cert ./cert_location --host tcp://192.168.99.100:2376 --api 1.30 --output`
+`$ cli create http://path.to.my.project/ --cert ./cert_location --host tcp://192.168.99.100:2376 --output`
 
 Example writing the container logs into a specific file:
 
-`$ cli create http://path.to.my.project/ --cert ./cert_location --host tcp://192.168.99.100:2376 --api 1.30 --output --logfile myLogFile.log `
+`$ cli create http://path.to.my.project/ --cert ./cert_location --host tcp://192.168.99.100:2376 --output --logfile myLogFile.log `
 
 
 ## Command "update"
@@ -113,7 +111,6 @@ Flags:
 
 * `--file` 
 * `--cert` 
-* `--api`  
 * `--host` 
 * `--param` 
 * `--http_proxy` 
@@ -128,22 +125,21 @@ Or environment variables :
 
 * `DOCKER_CERT_PATH`
 * `DOCKER_HOST`
-* `DOCKER_API_VERSION`
 * `HTTP_PROXY`
 * `HTTPS_PROXY`
 * `NO_PROXY`
 
 Example :
 
-`$ cli check http://path.to.my.project/ --cert ./cert_location --host tcp://192.168.99.100:2376 --api 1.30 ` 
+`$ cli check http://path.to.my.project/ --cert ./cert_location --host tcp://192.168.99.100:2376  ` 
 
 Example writing the container logs into `container.log`:
 
-`$ cli check http://path.to.my.project/ --cert ./cert_location --host tcp://192.168.99.100:2376 --api 1.30 --output`
+`$ cli check http://path.to.my.project/ --cert ./cert_location --host tcp://192.168.99.100:2376 --output`
 
 Example writing the container logs into a specific file:
 
-`$ cli check http://path.to.my.project/ --cert ./cert_location --host tcp://192.168.99.100:2376 --api 1.30 --output --logfile myLogFile.log `
+`$ cli check http://path.to.my.project/ --cert ./cert_location --host tcp://192.168.99.100:2376 --output --logfile myLogFile.log `
 
 
 
@@ -191,7 +187,6 @@ In order to interact with docker **Lagoon CLI** requires the following configura
 
 * The address of the docker host wherein you want to create or update an environment
 * The docker host's certificates location
-* The version of the docker host API we will deal with
 
 
 ___
@@ -200,7 +195,6 @@ ___
 The Docker flags exposed by **Lagoon CLI** are:
 
 * `--cert` : the Docker certificates location
-* `--api` : the Docker API version
 * `--host` : the Docker host address 
 
  
@@ -214,12 +208,9 @@ If you want to create an environment on your own docker host you can take advant
 * `DOCKER_CERT_PATH` : the certificates location
 * `DOCKER_HOST` : the docker host address 
 
-You will need to create an enviroment variable
-
-* `DOCKER_API_VERSION` : the API version
 
 
 ---
 ### How Lagoon CLI will decide to use Docker flags or environment variables
 
-If any of `--cert` , `--api` or `--host` is setted then **Lagoon CLI** will use flags to establish the connection with the docker daemon, if not then the environment variables will be used.
+If one of `--cert` or `--host` is setted then **Lagoon CLI** will use flags to establish the connection with the docker daemon, if not then the environment variables will be used.

@@ -1,10 +1,26 @@
 language: go
-go: "1.10"
+sudo: false
+matrix:
+  include:
+    # "1.x" always refers to the latest Go version, inc. the patch release.
+    # e.g. "1.x" is 1.11 until 1.11.1 is available.
+    - go: 1.x
+      env: LATEST=true
+    - go: 1.7.x
+    - go: 1.8.x
+    - go: 1.9.x
+    - go: 1.10.x
+    - go: 1.11.x
+    - go: tip
+  allow_failures:
+    - go: tip
 
 env:
   - DEP_VERSION="0.4.1"
 
 before_install:
+  # gox simplifies building for multiple architectures
+  - go get github.com/mitchellh/gox
   # Download the binary to bin folder in $GOPATH
   - curl -L -s https://github.com/golang/dep/releases/download/v${DEP_VERSION}/dep-linux-amd64 -o $GOPATH/bin/dep
   # Make the binary executable
@@ -12,3 +28,29 @@ before_install:
 
 install:
   - dep ensure
+
+script:
+  #- go get -t -v ./...
+  #- diff -u <(echo -n) <(gofmt -d .)
+  #- go vet $(go list ./... | grep -v /vendor/)
+  #- go test -v -race ./...
+  # Only build binaries from the latest Go release.
+  - if [ "${LATEST}" = "true" ]; then gox -os="linux darwin windows" -arch="amd64" -output="logshare.." -ldflags "-X main.Rev=`git rev-parse --short HEAD`" -verbose ./...; fi
+
+deploy:
+  provider: releases
+  skip_cleanup: true
+  api_key:
+    # Your *encrypted* GitHub key, as the output of the Travis CI CLI tool.
+    secure: eXKgd7mt7RL8EBPUtQ+vxCoOUCCSX2SzYi29nxBKb6+63AG1nF8PkuTu9kF20evs08lFdRIQ4BNwNnKM2oKEr6uDdzQpD6QNypT1eu6Fjz25OgQbfnJvlfOTWRPoc5QUSxXWCthuv+Wa7yajARI5PdtD8DQiN1Gm63WljQhfa6aed4cnEprOi0WJHsVn15XcMIUXQimBCWa1EijlZj7Zcjl1z1RJke//zYAb/dWfWHN/GQrAUjbFKJRuh+iQKhv7/RUvfRSZplozenzw+Pal7PO5n8sB9AKPw5/VadZv0j5Ty9zg1gyf8ontgDToGHCOELZeo+BY5VyPSBYmBpnjOX9PV2PDCXyxKpJAxklprptSjmaCbAoLRpaZ4CwVdZfCVcRpCXMgN0Q0ndNVoKr2KaImDKpogZgYkCVi1wj6yliCmO2qLIriB/YOMgIF/cLuz6HzjrKZqQ3039PmA1NBIsMJE2MOXbBxxDlFpLepNcNZ6X3VzjJZOD9LwE5LaHGEt1XVOJip+yVo+5DJ93JeGZJFs71ZVCgNdTA2VseuKdHMUB2IaQ6ALnkYcQH6tR/12edj+sy86lzVCa2jId86ErM0Q3IGJ0BEalPlto4mG+gsWrYZ8Zmdqs5e/6y0ArJtqqltJdzl6ST5J/abv2z8al7u9wCT4zIRcT7QZWIOSp4=
+  file:
+  # The names of the binaries to output, based on the -output template passed to gox.
+  - logshare.windows.amd64.exe
+  - logshare.darwin.amd64
+  - logshare.linux.amd64
+  on:
+    # What to repository to build
+    repo: username/reponame
+    # Only build binaries for tagged commits
+    tags: true
+    condition: $LATEST = true

@@ -15,31 +15,33 @@ import (
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
+//go:generate go run generate/generate.go
+
 const (
+	EXCHANGE_FOLDER_ROOT string = "out"
 
 	// Environment variables used by default by the docker client
 	// "github.com/docker/docker/client"
 	envCertPath   string = "DOCKER_CERT_PATH"
-	envApiVersion string = "DOCKER_API_VERSION"
 	envDockerHost string = "DOCKER_HOST"
 	envHttpProxy  string = "HTTP_PROXY"
 	envHttpsProxy string = "HTTPS_PROXY"
 	envNoProxy    string = "NO_PROXY"
 
 	// Flags keys for Commands
-	deployFlagKey = "create"
-	updateFlagKey = "update"
-	checkFlagKey  = "check"
-	loginFlagKey  = "login"
-	logoutFlagKey = "logout"
-	statusFlagKey = "status"
+	deployFlagKey  = "create"
+	updateFlagKey  = "update"
+	checkFlagKey   = "check"
+	loginFlagKey   = "login"
+	logoutFlagKey  = "logout"
+	statusFlagKey  = "status"
+	versionFlagKey = "version"
 
 	// Flags keys for Arguments
 	descriptorFlagKey     = "descriptor"
 	descriptorNameFlagKey = "file"
 
 	certPathFlagKey      = "cert"
-	apiVersionFlagKey    = "api"
 	dockerHostFlagKey    = "host"
 	httpProxyFlagKey     = "http_proxy"
 	httpsProxyFlagKey    = "https_proxy"
@@ -55,17 +57,18 @@ const (
 	containerOutputFlagKey = "output"
 
 	// Name of the lagoon starter image
-	starterImageName string = "lagoonplatform/installer:alpha3"
+	starterImageName string = "lagoonplatform/installer:latest"
 )
 
 var (
 	// Commands
-	deploy *kingpin.CmdClause
-	update *kingpin.CmdClause
-	check  *kingpin.CmdClause
-	login  *kingpin.CmdClause
-	logout *kingpin.CmdClause
-	status *kingpin.CmdClause
+	deploy  *kingpin.CmdClause
+	update  *kingpin.CmdClause
+	check   *kingpin.CmdClause
+	login   *kingpin.CmdClause
+	logout  *kingpin.CmdClause
+	status  *kingpin.CmdClause
+	version *kingpin.CmdClause
 
 	fullLoginFileName string
 
@@ -84,7 +87,6 @@ func initFlags(app *kingpin.Application) {
 	deploy.Arg(descriptorFlagKey, "The environment descriptor url (the root folder location)").Required().StringVar(&cr.url)
 	deploy.Flag(descriptorNameFlagKey, "The name of the environment descriptor, if missing we will look for a descriptor named \""+engine.DescriptorFileName+"\"").Default(engine.DescriptorFileName).StringVar(&cr.file)
 	deploy.Flag(certPathFlagKey, "The location of the docker certificates (optional)").StringVar(&cr.cert)
-	deploy.Flag(apiVersionFlagKey, "The version of the docker API (optional)").StringVar(&cr.api)
 	deploy.Flag(dockerHostFlagKey, "The url of the docker host (optional)").StringVar(&cr.host)
 	deploy.Flag(paramFileFlagKey, "The parameters file (optional)").StringVar(&cr.container.paramFile)
 	deploy.Flag(httpProxyFlagKey, "The http proxy(optional)").StringVar(&cr.container.httpProxy)
@@ -109,7 +111,6 @@ func initFlags(app *kingpin.Application) {
 	check.Arg(descriptorFlagKey, "The environment descriptor url (the root folder location)").Required().StringVar(&ch.url)
 	check.Flag(descriptorNameFlagKey, "The name of the environment descriptor, if missing we will look for a descriptor named \""+engine.DescriptorFileName+"\"").Default(engine.DescriptorFileName).StringVar(&ch.file)
 	check.Flag(certPathFlagKey, "The location of the docker certificates (optional)").StringVar(&ch.cert)
-	check.Flag(apiVersionFlagKey, "The version of the docker API (optional)").StringVar(&ch.api)
 	check.Flag(dockerHostFlagKey, "The url of the docker host (optional)").StringVar(&ch.host)
 	check.Flag(paramFileFlagKey, "The environment variables file (optional)").StringVar(&ch.container.paramFile)
 	check.Flag(httpProxyFlagKey, "The http proxy(optional)").StringVar(&ch.container.httpProxy)
@@ -128,10 +129,13 @@ func initFlags(app *kingpin.Application) {
 	logout = app.Command(logoutFlagKey, "Logout from an environment manager API.")
 
 	status = app.Command(statusFlagKey, "Status of the environment manager API.")
+
+	version = app.Command(versionFlagKey, "The version details of the CLI.")
 }
 
-func main() {
-	logger = log.New(os.Stdout, "Lagoon CLI: ", log.Ldate|log.Ltime)
+func showHeader() {
+
+	log.Printf("Lagoon installation based on the Docker image: %s\n", starterImageName)
 
 	fullLoginFileName = path.Join("", loginFileName)
 	// this comes from http://www.kammerl.de/ascii/AsciiSignature.php
@@ -150,23 +154,36 @@ func main() {
 		log.Println(`| |___| |___ | | `)
 		log.Println(` \____|_____|___|`)
 	}
+}
+
+func main() {
+	logger = log.New(os.Stdout, "Lagoon CLI: ", log.Ldate|log.Ltime)
 
 	app := kingpin.New("lagoon", CLI_DESCRIPTION)
 	initFlags(app)
+
 	switch kingpin.MustParse(app.Parse(os.Args[1:])) {
 
 	case deploy.FullCommand():
+		showHeader()
 		runCreate()
 	case update.FullCommand():
+		showHeader()
 		runUpdate()
 	case check.FullCommand():
+		showHeader()
 		runCheck()
 	case login.FullCommand():
+		showHeader()
 		runLogin()
 	case logout.FullCommand():
+		showHeader()
 		runLogout()
 	case status.FullCommand():
+		showHeader()
 		runStatus()
+	case version.FullCommand():
+		runVersion()
 	}
 	log.Println(LOG_COMMAND_COMPLETED)
 }
@@ -178,7 +195,7 @@ func runCreate() {
 		log.Printf(LOG_LOGGED_AS, user, url)
 		log.Printf(LOG_LOGOUT_REQUIRED)
 	} else {
-		ef, e := engine.CreateExchangeFolder("out", "lagoon_installer")
+		ef, e := engine.CreateExchangeFolder(EXCHANGE_FOLDER_ROOT, "lagoon_installer")
 		if e != nil {
 			logger.Fatal(fmt.Errorf(ERROR_CREATING_EXCHANGE_FOLDER, "lagoon_installer"))
 		}

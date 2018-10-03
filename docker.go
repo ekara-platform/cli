@@ -28,7 +28,7 @@ import (
 var cli docker.Client
 
 // initFlaggedClient initializes the docker client using the flaged values
-func initFlaggedClient(host string, api string, path string) {
+func initFlaggedClient(host string /*api string, */, path string) {
 
 	options := tlsconfig.Options{
 		CAFile:             filepath.Join(path, "ca.pem"),
@@ -49,7 +49,8 @@ func initFlaggedClient(host string, api string, path string) {
 		CheckRedirect: docker.CheckRedirect,
 	}
 
-	c, err := docker.NewClient(host, api, httpClient, nil)
+	//c, err := docker.NewClient(host, api, httpClient, nil)
+	c, err := docker.NewClient(host, "", httpClient, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -311,8 +312,6 @@ type DockerCreateParams struct {
 	file string
 	// The docker certificates location
 	cert string
-	// The docker api version
-	api string
 	// The docker host
 	host string
 	// The public SSH key used to log on the created environment
@@ -331,8 +330,6 @@ type DockerUpdateParams struct {
 	file string
 	// The docker certificates location
 	cert string
-	// The docker api version
-	api string
 	// The docker host
 	host string
 	// The installer container parameters
@@ -347,8 +344,6 @@ type DockerCheckParams struct {
 	file string
 	// The docker certificates location
 	cert string
-	// The docker api version
-	api string
 	// The docker host
 	host string
 	// The installer container parameters
@@ -368,7 +363,7 @@ type ContainerParam struct {
 // using the flags and/or the environment variables
 func (n *DockerCreateParams) checkParams(c *kingpin.ParseContext) error {
 	log.Printf("Creation of:%v\n", n.url)
-	log.Printf("Lauched to run docker with cert:%v, api:%v, on daemon:%v\n", n.cert, n.api, n.host)
+	log.Printf("Lauched to run docker with cert:%v, on daemon:%v\n", n.cert, n.host)
 	checkDescriptor(n.url)
 
 	// The SSH public key always comes with the private
@@ -383,7 +378,7 @@ func (n *DockerCreateParams) checkParams(c *kingpin.ParseContext) error {
 	log.Printf(LOG_SSH_PUBLIC_CONFIRMATION, n.publicSSHKey)
 	log.Printf(LOG_SSH_PRIVATE_CONFIRMATION, n.privateSSHKey)
 
-	checkDockerStuff(n.cert, n.host, n.api)
+	checkDockerStuff(n.cert, n.host)
 	return nil
 }
 
@@ -391,9 +386,9 @@ func (n *DockerCreateParams) checkParams(c *kingpin.ParseContext) error {
 // using the flags and/or the environment variables
 func (n *DockerCheckParams) checkParams(c *kingpin.ParseContext) error {
 	log.Printf("Creation of:%v\n", n.url)
-	log.Printf("Lauched to run docker with cert:%v, api:%v, on daemon:%v\n", n.cert, n.api, n.host)
+	log.Printf("Lauched to run docker with cert:%v, on daemon:%v\n", n.cert, n.host)
 	checkDescriptor(n.url)
-	checkDockerStuff(n.cert, n.host, n.api)
+	checkDockerStuff(n.cert, n.host)
 	return nil
 }
 
@@ -402,7 +397,7 @@ func (n *DockerCheckParams) checkParams(c *kingpin.ParseContext) error {
 func (n *DockerUpdateParams) checkParams(c *kingpin.ParseContext) error {
 	log.Printf("Update of:%v\n", n.url)
 	checkDescriptor(n.url)
-	checkDockerStuff(n.cert, n.host, n.api)
+	checkDockerStuff(n.cert, n.host)
 	return nil
 }
 
@@ -416,18 +411,16 @@ func checkDescriptor(d string) {
 
 }
 
-func checkDockerStuff(cert string, host string, api string) {
+func checkDockerStuff(cert string, host string) {
 
 	// If we use flags then these 3 are required
-	if host != "" || api != "" || cert != "" {
+	if host != "" || cert != "" {
 		checkFlag(cert, certPathFlagKey)
 		checkFlag(host, dockerHostFlagKey)
-		checkFlag(api, apiVersionFlagKey)
 		log.Printf(LOG_FLAG_CONFIRMATION, certPathFlagKey, cert)
 		log.Printf(LOG_FLAG_CONFIRMATION, dockerHostFlagKey, host)
-		log.Printf(LOG_FLAG_CONFIRMATION, apiVersionFlagKey, api)
 		log.Printf(LOG_INIT_FLAGGED_DOCKER_CLIENT)
-		initFlaggedClient(host, api, cert)
+		initFlaggedClient(host, cert)
 	} else {
 		// if the flags are not used then we will ensure
 		// that the environment variables are well defined
