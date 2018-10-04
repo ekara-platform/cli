@@ -8,7 +8,7 @@ import "log"
 //
 //*****************************************************************************
 
-var VersionString = "DEV_LOCAL"
+var VersionString = "unset"
 	
 // runVersion returns the details of the CLI version
 func runVersion() {

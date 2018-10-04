@@ -1,43 +1,32 @@
 language: go
-go: "1.10"
+go: '1.10'
 
 env:
-  - DEP_VERSION="0.4.1"
+- DEP_VERSION="0.4.1"
 
 before_install:
-  # gox simplifies building for multiple architectures
-  - go get github.com/mitchellh/gox
-  # Download the binary to bin folder in $GOPATH
-  - curl -L -s https://github.com/golang/dep/releases/download/v${DEP_VERSION}/dep-linux-amd64 -o $GOPATH/bin/dep
-  # Make the binary executable
-  - chmod +x $GOPATH/bin/dep
+- curl -L -s https://github.com/golang/dep/releases/download/v${DEP_VERSION}/dep-linux-amd64
+  -o $GOPATH/bin/dep
+- chmod +x $GOPATH/bin/dep
 
 install:
-  - # skip
+- dep ensure -v
 
 script:
-  #- go get -t -v ./...
-  #- diff -u <(echo -n) <(gofmt -d .)
-  #- go vet $(go list ./... | grep -v /vendor/)
-  #- go test -v -race ./...
-  # Only build binaries from the latest Go release.
-  - dep ensure
-  - gox -os="linux darwin windows" -arch="amd64" -output="logshare.." -ldflags "-X main.Rev=`git rev-parse --short HEAD`" -verbose ./...;
+  go generate
+  - bash xcross.sh
+  - for f in  cli-windows-*; do mv -v -- "$f" "$f.exe"; done;
+  - echo "Generated files"
+  - ls -al cli-*
 
 deploy:
   provider: releases
-  skip_cleanup: true
+  skip_cleanup: true	
   api_key:
-    # Your *encrypted* GitHub key, as the output of the Travis CI CLI tool.
-    secure: UfNHWAeaITUWDeM5313BruYjGhwFFI19Wzr1DWkr659y8FcX3F1IVoPg006SyzRLnX7Y93dQuSmHmCW3+wIJVPj32piXITZZ7x+3spDA24QOOPDqCyByg4qgykHf1h50woRTk3TFRlEVFu2lchbZ78JcWAHUQTXIKv9r1aarV0Cjjtun3UnG76OuNsItO7OnLPacriUn26RwWpqJzTFJgU0D2eIbVjOjucNINantlDRVwd8ujh9FYylop20s+obdmG/AcRm1GGmgCYUK1WsXG84zJSBQSnzliUEAf1fLj9YXeoV6UoyG4oFZthXEfMzzZg9sxvAbjp0WH7HoRC+EYkzKS2le7ZtzXmOoRXhkPt5ngetCxxmzLEj+b+wkdVgtPXfOnb102D3A33lHsEf9NYuzuYBdtGmLrh3Y95WscSj1guGPt3mxvjWJVflpzQcUOKnkQAcle9FUphBJ4CjrHh+fQN9US6YiDMGZuQrL8GxLhfDeoZsaSu1g/LyLHleknJzw8mM04HOadhVrUuX4D0E2xgrvd4OQ6mTXWmqGuBoISAkNTJYU/Sb4eghKELRaEYrMX48JkuNOQJQcDhTpe7Q9XNUlWxAXV4PO5U1hj2WqCQo3UDHi333vJYrc+3L5SVG+1n/yQcGO3ZW7LiXdPMLkDKxussciId/EKuUcixo=
+    secure: XeYIbWHmiU0R1u939Z9MfT6sTjWgnEwStCHlfYDloNk+SABczuEa+m1egqzX5c+I4TxcGKxVNs3USwtWfo5Y4nWtewC8e6aNXx75kEE/dOcSw80F9q2ciQ71eUR+hNEwUIGHowAHUfWHKptWEHK2Pv2p9p1QDBZ5cY0K5o51LKCvYElb5XAaXJUjBmsM36/QwuiYbJJe/k+pNeIkSaMSQ5f8Aed/Wz9ZnamB/iZTGefbjgEVdlqPdgts+7liJirtgUuw7ywzpI7W9OeQ/ZrnGDqht5BAR5+Y5ezeUpm3yDO6LhDpd/0svd3E4QD2YB66nQVtpmPiceSjRHbDqfVwsnhWb+YE1iuZ+ONi/iKyx8tBgO2P5r8JteXOmaStKkkJArY0guAloUhdc09qVKpqW/Vvgxwz5D62N+8UJHGECeaF1KmEDUwFWPbAmV5AlZn3sg1ciyQTj3H2C1nJYHWAeXtqc2Tk1BxwJXxX4/m+f7jRHPX12HMUM6Y92SB6jOPLRWeS6Nxz+vtb7VkeMSjuNr+XHmjJKTIWjAbBUKEKFmBoUfVCbrG/8NPX1i8KzORlE0yQhe/08xykF81FrX5UNU5zJav1i4NsSq/NPpRV33jBMUtcfyT/vbLUwI7ZJTKBKVQ6PiRmGl2ty/Wa2tA+mKVVKZzoqfPdBdVFfYg3gm0=
+  file_glob: true
   file:
-  # The names of the binaries to output, based on the -output template passed to gox.
-  - logshare.windows.amd64.exe
-  - logshare.darwin.amd64
-  - logshare.linux.amd64
+  - cli-*
   on:
-    # What to repository to build
     repo: lagoon-platform/cli
-    # Only build binaries for tagged commits
     tags: true
-    

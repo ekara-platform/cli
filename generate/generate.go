@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+
 	"text/template"
 )
 
@@ -15,11 +16,18 @@ func main() {
 
 	c := Content{}
 
-	c.Version = os.Getenv("LAGOON_CLI_VERSION")
-
-	if c.Version == "" {
-		c.Version = "unset"
+	tag := os.Getenv("TRAVIS_TAG")
+	if len(tag) > 0 {
+		c.Version = tag
+	} else {
+		commit := os.Getenv("TRAVIS_COMMIT")
+		if commit != "" {
+			c.Version = "Commit:" + commit
+		} else {
+			c.Version = "unset"
+		}
 	}
+
 	fmt.Printf("Generating the CLI version %s\n", c.Version)
 
 	w, err := os.Create("version.go")
