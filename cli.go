@@ -15,7 +15,6 @@ import (
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
-
 //go:generate go run generate/generate.go
 
 const (
@@ -58,7 +57,7 @@ const (
 	containerOutputFlagKey = "output"
 
 	// Name of the lagoon starter image
-	starterImageName string = "lagoonplatform/installer:latest"
+	starterImageName string = "lagoonplatform/installer:alpha3"
 )
 
 var (
