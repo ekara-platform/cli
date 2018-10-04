@@ -13,7 +13,7 @@ install:
 - dep ensure -v
 
 script:
-  go generate
+  - go generate
   - bash xcross.sh
   - for f in  cli-windows-*; do mv -v -- "$f" "$f.exe"; done;
   - echo "Generated files"
