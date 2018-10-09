@@ -57,7 +57,7 @@ const (
 	containerOutputFlagKey = "output"
 
 	// Name of the lagoon starter image
-	starterImageName string = "lagoonplatform/installer:alpha3"
+	starterImageName string = "lagoonplatform/installer:latest"
 )
 
 var (

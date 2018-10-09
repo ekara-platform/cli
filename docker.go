@@ -28,15 +28,20 @@ import (
 var cli docker.Client
 
 // initFlaggedClient initializes the docker client using the flaged values
-func initFlaggedClient(host string /*api string, */, path string) {
+func initFlaggedClient(host string, cert string) {
 
-	options := tlsconfig.Options{
-		CAFile:             filepath.Join(path, "ca.pem"),
-		CertFile:           filepath.Join(path, "cert.pem"),
-		KeyFile:            filepath.Join(path, "key.pem"),
-		InsecureSkipVerify: false,
+	var options tlsconfig.Options
+	if cert != "" {
+		options = tlsconfig.Options{
+			CAFile:             filepath.Join(cert, "ca.pem"),
+			CertFile:           filepath.Join(cert, "cert.pem"),
+			KeyFile:            filepath.Join(cert, "key.pem"),
+			InsecureSkipVerify: false,
+		}
+	} else {
+		options = tlsconfig.Options{}
+
 	}
-
 	tlsc, err := tlsconfig.Client(options)
 	if err != nil {
 		panic(err)
@@ -415,16 +420,16 @@ func checkDockerStuff(cert string, host string) {
 
 	// If we use flags then these 3 are required
 	if host != "" || cert != "" {
-		checkFlag(cert, certPathFlagKey)
 		checkFlag(host, dockerHostFlagKey)
-		log.Printf(LOG_FLAG_CONFIRMATION, certPathFlagKey, cert)
+		if cert != "" {
+			log.Printf(LOG_FLAG_CONFIRMATION, certPathFlagKey, cert)
+		}
 		log.Printf(LOG_FLAG_CONFIRMATION, dockerHostFlagKey, host)
 		log.Printf(LOG_INIT_FLAGGED_DOCKER_CLIENT)
 		initFlaggedClient(host, cert)
 	} else {
 		// if the flags are not used then we will ensure
 		// that the environment variables are well defined
-		checkEnvVar(envCertPath)
 		checkEnvVar(envDockerHost)
 		log.Printf(LOG_INIT_DOCKER_CLIENT)
 		initClient()
