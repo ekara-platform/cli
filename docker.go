@@ -30,32 +30,31 @@ var cli docker.Client
 // initFlaggedClient initializes the docker client using the flaged values
 func initFlaggedClient(host string, cert string) {
 
-	var options tlsconfig.Options
+	var err error
+	var c *docker.Client
 	if cert != "" {
-		options = tlsconfig.Options{
+
+		options := tlsconfig.Options{
 			CAFile:             filepath.Join(cert, "ca.pem"),
 			CertFile:           filepath.Join(cert, "cert.pem"),
 			KeyFile:            filepath.Join(cert, "key.pem"),
 			InsecureSkipVerify: false,
 		}
+		tlsc, err := tlsconfig.Client(options)
+		if err != nil {
+			panic(err)
+		}
+		httpClient := &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: tlsc,
+			},
+			CheckRedirect: docker.CheckRedirect,
+		}
+		c, err = docker.NewClient(host, "", httpClient, nil)
 	} else {
-		options = tlsconfig.Options{}
-
-	}
-	tlsc, err := tlsconfig.Client(options)
-	if err != nil {
-		panic(err)
+		c, err = docker.NewClient(host, "", nil, nil)
 	}
 
-	httpClient := &http.Client{
-		Transport: &http.Transport{
-			TLSClientConfig: tlsc,
-		},
-		CheckRedirect: docker.CheckRedirect,
-	}
-
-	//c, err := docker.NewClient(host, api, httpClient, nil)
-	c, err := docker.NewClient(host, "", httpClient, nil)
 	if err != nil {
 		panic(err)
 	}
