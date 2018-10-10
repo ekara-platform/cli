@@ -22,6 +22,7 @@ import (
 	"gopkg.in/alecthomas/kingpin.v2"
 
 	"github.com/lagoon-platform/engine"
+	"github.com/lagoon-platform/engine/util"
 )
 
 // The docker client used within the whole application
@@ -116,13 +117,13 @@ func stopContainerById(id string, done chan bool) {
 // Once built the container will be started.
 // The method will wait until the container is started and
 // will notify it using the chanel
-func startContainer(imageName string, done chan bool, descriptor string, file string, ef engine.ExchangeFolder, p ContainerParam, action engine.EngineAction) {
+func startContainer(imageName string, done chan bool, descriptor string, file string, ef util.ExchangeFolder, p ContainerParam, action engine.EngineAction) {
 
 	envVar := []string{}
-	envVar = append(envVar, engine.StarterEnvVariableKey+"="+descriptor)
-	envVar = append(envVar, engine.StarterEnvNameVariableKey+"="+file)
+	envVar = append(envVar, util.StarterEnvVariableKey+"="+descriptor)
+	envVar = append(envVar, util.StarterEnvNameVariableKey+"="+file)
 
-	envVar = append(envVar, engine.ActionEnvVariableKey+"="+action.String())
+	envVar = append(envVar, util.ActionEnvVariableKey+"="+action.String())
 	envVar = append(envVar, "http_proxy="+getHttpProxy(p.httpProxy))
 	envVar = append(envVar, "https_proxy="+getHttpsProxy(p.httpsProxy))
 	envVar = append(envVar, "no_proxy="+getNoProxy(p.noProxy))
@@ -136,14 +137,14 @@ func startContainer(imageName string, done chan bool, descriptor string, file st
 	startedAt = startedAt.Add(time.Second * -2)
 	resp, err := cli.ContainerCreate(context.Background(), &container.Config{
 		Image:      imageName,
-		WorkingDir: engine.InstallerVolume,
+		WorkingDir: util.InstallerVolume,
 		Env:        envVar,
 	}, &container.HostConfig{
 		Mounts: []mount.Mount{
 			{
 				Type:   mount.TypeBind,
 				Source: ef.Location.AdaptedPath(),
-				Target: engine.InstallerVolume,
+				Target: util.InstallerVolume,
 			},
 		},
 	}, nil, "")
@@ -161,14 +162,14 @@ func startContainer(imageName string, done chan bool, descriptor string, file st
 			logMap := make(map[string]string)
 			// Trick to avoid tracing twice the same log line
 			notExist := func(s string) (bool, string) {
-				tab := strings.Split(s, engine.InstallerLogPrefix)
+				tab := strings.Split(s, util.InstallerLogPrefix)
 				if len(tab) > 1 {
 					sTrim := strings.Trim(tab[1], " ")
 					if _, ok := logMap[sTrim]; ok {
 						return false, ""
 					}
 					logMap[sTrim] = ""
-					return true, engine.InstallerLogPrefix + sTrim
+					return true, util.InstallerLogPrefix + sTrim
 				} else {
 					return true, s
 				}
@@ -231,7 +232,7 @@ func startContainer(imageName string, done chan bool, descriptor string, file st
 	}
 }
 
-func logAllFromContainer(id string, ef engine.ExchangeFolder, done chan bool, p ContainerParam) {
+func logAllFromContainer(id string, ef util.ExchangeFolder, done chan bool, p ContainerParam) {
 	if p.output {
 		out, err := cli.ContainerLogs(context.Background(), id, types.ContainerLogsOptions{ShowStdout: true, ShowStderr: true})
 		if err != nil {
@@ -435,13 +436,13 @@ func checkDockerStuff(cert string, host string) {
 	}
 }
 
-func copyExtraParameters(file string, ef engine.ExchangeFolder) {
+func copyExtraParameters(file string, ef util.ExchangeFolder) {
 	b, err := ioutil.ReadFile(file)
 	if err != nil {
 		panic(err)
 	}
 
-	err = ef.Location.Write(b, engine.CliParametersFileName)
+	err = ef.Location.Write(b, util.CliParametersFileName)
 	if err != nil {
 		panic(err)
 	}

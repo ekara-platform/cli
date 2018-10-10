@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/lagoon-platform/engine"
+	"github.com/lagoon-platform/engine/util"
 
 	"gopkg.in/alecthomas/kingpin.v2"
 )
@@ -85,7 +86,7 @@ func initFlags(app *kingpin.Application) {
 	cr = &DockerCreateParams{}
 	deploy = app.Command(deployFlagKey, "Create a new environment.")
 	deploy.Arg(descriptorFlagKey, "The environment descriptor url (the root folder location)").Required().StringVar(&cr.url)
-	deploy.Flag(descriptorNameFlagKey, "The name of the environment descriptor, if missing we will look for a descriptor named \""+engine.DescriptorFileName+"\"").Default(engine.DescriptorFileName).StringVar(&cr.file)
+	deploy.Flag(descriptorNameFlagKey, "The name of the environment descriptor, if missing we will look for a descriptor named \""+util.DescriptorFileName+"\"").Default(util.DescriptorFileName).StringVar(&cr.file)
 	deploy.Flag(certPathFlagKey, "The location of the docker certificates (optional)").StringVar(&cr.cert)
 	deploy.Flag(dockerHostFlagKey, "The url of the docker host (optional)").StringVar(&cr.host)
 	deploy.Flag(paramFileFlagKey, "The parameters file (optional)").StringVar(&cr.container.paramFile)
@@ -101,7 +102,7 @@ func initFlags(app *kingpin.Application) {
 	up = &DockerUpdateParams{}
 	update = app.Command(updateFlagKey, "Update an existing environment.")
 	update.Arg(descriptorFlagKey, "The environment descriptor url (the root folder location)").Required().StringVar(&up.url)
-	update.Flag(descriptorNameFlagKey, "The name of the environment descriptor, if missing we will look for a descriptor named \""+engine.DescriptorFileName+"\"").Default(engine.DescriptorFileName).StringVar(&up.file)
+	update.Flag(descriptorNameFlagKey, "The name of the environment descriptor, if missing we will look for a descriptor named \""+util.DescriptorFileName+"\"").Default(util.DescriptorFileName).StringVar(&up.file)
 	update.Flag(containerOutputFlagKey, "\"true\" to write the container logs into a local file, defaulted to  \"false\"").BoolVar(&up.container.output)
 	update.Flag(containerFileFlagKey, "The output file where to write the logs, if missing the log content will be written in \""+DefaultContainerLogFileName+"\"").StringVar(&up.container.file)
 	update.Action(up.checkParams)
@@ -109,7 +110,7 @@ func initFlags(app *kingpin.Application) {
 	ch = &DockerCheckParams{}
 	check = app.Command(checkFlagKey, "Valid an existing environment descriptor.")
 	check.Arg(descriptorFlagKey, "The environment descriptor url (the root folder location)").Required().StringVar(&ch.url)
-	check.Flag(descriptorNameFlagKey, "The name of the environment descriptor, if missing we will look for a descriptor named \""+engine.DescriptorFileName+"\"").Default(engine.DescriptorFileName).StringVar(&ch.file)
+	check.Flag(descriptorNameFlagKey, "The name of the environment descriptor, if missing we will look for a descriptor named \""+util.DescriptorFileName+"\"").Default(util.DescriptorFileName).StringVar(&ch.file)
 	check.Flag(certPathFlagKey, "The location of the docker certificates (optional)").StringVar(&ch.cert)
 	check.Flag(dockerHostFlagKey, "The url of the docker host (optional)").StringVar(&ch.host)
 	check.Flag(paramFileFlagKey, "The environment variables file (optional)").StringVar(&ch.container.paramFile)
@@ -195,7 +196,7 @@ func runCreate() {
 		log.Printf(LOG_LOGGED_AS, user, url)
 		log.Printf(LOG_LOGOUT_REQUIRED)
 	} else {
-		ef, e := engine.CreateExchangeFolder(EXCHANGE_FOLDER_ROOT, "lagoon_installer")
+		ef, e := util.CreateExchangeFolder(EXCHANGE_FOLDER_ROOT, "lagoon_installer")
 		if e != nil {
 			logger.Fatal(fmt.Errorf(ERROR_CREATING_EXCHANGE_FOLDER, "lagoon_installer"))
 		}
@@ -220,12 +221,12 @@ func runCreate() {
 
 		if cr.privateSSHKey != "" && cr.publicSSHKey != "" {
 			// Move the ssh keys into the exchange folder input
-			err := Copy(cr.publicSSHKey, filepath.Join(ef.Input.Path(), engine.SSHPuplicKeyFileName))
+			err := Copy(cr.publicSSHKey, filepath.Join(ef.Input.Path(), util.SSHPuplicKeyFileName))
 			if err != nil {
 				logger.Fatal(fmt.Errorf(ERROR_COPYING_SSH_PUB, cr.publicSSHKey))
 			}
 
-			err = Copy(cr.privateSSHKey, filepath.Join(ef.Input.Path(), engine.SSHPrivateKeyFileName))
+			err = Copy(cr.privateSSHKey, filepath.Join(ef.Input.Path(), util.SSHPrivateKeyFileName))
 			if err != nil {
 				logger.Fatal(fmt.Errorf(ERROR_COPYING_SSH_PRIV, cr.privateSSHKey))
 			}
@@ -242,7 +243,7 @@ func runUpdate() {
 		log.Printf(LOG_UPDATING_FROM, url)
 		// TODO GET REAL CLIENT NAME FROM LOGGIN
 		dummyClientName := "DUMMY_CLIENT_NAME"
-		ef, e := engine.CreateExchangeFolder("out", dummyClientName)
+		ef, e := util.CreateExchangeFolder("out", dummyClientName)
 		if e != nil {
 			logger.Fatal(fmt.Errorf(ERROR_CREATING_EXCHANGE_FOLDER, dummyClientName))
 		}
@@ -256,7 +257,7 @@ func runUpdate() {
 // runCheck checks the validity of the environment descriptor content
 func runCheck() {
 	log.Printf(LOG_CHECKING_FROM, ch.url)
-	ef, e := engine.CreateExchangeFolder("out", "check")
+	ef, e := util.CreateExchangeFolder("out", "check")
 	if e != nil {
 		logger.Fatal(fmt.Errorf(ERROR_CREATING_EXCHANGE_FOLDER, "check"))
 	}
@@ -264,7 +265,7 @@ func runCheck() {
 	starterStart(*ef, ch.url, ch.file, engine.ActionCheck, ch.container)
 }
 
-func starterStart(ef engine.ExchangeFolder, descriptor string, file string, action engine.EngineAction, cp ContainerParam) {
+func starterStart(ef util.ExchangeFolder, descriptor string, file string, action engine.EngineAction, cp ContainerParam) {
 	log.Printf(LOG_GET_IMAGE)
 	done := make(chan bool, 1)
 	go imagePull(starterImageName, done)
