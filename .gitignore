@@ -17,7 +17,7 @@
 # Dep generated folder
 /vendor/
 
-# Lagoon session file
+# Ekara session file
 *.cli
 
 # Container logs/output

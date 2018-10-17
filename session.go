@@ -7,8 +7,8 @@ import (
 )
 
 const (
-	// Name of the lagoon persisted login file
-	loginFileName string = "lagoon_login.cli"
+	// Name of the ekara persisted login file
+	loginFileName string = "ekara_login.cli"
 )
 
 // Structure of the file containing the session details against the API

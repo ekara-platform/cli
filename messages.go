@@ -1,7 +1,7 @@
 package main
 
 const (
-	CLI_DESCRIPTION string = "Lagoon Command Line Interface."
+	CLI_DESCRIPTION string = "Ekara Command Line Interface."
 
 	//	// Error messages
 	ERROR_CREATING_EXCHANGE_FOLDER string = "Error creating the exchange folder %s"
@@ -29,9 +29,9 @@ const (
 
 	//	// Log messages
 	LOG_FAIL_ON_PROMPT_RESTART   string = "Cannot go further if you refuse to stop the running container!"
-	LOG_CONFIG_CONFIRMATION      string = "Launching lagoon CLI for %s:%s"
-	LOG_SSH_PUBLIC_CONFIRMATION  string = "Launching lagoon CLI with the public SSH key %s"
-	LOG_SSH_PRIVATE_CONFIRMATION string = "Launching lagoon CLI with the private SSH key %s"
+	LOG_CONFIG_CONFIRMATION      string = "Launching ekara CLI for %s:%s"
+	LOG_SSH_PUBLIC_CONFIRMATION  string = "Launching ekara CLI with the public SSH key %s"
+	LOG_SSH_PRIVATE_CONFIRMATION string = "Launching ekara CLI with the private SSH key %s"
 
 	LOG_FLAG_CONFIRMATION          string = "Flagged, %s %s"
 	LOG_INIT_FLAGGED_DOCKER_CLIENT string = "Flagged docker client initialization..."

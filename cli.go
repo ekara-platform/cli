@@ -10,8 +10,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/lagoon-platform/engine"
-	"github.com/lagoon-platform/engine/util"
+	"github.com/ekara-platform/engine"
+	"github.com/ekara-platform/engine/util"
 
 	"gopkg.in/alecthomas/kingpin.v2"
 )
@@ -57,8 +57,8 @@ const (
 	containerFileFlagKey   = "logfile"
 	containerOutputFlagKey = "output"
 
-	// Name of the lagoon starter image
-	starterImageName string = "lagoonplatform/installer:latest"
+	// Name of the ekara starter image
+	starterImageName string = "ekaraplatform/installer:latest"
 )
 
 var (
@@ -136,18 +136,18 @@ func initFlags(app *kingpin.Application) {
 
 func showHeader() {
 
-	log.Printf("Lagoon installation based on the Docker image: %s\n", starterImageName)
+	log.Printf("Ekara installation based on the Docker image: %s\n", starterImageName)
 
 	fullLoginFileName = path.Join("", loginFileName)
 	// this comes from http://www.kammerl.de/ascii/AsciiSignature.php
 	// the font used id "standard"
 	if _, err := os.Stat(fullLoginFileName); os.IsNotExist(err) {
-		log.Println(` _                                  `)
-		log.Println(`| |    __ _  __ _  ___   ___  _ __  `)
-		log.Println(`| |   / _  |/ _  |/ _ \ / _ \| '_ \ `)
-		log.Println(`| |__| (_| | (_| | (_) | (_) | | | |`)
-		log.Println(`|_____\__,_|\__, |\___/ \___/|_| |_|`)
-		log.Println(`            |___/                   `)
+
+		log.Println(" _____ _                   ")
+		log.Println("| ____| | ____ _ _ __ __ _ ")
+		log.Println("|  _| | |/ / _` | '__/ _` |")
+		log.Println("| |___|   < (_| | | | (_| |")
+		log.Println(`|_____|_|\_\__,_|_|  \__,_|`)
 
 		log.Println(`  ____ _     ___ `)
 		log.Println(` / ___| |   |_ _|`)
@@ -158,9 +158,9 @@ func showHeader() {
 }
 
 func main() {
-	logger = log.New(os.Stdout, "Lagoon CLI: ", log.Ldate|log.Ltime)
+	logger = log.New(os.Stdout, "Ekara CLI: ", log.Ldate|log.Ltime)
 
-	app := kingpin.New("lagoon", CLI_DESCRIPTION)
+	app := kingpin.New("ekara", CLI_DESCRIPTION)
 	initFlags(app)
 
 	switch kingpin.MustParse(app.Parse(os.Args[1:])) {
@@ -196,9 +196,9 @@ func runCreate() {
 		log.Printf(LOG_LOGGED_AS, user, url)
 		log.Printf(LOG_LOGOUT_REQUIRED)
 	} else {
-		ef, e := util.CreateExchangeFolder(EXCHANGE_FOLDER_ROOT, "lagoon_installer")
+		ef, e := util.CreateExchangeFolder(EXCHANGE_FOLDER_ROOT, "ekara_installer")
 		if e != nil {
-			logger.Fatal(fmt.Errorf(ERROR_CREATING_EXCHANGE_FOLDER, "lagoon_installer"))
+			logger.Fatal(fmt.Errorf(ERROR_CREATING_EXCHANGE_FOLDER, "ekara_installer"))
 		}
 		ef.Create()
 

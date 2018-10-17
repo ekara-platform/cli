@@ -28,5 +28,5 @@ deploy:
   file:
   - cli-*
   on:
-    repo: lagoon-platform/cli
+    repo: ekara-platform/cli
     tags: true

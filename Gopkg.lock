@@ -71,6 +71,23 @@
   version = "v0.3.3"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/ekara-platform/engine"
+  packages = [
+    ".",
+    "ansible",
+    "component",
+    "util"
+  ]
+  revision = "3bf8be3e4818f915a30658323d1a80598143bfb9"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/ekara-platform/model"
+  packages = ["."]
+  revision = "323d1cd9479c5e7967cbd12160f99a0701c4508f"
+
+[[projects]]
   name = "github.com/emirpasic/gods"
   packages = [
     "containers",
@@ -80,8 +97,8 @@
     "trees/binaryheap",
     "utils"
   ]
-  revision = "7aedbffbedb86457447efbed4c7a99395ac3b5ba"
-  version = "v1.11.0"
+  revision = "1615341f118ae12f353cc8a983f35b584342c9b3"
+  version = "v1.12.0"
 
 [[projects]]
   name = "github.com/gogo/protobuf"
@@ -106,18 +123,6 @@
   packages = ["."]
   revision = "81db2a75821ed34e682567d48be488a1c3121088"
   version = "0.5"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/lagoon-platform/engine"
-  packages = ["."]
-  revision = "a575376fd41bffe0162e498d58c593771161dbb2"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/lagoon-platform/model"
-  packages = ["."]
-  revision = "24295414c6e9188af14361fb40616ee298f4aa8a"
 
 [[projects]]
   name = "github.com/mitchellh/go-homedir"
@@ -197,7 +202,7 @@
     "ssh/knownhosts",
     "ssh/terminal"
   ]
-  revision = "0e37d006457bf46f9e6692014ba72ef82c33022c"
+  revision = "0c41d7ab0a0ee717d4590a44bcb987dfd9e183eb"
 
 [[projects]]
   branch = "master"
@@ -208,7 +213,7 @@
     "internal/socks",
     "proxy"
   ]
-  revision = "2f5d2388922f370f4355f327fcf4cfe9f5583908"
+  revision = "49bb7cea24b1df9410e1712aa6433dae904ff66a"
 
 [[projects]]
   branch = "master"
@@ -217,7 +222,7 @@
     "unix",
     "windows"
   ]
-  revision = "d641721ec2dead6fe5ca284096fe4b1fcd49e427"
+  revision = "fa43e7bc11baaae89f3f902b2b4d832b68234844"
 
 [[projects]]
   name = "golang.org/x/text"
@@ -294,8 +299,8 @@
     "utils/merkletrie/internal/frame",
     "utils/merkletrie/noder"
   ]
-  revision = "d3cec13ac0b195bfb897ed038a08b5130ab9969e"
-  version = "v4.7.0"
+  revision = "cd64b4d630b6c2d2b3d72e9615e14f9d58bb5787"
+  version = "v4.7.1"
 
 [[projects]]
   name = "gopkg.in/warnings.v0"
@@ -312,6 +317,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "397040717100a57777d97fe0737e250e93b99dd9e5abda1d02677b9e1fd1b8b8"
+  inputs-digest = "f2541d02a7f6fe768ca972fad72127795891aacdcfd4d34ac25d0c7be695427b"
   solver-name = "gps-cdcl"
   solver-version = 1

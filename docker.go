@@ -21,8 +21,8 @@ import (
 
 	"gopkg.in/alecthomas/kingpin.v2"
 
-	"github.com/lagoon-platform/engine"
-	"github.com/lagoon-platform/engine/util"
+	"github.com/ekara-platform/engine"
+	"github.com/ekara-platform/engine/util"
 )
 
 // The docker client used within the whole application

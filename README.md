@@ -1,7 +1,7 @@
-# Lagoon CLI
+# Ekara CLI
 ___
 
-**Lagoon CLI** is the command line interface tool used to build and interact with Lagoon environments.
+**Ekara CLI** is the command line interface tool used to build and interact with Ekara environments.
 
 It will be compiled in order to provide a file which will be executed on the machine where the environment creation will be launched.
 
@@ -35,7 +35,7 @@ Flags:
 
 > use `cli create --help` for the detail of all options.
 
-* `--file` The name of the environment descriptor, (optional, if missing we will look for a descriptor named `lagoon.yaml`)
+* `--file` The name of the environment descriptor, (optional, if missing we will look for a descriptor named `ekara.yaml`)
 * `--cert` The location of the docker certificates (optional, can be substituted by an environment variable) 
 * `--host` The url of the docker host(optional, can be substituted by an environment variable)
 * `--param` The [parameters file](./doc/param.md). (optional)
@@ -92,7 +92,7 @@ Flags:
 
 Example :
 
-`$ lagoon update http://path.to.my.project/ --output --logfile myLogFile.log `
+`$ cli update http://path.to.my.project/ --output --logfile myLogFile.log `
 
 
 ## Command "check"
@@ -158,7 +158,7 @@ Flag(s):
 
 Example :
 
-`$ lagoon login http://path.to.the.api --user usrXX`
+`$ cli login http://path.to.the.api --user usrXX`
 
 ## Command "logout"
 This command performs a logout from an environment manager API.
@@ -167,7 +167,7 @@ Command type: **API**
 
 Example :
 
-`$ lagoon logout`
+`$ cli logout`
 
 ## Command "status"
 This command returns the status of the environment manager API where the user is logged in.
@@ -179,11 +179,11 @@ Command type: **API**
 
 Example :
 
-`$ lagoon status`
+`$ cli status`
 
 ## Docker commands required configuration
 ___
-In order to interact with docker **Lagoon CLI** requires the following configuration:
+In order to interact with docker **Ekara CLI** requires the following configuration:
 
 * The address of the docker host wherein you want to create or update an environment
 * The docker host's certificates location
@@ -192,13 +192,13 @@ In order to interact with docker **Lagoon CLI** requires the following configura
 ___
 ### Docker Configuration using `Flags`
 
-The Docker flags exposed by **Lagoon CLI** are:
+The Docker flags exposed by **Ekara CLI** are:
 
 * `--cert` : the Docker certificates location
 * `--host` : the Docker host address 
 
  
-> If you decide to configure **Lagoon CLI** using flags then remember that all these 3 flags must be setted.
+> If you decide to configure **Ekara CLI** using flags then remember that all these 3 flags must be setted.
 
 ___
 ### Docker Configuration using `environment variables`
@@ -211,6 +211,6 @@ If you want to create an environment on your own docker host you can take advant
 
 
 ---
-### How Lagoon CLI will decide to use Docker flags or environment variables
+### How Ekara CLI will decide to use Docker flags or environment variables
 
-If one of `--cert` or `--host` is setted then **Lagoon CLI** will use flags to establish the connection with the docker daemon, if not then the environment variables will be used.
+If one of `--cert` or `--host` is setted then **Ekara CLI** will use flags to establish the connection with the docker daemon, if not then the environment variables will be used.

@@ -1,4 +1,4 @@
-# Lagoon CLI `parameters` file
+# Ekara CLI `parameters` file
 ___
 
 Some CLI commands accept the flag `--param` to specify a **yaml** file used to pass parameters which will be interpreted at runtime to substitute variables into the environment descriptor.
@@ -10,7 +10,7 @@ The file can contain any valid yaml data.
 
 ##File usage
 
-`$ cli create http://path.to.my.project/ --cert ./cert_location --host tcp://192.168.99.100:2376 --api 1.30 --client myClientName --param myParameters.yaml`
+`$ cli create http://path.to.my.project/ --cert ./cert_location --host tcp://192.168.99.100:2376 --param myParameters.yaml`
 
 
 ##Variables substritution
