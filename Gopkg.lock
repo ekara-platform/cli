@@ -79,13 +79,13 @@
     "component",
     "util"
   ]
-  revision = "3bf8be3e4818f915a30658323d1a80598143bfb9"
+  revision = "d910da2a17bdb7b40f81a87ab1a458a94f723631"
 
 [[projects]]
   branch = "master"
   name = "github.com/ekara-platform/model"
   packages = ["."]
-  revision = "323d1cd9479c5e7967cbd12160f99a0701c4508f"
+  revision = "39de05bffd596d1c875994965e0760f1d6f7a8b1"
 
 [[projects]]
   name = "github.com/emirpasic/gods"
@@ -171,8 +171,8 @@
     "token",
     "types"
   ]
-  revision = "f187355171c936ac84a82793659ebb4936bc1c23"
-  version = "v1.3.0"
+  revision = "1ac3a1ac202429a54835fe8408a92880156b489d"
+  version = "v1.4.0"
 
 [[projects]]
   name = "github.com/xanzy/ssh-agent"
@@ -202,7 +202,7 @@
     "ssh/knownhosts",
     "ssh/terminal"
   ]
-  revision = "0c41d7ab0a0ee717d4590a44bcb987dfd9e183eb"
+  revision = "4d3f4d9ffa16a13f451c3b2999e9c49e9750bf06"
 
 [[projects]]
   branch = "master"
@@ -213,7 +213,7 @@
     "internal/socks",
     "proxy"
   ]
-  revision = "49bb7cea24b1df9410e1712aa6433dae904ff66a"
+  revision = "c44066c5c816ec500d459a2a324a753f78531ae0"
 
 [[projects]]
   branch = "master"
@@ -222,7 +222,7 @@
     "unix",
     "windows"
   ]
-  revision = "fa43e7bc11baaae89f3f902b2b4d832b68234844"
+  revision = "7e31e0c00fa05cb5fbf4347b585621d6709e19a4"
 
 [[projects]]
   name = "golang.org/x/text"
