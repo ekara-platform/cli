@@ -19,10 +19,11 @@ import (
 //go:generate go run generate/generate.go
 
 const (
-	EXCHANGE_FOLDER_ROOT string = "out"
+	ROOT_EXCHANGE_FOLDER  string = "out"
+	CHECK_EXCHANGE_FOLDER string = "check"
+	HEADER_PARSING_FOLDER string = "parsingGName"
 
 	// Environment variables used by default by the docker client
-	// "github.com/docker/docker/client"
 	envCertPath   string = "DOCKER_CERT_PATH"
 	envDockerHost string = "DOCKER_HOST"
 	envHttpProxy  string = "HTTP_PROXY"
@@ -58,7 +59,7 @@ const (
 	containerOutputFlagKey = "output"
 
 	// Name of the ekara starter image
-	starterImageName string = "ekaraplatform/installer:latest"
+	starterImageName string = "ekaraplatform/installer:alpha4"
 )
 
 var (
@@ -189,6 +190,28 @@ func main() {
 	log.Println(LOG_COMMAND_COMPLETED)
 }
 
+// parseHeader parses the environment descriptor in order to get the qualified
+// environement name
+func parseHeader() string {
+	ef := createEF(HEADER_PARSING_FOLDER)
+	defer ef.Delete()
+
+	engine, err := engine.Create(logger, ef.Output.Path(), map[string]interface{}{})
+	if err != nil {
+		ef.Delete()
+		logger.Fatalf(ERROR_CREATING_EKARA_ENGINE, err.Error())
+	}
+
+	err = engine.Init(cr.url, "", cr.file)
+	if err != nil {
+		ef.Delete()
+		logger.Fatalf(ERROR_INITIALIZING_EKARA_ENGINE, err.Error())
+	}
+	qName := engine.Environment().QualifiedName().String()
+	logger.Printf(LOG_QUALIFIED_NAME, qName)
+	return qName
+}
+
 // runCreate starts the installer in order to create an environement
 func runCreate() {
 	b, url, user := isLogged()
@@ -196,13 +219,12 @@ func runCreate() {
 		log.Printf(LOG_LOGGED_AS, user, url)
 		log.Printf(LOG_LOGOUT_REQUIRED)
 	} else {
-		ef, e := util.CreateExchangeFolder(EXCHANGE_FOLDER_ROOT, "ekara_installer")
-		if e != nil {
-			logger.Fatal(fmt.Errorf(ERROR_CREATING_EXCHANGE_FOLDER, "ekara_installer"))
-		}
-		ef.Create()
+		qName := parseHeader()
+
+		ef := createEF(qName)
 
 		log.Printf(LOG_DEPLOYING_FROM, cr.url)
+
 		b, session := engine.HasCreationSession(*ef)
 		log.Printf("A session exists : %v", b)
 		if b {
@@ -231,7 +253,7 @@ func runCreate() {
 				logger.Fatal(fmt.Errorf(ERROR_COPYING_SSH_PRIV, cr.privateSSHKey))
 			}
 		}
-		starterStart(*ef, cr.url, cr.file, engine.ActionCreate, cr.container)
+		starterStart(*ef, qName, cr.url, cr.file, engine.ActionCreate, cr.container)
 	}
 }
 
@@ -241,13 +263,10 @@ func runUpdate() {
 	b, url, _ := isLogged()
 	if b {
 		log.Printf(LOG_UPDATING_FROM, url)
-		// TODO GET REAL CLIENT NAME FROM LOGGIN
-		dummyClientName := "DUMMY_CLIENT_NAME"
-		ef, e := util.CreateExchangeFolder("out", dummyClientName)
-		if e != nil {
-			logger.Fatal(fmt.Errorf(ERROR_CREATING_EXCHANGE_FOLDER, dummyClientName))
-		}
-		ef.Create()
+		// TODO GET REAL QUALIFIED NAME FROM THE DESCRIPTOR
+		dummyQualifiedName := "DUMMY_QUALIFIED_NAME"
+		_ = createEF(dummyQualifiedName)
+
 		// TODO CALL THE API HERE IN ORDER TO START THE ENVIRONMENT UPDATE
 	} else {
 		log.Printf(LOG_LOGIN_REQUIRED)
@@ -257,15 +276,11 @@ func runUpdate() {
 // runCheck checks the validity of the environment descriptor content
 func runCheck() {
 	log.Printf(LOG_CHECKING_FROM, ch.url)
-	ef, e := util.CreateExchangeFolder("out", "check")
-	if e != nil {
-		logger.Fatal(fmt.Errorf(ERROR_CREATING_EXCHANGE_FOLDER, "check"))
-	}
-	ef.Create()
-	starterStart(*ef, ch.url, ch.file, engine.ActionCheck, ch.container)
+	ef := createEF(CHECK_EXCHANGE_FOLDER)
+	starterStart(*ef, "check", ch.url, ch.file, engine.ActionCheck, ch.container)
 }
 
-func starterStart(ef util.ExchangeFolder, descriptor string, file string, action engine.EngineAction, cp ContainerParam) {
+func starterStart(ef util.ExchangeFolder, name string, descriptor string, file string, action engine.EngineAction, cp ContainerParam) {
 	log.Printf(LOG_GET_IMAGE)
 	done := make(chan bool, 1)
 	go imagePull(starterImageName, done)
@@ -286,7 +301,7 @@ func starterStart(ef util.ExchangeFolder, descriptor string, file string, action
 	}
 
 	done = make(chan bool, 1)
-	startContainer(starterImageName, done, descriptor, file, ef, cp, action)
+	startContainer(starterImageName, done, name, descriptor, file, ef, cp, action)
 	<-done
 }
 
@@ -310,6 +325,7 @@ func getNoProxy(param string) string {
 	}
 	return param
 }
+
 func checkFlag(val string, flagKey string) {
 	if val == "" {
 		log.Fatal(fmt.Errorf(ERROR_REQUIRED_FLAG, flagKey))

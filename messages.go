@@ -22,6 +22,11 @@ const (
 	ERROR_COPYING_SSH_PUB  string = "Error copying the SSH public key %s"
 	ERROR_COPYING_SSH_PRIV string = "Error copying the SSH public key %s"
 
+	ERROR_UNREACHABLE_PARAM_FILE string = "Error, the file \"%s\" cannot be located"
+
+	ERROR_CREATING_EKARA_ENGINE     string = "Error creating the Ekara engine %s"
+	ERROR_INITIALIZING_EKARA_ENGINE string = "Error initializing the Ekara engine %s"
+
 	//	// Prompt messages
 	PROMPT_RESTART        string = "Are you sure you want to recreate the starter container now (Y/N) "
 	PROMPT_UPDATE_SESSION string = "Do you want to recreate or update the client %s (Y/N) "
@@ -57,4 +62,6 @@ const (
 	LOG_CONTAINER_LOG_WRITTEN string = "The container logs have been written into %s\n"
 
 	LOG_LOADING_EXTRA_ENVARS string = "Setting environment variables fron client: %s=%s"
+
+	LOG_QUALIFIED_NAME string = "The environemnt qualified name is :%s"
 )

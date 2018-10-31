@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -117,11 +118,12 @@ func stopContainerById(id string, done chan bool) {
 // Once built the container will be started.
 // The method will wait until the container is started and
 // will notify it using the chanel
-func startContainer(imageName string, done chan bool, descriptor string, file string, ef util.ExchangeFolder, p ContainerParam, action engine.EngineAction) {
+func startContainer(imageName string, done chan bool, name string, descriptor string, file string, ef util.ExchangeFolder, p ContainerParam, action engine.EngineAction) {
 
 	envVar := []string{}
 	envVar = append(envVar, util.StarterEnvVariableKey+"="+descriptor)
 	envVar = append(envVar, util.StarterEnvNameVariableKey+"="+file)
+	envVar = append(envVar, util.StarterEnvQualifiedVariableKey+"="+name)
 
 	envVar = append(envVar, util.ActionEnvVariableKey+"="+action.String())
 	envVar = append(envVar, "http_proxy="+getHttpProxy(p.httpProxy))
@@ -437,6 +439,13 @@ func checkDockerStuff(cert string, host string) {
 }
 
 func copyExtraParameters(file string, ef util.ExchangeFolder) {
+	// Check if the parameter file exist
+	if _, err := os.Stat(file); err != nil {
+		if os.IsNotExist(err) {
+			log.Fatalf(ERROR_UNREACHABLE_PARAM_FILE, file)
+		}
+	}
+
 	b, err := ioutil.ReadFile(file)
 	if err != nil {
 		panic(err)
