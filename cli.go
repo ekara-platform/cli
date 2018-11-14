@@ -59,7 +59,7 @@ const (
 	containerOutputFlagKey = "output"
 
 	// Name of the ekara starter image
-	starterImageName string = "ekaraplatform/installer:alpha4"
+	starterImageName string = "ekaraplatform/installer:alpha5"
 )
 
 var (
