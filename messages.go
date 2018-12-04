@@ -28,9 +28,8 @@ const (
 	ERROR_INITIALIZING_EKARA_ENGINE string = "Error initializing the Ekara engine %s"
 
 	//	// Prompt messages
-	PROMPT_RESTART        string = "Are you sure you want to recreate the starter container now (Y/N) "
-	PROMPT_UPDATE_SESSION string = "Do you want to recreate or update the client %s (Y/N) "
-	PROMPT_PASSWORD       string = "Please enter password for %s:"
+	PROMPT_RESTART  string = "Are you sure you want to recreate the starter container now (Y/N) "
+	PROMPT_PASSWORD string = "Please enter password for %s:"
 
 	//	// Log messages
 	LOG_FAIL_ON_PROMPT_RESTART   string = "Cannot go further if you refuse to stop the running container!"
@@ -63,5 +62,5 @@ const (
 
 	LOG_LOADING_EXTRA_ENVARS string = "Setting environment variables fron client: %s=%s"
 
-	LOG_QUALIFIED_NAME string = "The environemnt qualified name is :%s"
+	LOG_QUALIFIED_NAME string = "The environemt qualified name is :%s"
 )

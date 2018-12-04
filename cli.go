@@ -59,7 +59,7 @@ const (
 	containerOutputFlagKey = "output"
 
 	// Name of the ekara starter image
-	starterImageName string = "ekaraplatform/installer:alpha5"
+	starterImageName string = "ekaraplatform/installer:latest"
 )
 
 var (
@@ -207,7 +207,7 @@ func parseHeader() string {
 		ef.Delete()
 		logger.Fatalf(ERROR_INITIALIZING_EKARA_ENGINE, err.Error())
 	}
-	qName := engine.Environment().QualifiedName().String()
+	qName := engine.ComponentManager().Environment().QualifiedName().String()
 	logger.Printf(LOG_QUALIFIED_NAME, qName)
 	return qName
 }
@@ -220,26 +220,9 @@ func runCreate() {
 		log.Printf(LOG_LOGOUT_REQUIRED)
 	} else {
 		qName := parseHeader()
-
 		ef := createEF(qName)
 
 		log.Printf(LOG_DEPLOYING_FROM, cr.url)
-
-		b, session := engine.HasCreationSession(*ef)
-		log.Printf("A session exists : %v", b)
-		if b {
-			reader := bufio.NewReader(os.Stdin)
-			c := session.CreationSession.Client
-			fmt.Printf(PROMPT_UPDATE_SESSION, c)
-			text, _ := reader.ReadString('\n')
-			if strings.TrimSpace(text) != "Y" {
-				log.Printf("Cleaning the session for: %s", c)
-				if err := os.Remove(session.File); err != nil {
-					log.Fatal(fmt.Errorf(ERROR_CLIENT_SESSION_NOT_CLOSED, c, session.File))
-				}
-				ef.CleanAll()
-			}
-		}
 
 		if cr.privateSSHKey != "" && cr.publicSSHKey != "" {
 			// Move the ssh keys into the exchange folder input
