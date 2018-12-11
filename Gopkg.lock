@@ -71,7 +71,6 @@
   version = "v0.3.3"
 
 [[projects]]
-  branch = "master"
   name = "github.com/ekara-platform/engine"
   packages = [
     ".",
@@ -79,13 +78,14 @@
     "component",
     "util"
   ]
-  revision = "5d80148c306219ee2c7803132d38892716e380f1"
+  revision = "1cbf9f23c8c35167de961dd593fe926b5e526eb7"
+  version = "1.0.0-beta1"
 
 [[projects]]
-  branch = "master"
   name = "github.com/ekara-platform/model"
   packages = ["."]
-  revision = "cc3bc459a8fe828d32322bdef840f907b7be9287"
+  revision = "10ee1b2a9a586c0f275232c8b9cebeefa0bdfa0f"
+  version = "1.0.0-beta1"
 
 [[projects]]
   name = "github.com/emirpasic/gods"
