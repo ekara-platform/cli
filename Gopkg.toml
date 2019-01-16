@@ -34,8 +34,8 @@
   version = "0.3.0"
 
 [[constraint]]
-  branch = "master"
   name = "github.com/ekara-platform/engine"
+  version = "1.0.0-beta1"
 
 [[constraint]]
   branch = "master"
