@@ -4,7 +4,7 @@ docker run --rm -it -v "$PWD":/go/src/cli -w /go/src/cli dockercore/golang-cross
         echo "Building $GOOS-$GOARCH"
         export GOOS=$GOOS
         export GOARCH=$GOARCH
-        go build -o cli-$GOOS-$GOARCH
+        go build -o ekara-$GOOS-$GOARCH
       done
     done
     '

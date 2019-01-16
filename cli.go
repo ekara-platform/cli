@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/ekara-platform/engine"
+	"github.com/ekara-platform/engine/ansible"
 	"github.com/ekara-platform/engine/util"
 
 	"gopkg.in/alecthomas/kingpin.v2"
@@ -31,7 +32,9 @@ const (
 	envNoProxy    string = "NO_PROXY"
 
 	// Flags keys for Commands
-	deployFlagKey  = "create"
+	createFlagKey  = "create"
+	installFlagKey = "install"
+	deployFlagKey  = "deploy"
 	updateFlagKey  = "update"
 	checkFlagKey   = "check"
 	loginFlagKey   = "login"
@@ -59,11 +62,13 @@ const (
 	containerOutputFlagKey = "output"
 
 	// Name of the ekara starter image
-	starterImageName string = "ekaraplatform/installer:1.0.0-beta1"
+	starterImageName string = "ekaraplatform/installer:latest"
 )
 
 var (
 	// Commands
+	create  *kingpin.CmdClause
+	install *kingpin.CmdClause
 	deploy  *kingpin.CmdClause
 	update  *kingpin.CmdClause
 	check   *kingpin.CmdClause
@@ -85,19 +90,19 @@ var (
 func initFlags(app *kingpin.Application) {
 
 	cr = &DockerCreateParams{}
-	deploy = app.Command(deployFlagKey, "Create a new environment.")
-	deploy.Arg(descriptorFlagKey, "The environment descriptor url (the root folder location)").Required().StringVar(&cr.url)
-	deploy.Flag(descriptorNameFlagKey, "The name of the environment descriptor, if missing we will look for a descriptor named \""+util.DescriptorFileName+"\"").Default(util.DescriptorFileName).StringVar(&cr.file)
-	deploy.Flag(certPathFlagKey, "The location of the docker certificates (optional)").StringVar(&cr.cert)
-	deploy.Flag(dockerHostFlagKey, "The url of the docker host (optional)").StringVar(&cr.host)
-	deploy.Flag(paramFileFlagKey, "The parameters file (optional)").StringVar(&cr.container.paramFile)
-	deploy.Flag(httpProxyFlagKey, "The http proxy(optional)").StringVar(&cr.container.httpProxy)
-	deploy.Flag(httpsProxyFlagKey, "The https proxy (optional)").StringVar(&cr.container.httpsProxy)
-	deploy.Flag(noProxyFlagKey, "The no proxy (optional)").StringVar(&cr.container.noProxy)
-	deploy.Flag(containerOutputFlagKey, "\"true\" to write the container logs into a local file, defaulted to  \"false\"").BoolVar(&cr.container.output)
-	deploy.Flag(containerFileFlagKey, "The output file where to write the logs, if missing the log content will be written in \""+DefaultContainerLogFileName+"\"").StringVar(&cr.container.file)
-	deploy.Flag(publicSSHKeyFlagKey, "The public SSH key to connect the created machines  (optional)").StringVar(&cr.publicSSHKey)
-	deploy.Flag(privateSSHKeyFlagKey, "The private SSH key to connect the created machines  (optional)").StringVar(&cr.privateSSHKey)
+	create = app.Command(createFlagKey, "Create a new environment.")
+	addFlags(create)
+	addSSHFlags(create)
+	create.Action(cr.checkParams)
+
+	install = app.Command(installFlagKey, "Install a new environment.")
+	addFlags(install)
+	addSSHFlags(install)
+	install.Action(cr.checkParams)
+
+	deploy = app.Command(deployFlagKey, "Deploy a new environment.")
+	addFlags(deploy)
+	addSSHFlags(deploy)
 	deploy.Action(cr.checkParams)
 
 	up = &DockerUpdateParams{}
@@ -110,16 +115,7 @@ func initFlags(app *kingpin.Application) {
 
 	ch = &DockerCheckParams{}
 	check = app.Command(checkFlagKey, "Valid an existing environment descriptor.")
-	check.Arg(descriptorFlagKey, "The environment descriptor url (the root folder location)").Required().StringVar(&ch.url)
-	check.Flag(descriptorNameFlagKey, "The name of the environment descriptor, if missing we will look for a descriptor named \""+util.DescriptorFileName+"\"").Default(util.DescriptorFileName).StringVar(&ch.file)
-	check.Flag(certPathFlagKey, "The location of the docker certificates (optional)").StringVar(&ch.cert)
-	check.Flag(dockerHostFlagKey, "The url of the docker host (optional)").StringVar(&ch.host)
-	check.Flag(paramFileFlagKey, "The environment variables file (optional)").StringVar(&ch.container.paramFile)
-	check.Flag(httpProxyFlagKey, "The http proxy(optional)").StringVar(&ch.container.httpProxy)
-	check.Flag(httpsProxyFlagKey, "The https proxy (optional)").StringVar(&ch.container.httpsProxy)
-	check.Flag(noProxyFlagKey, "The no proxy (optional)").StringVar(&ch.container.noProxy)
-	check.Flag(containerOutputFlagKey, "\"true\" to write the container logs into a local file, defaulted to  \"false\"").BoolVar(&ch.container.output)
-	check.Flag(containerFileFlagKey, "The output file where to write the logs, if missing the logcontent will be written in \""+DefaultContainerLogFileName+"\"").StringVar(&ch.container.file)
+	addFlags(check)
 	check.Action(ch.checkParams)
 
 	l = &Login{}
@@ -135,6 +131,23 @@ func initFlags(app *kingpin.Application) {
 	version = app.Command(versionFlagKey, "The version details of the CLI.")
 }
 
+func addFlags(c *kingpin.CmdClause) {
+	c.Arg(descriptorFlagKey, "The environment descriptor url (the root folder location)").Required().StringVar(&cr.url)
+	c.Flag(descriptorNameFlagKey, "The name of the environment descriptor, if missing we will look for a descriptor named \""+util.DescriptorFileName+"\"").Default(util.DescriptorFileName).StringVar(&cr.file)
+	c.Flag(certPathFlagKey, "The location of the docker certificates (optional)").StringVar(&cr.cert)
+	c.Flag(dockerHostFlagKey, "The url of the docker host (optional)").StringVar(&cr.host)
+	c.Flag(paramFileFlagKey, "The parameters file (optional)").StringVar(&cr.container.paramFile)
+	c.Flag(httpProxyFlagKey, "The http proxy(optional)").StringVar(&cr.container.httpProxy)
+	c.Flag(httpsProxyFlagKey, "The https proxy (optional)").StringVar(&cr.container.httpsProxy)
+	c.Flag(noProxyFlagKey, "The no proxy (optional)").StringVar(&cr.container.noProxy)
+	c.Flag(containerOutputFlagKey, "\"true\" to write the container logs into a local file, defaulted to  \"false\"").BoolVar(&cr.container.output)
+	c.Flag(containerFileFlagKey, "The output file where to write the logs, if missing the log content will be written in \""+DefaultContainerLogFileName+"\"").StringVar(&cr.container.file)
+}
+
+func addSSHFlags(c *kingpin.CmdClause) {
+	c.Flag(publicSSHKeyFlagKey, "The public SSH key to connect the created machines  (optional)").StringVar(&cr.publicSSHKey)
+	c.Flag(privateSSHKeyFlagKey, "The private SSH key to connect the created machines  (optional)").StringVar(&cr.privateSSHKey)
+}
 func showHeader() {
 
 	log.Printf("Ekara installation based on the Docker image: %s\n", starterImageName)
@@ -166,9 +179,15 @@ func main() {
 
 	switch kingpin.MustParse(app.Parse(os.Args[1:])) {
 
-	case deploy.FullCommand():
+	case create.FullCommand():
 		showHeader()
 		runCreate()
+	case install.FullCommand():
+		showHeader()
+		runInstall()
+	case deploy.FullCommand():
+		showHeader()
+		runDeploy()
 	case update.FullCommand():
 		showHeader()
 		runUpdate()
@@ -196,7 +215,14 @@ func parseHeader() string {
 	ef := createEF(HEADER_PARSING_FOLDER)
 	defer ef.Delete()
 
-	engine, err := engine.Create(logger, ef.Output.Path(), map[string]interface{}{})
+	p, err := ansible.ParseParams(cr.container.paramFile)
+	if err != nil {
+		logger.Fatalf(ERROR_UNREACHABLE_PARAM_FILE, err.Error())
+	}
+
+	logger.Printf("--> Loaded parameters %v \n", p)
+
+	engine, err := engine.Create(logger, ef.Output.Path(), p)
 	if err != nil {
 		ef.Delete()
 		logger.Fatalf(ERROR_CREATING_EKARA_ENGINE, err.Error())
@@ -222,6 +248,62 @@ func runCreate() {
 		qName := parseHeader()
 		ef := createEF(qName)
 
+		log.Printf(LOG_CREATING_FROM, cr.url)
+
+		if cr.privateSSHKey != "" && cr.publicSSHKey != "" {
+			// Move the ssh keys into the exchange folder input
+			err := Copy(cr.publicSSHKey, filepath.Join(ef.Input.Path(), util.SSHPuplicKeyFileName))
+			if err != nil {
+				logger.Fatal(fmt.Errorf(ERROR_COPYING_SSH_PUB, cr.publicSSHKey))
+			}
+
+			err = Copy(cr.privateSSHKey, filepath.Join(ef.Input.Path(), util.SSHPrivateKeyFileName))
+			if err != nil {
+				logger.Fatal(fmt.Errorf(ERROR_COPYING_SSH_PRIV, cr.privateSSHKey))
+			}
+		}
+		starterStart(*ef, qName, cr.url, cr.file, engine.ActionCreateId, cr.container)
+	}
+}
+
+// runInstall starts the installer in order to install an environement
+func runInstall() {
+	b, url, user := isLogged()
+	if b {
+		log.Printf(LOG_LOGGED_AS, user, url)
+		log.Printf(LOG_LOGOUT_REQUIRED)
+	} else {
+		qName := parseHeader()
+		ef := createEF(qName)
+
+		log.Printf(LOG_INSTALLING_FROM, cr.url)
+
+		if cr.privateSSHKey != "" && cr.publicSSHKey != "" {
+			// Move the ssh keys into the exchange folder input
+			err := Copy(cr.publicSSHKey, filepath.Join(ef.Input.Path(), util.SSHPuplicKeyFileName))
+			if err != nil {
+				logger.Fatal(fmt.Errorf(ERROR_COPYING_SSH_PUB, cr.publicSSHKey))
+			}
+
+			err = Copy(cr.privateSSHKey, filepath.Join(ef.Input.Path(), util.SSHPrivateKeyFileName))
+			if err != nil {
+				logger.Fatal(fmt.Errorf(ERROR_COPYING_SSH_PRIV, cr.privateSSHKey))
+			}
+		}
+		starterStart(*ef, qName, cr.url, cr.file, engine.ActionInstallId, cr.container)
+	}
+}
+
+// runDeploy starts the installer in order to deploy an environement
+func runDeploy() {
+	b, url, user := isLogged()
+	if b {
+		log.Printf(LOG_LOGGED_AS, user, url)
+		log.Printf(LOG_LOGOUT_REQUIRED)
+	} else {
+		qName := parseHeader()
+		ef := createEF(qName)
+
 		log.Printf(LOG_DEPLOYING_FROM, cr.url)
 
 		if cr.privateSSHKey != "" && cr.publicSSHKey != "" {
@@ -236,7 +318,7 @@ func runCreate() {
 				logger.Fatal(fmt.Errorf(ERROR_COPYING_SSH_PRIV, cr.privateSSHKey))
 			}
 		}
-		starterStart(*ef, qName, cr.url, cr.file, engine.ActionCreate, cr.container)
+		starterStart(*ef, qName, cr.url, cr.file, engine.ActionDeployId, cr.container)
 	}
 }
 
@@ -260,10 +342,10 @@ func runUpdate() {
 func runCheck() {
 	log.Printf(LOG_CHECKING_FROM, ch.url)
 	ef := createEF(CHECK_EXCHANGE_FOLDER)
-	starterStart(*ef, "check", ch.url, ch.file, engine.ActionCheck, ch.container)
+	starterStart(*ef, "check", ch.url, ch.file, engine.ActionCheckId, ch.container)
 }
 
-func starterStart(ef util.ExchangeFolder, name string, descriptor string, file string, action engine.EngineAction, cp ContainerParam) {
+func starterStart(ef util.ExchangeFolder, name string, descriptor string, file string, action engine.ActionId, cp ContainerParam) {
 	log.Printf(LOG_GET_IMAGE)
 	done := make(chan bool, 1)
 	go imagePull(starterImageName, done)

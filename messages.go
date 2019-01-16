@@ -51,7 +51,9 @@ const (
 	LOG_ALREADY_LOGGED_OUT         string = "You are already logged out"
 	LOG_LOGOUT_REQUIRED            string = "You must to logout first to be able to create an environment"
 	LOG_LOGIN_REQUIRED             string = "You must be logged in be able to perform this command"
+	LOG_CREATING_FROM              string = "Creating from: %s \n"
 	LOG_DEPLOYING_FROM             string = "Deploying from: %s \n"
+	LOG_INSTALLING_FROM            string = "Installing from: %s \n"
 	LOG_UPDATING_FROM              string = "Updating from: %s \n"
 
 	LOG_CHECKING_FROM string = "Checking from: %s \n"

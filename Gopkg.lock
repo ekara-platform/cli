@@ -71,6 +71,7 @@
   version = "v0.3.3"
 
 [[projects]]
+  branch = "master"
   name = "github.com/ekara-platform/engine"
   packages = [
     ".",
@@ -78,14 +79,13 @@
     "component",
     "util"
   ]
-  revision = "1cbf9f23c8c35167de961dd593fe926b5e526eb7"
-  version = "1.0.0-beta1"
+  revision = "0a767face84974614fdcb8d991cee4ec8ac00bbc"
 
 [[projects]]
+  branch = "master"
   name = "github.com/ekara-platform/model"
   packages = ["."]
-  revision = "10ee1b2a9a586c0f275232c8b9cebeefa0bdfa0f"
-  version = "1.0.0-beta1"
+  revision = "324dbe53c036fb8bf1651c20a3e26fe85df86091"
 
 [[projects]]
   name = "github.com/emirpasic/gods"
@@ -311,6 +311,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "f2541d02a7f6fe768ca972fad72127795891aacdcfd4d34ac25d0c7be695427b"
+  inputs-digest = "3387e828742b374ff466077c4bf0013822c297d861a616a7f05a21b01408bd86"
   solver-name = "gps-cdcl"
   solver-version = 1

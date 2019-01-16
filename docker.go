@@ -118,7 +118,7 @@ func stopContainerById(id string, done chan bool) {
 // Once built the container will be started.
 // The method will wait until the container is started and
 // will notify it using the chanel
-func startContainer(imageName string, done chan bool, name string, descriptor string, file string, ef util.ExchangeFolder, p ContainerParam, action engine.EngineAction) {
+func startContainer(imageName string, done chan bool, name string, descriptor string, file string, ef util.ExchangeFolder, p ContainerParam, action engine.ActionId) {
 
 	envVar := []string{}
 	envVar = append(envVar, util.StarterEnvVariableKey+"="+descriptor)
