@@ -71,6 +71,7 @@
   version = "v0.3.3"
 
 [[projects]]
+  branch = "master"
   name = "github.com/ekara-platform/engine"
   packages = [
     ".",
@@ -78,8 +79,7 @@
     "component",
     "util"
   ]
-  revision = "1cbf9f23c8c35167de961dd593fe926b5e526eb7"
-  version = "1.0.0-beta1"
+  revision = "0a767face84974614fdcb8d991cee4ec8ac00bbc"
 
 [[projects]]
   branch = "master"
@@ -216,7 +216,7 @@
     "unix",
     "windows"
   ]
-  revision = "a457fd036447854c0c02e89ea439481bdcf941a2"
+  revision = "11f53e03133963fb11ae0588e08b5e0b85be8be5"
 
 [[projects]]
   name = "golang.org/x/text"
@@ -311,6 +311,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "3766a8fe9654e0a31fc46c55407d8ebbc2a7ea6e5f44879bc6a132e3ff66a532"
+  inputs-digest = "3387e828742b374ff466077c4bf0013822c297d861a616a7f05a21b01408bd86"
   solver-name = "gps-cdcl"
   solver-version = 1
