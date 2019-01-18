@@ -79,7 +79,7 @@
     "component",
     "util"
   ]
-  revision = "0a767face84974614fdcb8d991cee4ec8ac00bbc"
+  revision = "7c6c5f639137834540fdac9341f1b890c623472f"
 
 [[projects]]
   branch = "master"
