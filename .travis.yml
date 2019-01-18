@@ -15,9 +15,9 @@ install:
 script:
   - go generate
   - bash xcross.sh
-  - for f in  cli-windows-*; do mv -v -- "$f" "$f.exe"; done;
+  - for f in  ekara-windows-*; do mv -v -- "$f" "$f.exe"; done;
   - echo "Generated files"
-  - ls -al cli-*
+  - ls -al ekara-*
 
 deploy:
   provider: releases
