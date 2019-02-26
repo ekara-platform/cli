@@ -104,10 +104,10 @@ func stopContainerById(id string, done chan bool) {
 		panic(err)
 	}
 	for {
-		log.Printf(LOG_WAITING_STOP)
+		logger.Printf(LOG_WAITING_STOP)
 		time.Sleep(500 * time.Millisecond)
 		if stillRunning := containerRunningById(id); stillRunning == false {
-			log.Printf(LOG_STOPPED)
+			logger.Printf(LOG_STOPPED)
 			done <- true
 			return
 		}
@@ -129,6 +129,8 @@ func startContainer(imageName string, done chan bool, name string, descriptor st
 	envVar = append(envVar, "http_proxy="+getHttpProxy(p.httpProxy))
 	envVar = append(envVar, "https_proxy="+getHttpsProxy(p.httpsProxy))
 	envVar = append(envVar, "no_proxy="+getNoProxy(p.noProxy))
+
+	logger.Printf(LOG_PASSING_CONTAINER_ENVARS, envVar)
 
 	// Check if we need to load parameters from the comand line
 	if p.paramFile != "" {
@@ -158,6 +160,8 @@ func startContainer(imageName string, done chan bool, name string, descriptor st
 	// Chan used to turn off the rolling log
 	exitCh := make(chan bool)
 
+	loggerNoHearder := log.New(os.Stdout, "", 0)
+
 	if p.output {
 		// Rolling output of the container logs
 		go func(start time.Time, exit chan bool) {
@@ -181,13 +185,14 @@ func startContainer(imageName string, done chan bool, name string, descriptor st
 			req := func(sr string) {
 				out, err := cli.ContainerLogs(context.Background(), resp.ID, types.ContainerLogsOptions{Since: sr, ShowStdout: true, ShowStderr: true})
 				if err != nil {
+					// TODO REMOVE PANIC
 					panic(err)
 				}
 				s := bufio.NewScanner(out)
 				for s.Scan() {
 					str := s.Text()
 					if b, sTrim := notExist(str); b {
-						log.Print(sTrim)
+						loggerNoHearder.Print(sTrim)
 					}
 				}
 				out.Close()
@@ -251,7 +256,7 @@ func logAllFromContainer(id string, ef util.ExchangeFolder, done chan bool, p Co
 		if err != nil {
 			panic(err)
 		}
-		log.Printf(LOG_CONTAINER_LOG_WRITTEN, logFile.Name())
+		logger.Printf(LOG_CONTAINER_LOG_WRITTEN, logFile.Name())
 	}
 	// We are done!
 	done <- true
@@ -299,10 +304,10 @@ func imagePull(taggedName string, done chan bool) {
 			panic(err)
 		}
 		for {
-			log.Printf(LOG_WAITING_DOWNLOAD)
+			logger.Printf(LOG_WAITING_DOWNLOAD)
 			time.Sleep(500 * time.Millisecond)
 			if img := imageExistsByName(starterImageName); img {
-				log.Printf(LOG_DOWNLOAD_COMPLETED)
+				logger.Printf(LOG_DOWNLOAD_COMPLETED)
 				done <- true
 				return
 			}
@@ -369,21 +374,21 @@ type ContainerParam struct {
 // checkParams checks the coherence of the parameters received to deal with docker
 // using the flags and/or the environment variables
 func (n *DockerCreateParams) checkParams(c *kingpin.ParseContext) error {
-	log.Printf("Creation of:%v\n", n.url)
-	log.Printf("Lauched to run docker with cert:%v, on daemon:%v\n", n.cert, n.host)
+	logger.Printf("Creation of:%v\n", n.url)
+	logger.Printf("Lauched to run docker with cert:%v, on daemon:%v\n", n.cert, n.host)
 	checkDescriptor(n.url)
 
 	// The SSH public key always comes with the private
 	if n.privateSSHKey != "" && n.publicSSHKey == "" {
-		log.Fatal(fmt.Errorf(ERROR_REQUIRED_SSH_PUBLIC))
+		logger.Fatal(fmt.Errorf(ERROR_REQUIRED_SSH_PUBLIC))
 	}
 
 	if n.privateSSHKey == "" && n.publicSSHKey != "" {
-		log.Fatal(fmt.Errorf(ERROR_REQUIRED_SSH_PRIVATE))
+		logger.Fatal(fmt.Errorf(ERROR_REQUIRED_SSH_PRIVATE))
 	}
 
-	log.Printf(LOG_SSH_PUBLIC_CONFIRMATION, n.publicSSHKey)
-	log.Printf(LOG_SSH_PRIVATE_CONFIRMATION, n.privateSSHKey)
+	logger.Printf(LOG_SSH_PUBLIC_CONFIRMATION, n.publicSSHKey)
+	logger.Printf(LOG_SSH_PRIVATE_CONFIRMATION, n.privateSSHKey)
 
 	checkDockerStuff(n.cert, n.host)
 	return nil
@@ -392,8 +397,8 @@ func (n *DockerCreateParams) checkParams(c *kingpin.ParseContext) error {
 // checkParams checks the coherence of the parameters received to deal with docker
 // using the flags and/or the environment variables
 func (n *DockerCheckParams) checkParams(c *kingpin.ParseContext) error {
-	log.Printf("Creation of:%v\n", n.url)
-	log.Printf("Lauched to run docker with cert:%v, on daemon:%v\n", n.cert, n.host)
+	logger.Printf("Checking of:%v\n", n.url)
+	logger.Printf("Lauched to run docker with cert:%v, on daemon:%v\n", n.cert, n.host)
 	checkDescriptor(n.url)
 	checkDockerStuff(n.cert, n.host)
 	return nil
@@ -402,7 +407,7 @@ func (n *DockerCheckParams) checkParams(c *kingpin.ParseContext) error {
 // checkParams checks the coherence of the parameters received to deal with docker
 // using the flags and/or the environment variables
 func (n *DockerUpdateParams) checkParams(c *kingpin.ParseContext) error {
-	log.Printf("Update of:%v\n", n.url)
+	logger.Printf("Update of:%v\n", n.url)
 	checkDescriptor(n.url)
 	checkDockerStuff(n.cert, n.host)
 	return nil
@@ -411,9 +416,9 @@ func (n *DockerUpdateParams) checkParams(c *kingpin.ParseContext) error {
 func checkDescriptor(d string) {
 	// The environment descriptor is always required
 	if d == "" {
-		log.Fatal(fmt.Errorf(ERROR_REQUIRED_CONFIG))
+		logger.Fatal(fmt.Errorf(ERROR_REQUIRED_CONFIG))
 	} else {
-		log.Printf(LOG_CONFIG_CONFIRMATION, descriptorFlagKey, d)
+		logger.Printf(LOG_CONFIG_CONFIRMATION, descriptorFlagKey, d)
 	}
 
 }
@@ -424,16 +429,16 @@ func checkDockerStuff(cert string, host string) {
 	if host != "" || cert != "" {
 		checkFlag(host, dockerHostFlagKey)
 		if cert != "" {
-			log.Printf(LOG_FLAG_CONFIRMATION, certPathFlagKey, cert)
+			logger.Printf(LOG_FLAG_CONFIRMATION, certPathFlagKey, cert)
 		}
-		log.Printf(LOG_FLAG_CONFIRMATION, dockerHostFlagKey, host)
-		log.Printf(LOG_INIT_FLAGGED_DOCKER_CLIENT)
+		logger.Printf(LOG_FLAG_CONFIRMATION, dockerHostFlagKey, host)
+		logger.Printf(LOG_INIT_FLAGGED_DOCKER_CLIENT)
 		initFlaggedClient(host, cert)
 	} else {
 		// if the flags are not used then we will ensure
 		// that the environment variables are well defined
 		checkEnvVar(envDockerHost)
-		log.Printf(LOG_INIT_DOCKER_CLIENT)
+		logger.Printf(LOG_INIT_DOCKER_CLIENT)
 		initClient()
 	}
 }
@@ -442,7 +447,7 @@ func copyExtraParameters(file string, ef util.ExchangeFolder) {
 	// Check if the parameter file exist
 	if _, err := os.Stat(file); err != nil {
 		if os.IsNotExist(err) {
-			log.Fatalf(ERROR_UNREACHABLE_PARAM_FILE, file)
+			logger.Fatalf(ERROR_UNREACHABLE_PARAM_FILE, file)
 		}
 	}
 

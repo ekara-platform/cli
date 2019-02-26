@@ -79,13 +79,13 @@
     "component",
     "util"
   ]
-  revision = "7c6c5f639137834540fdac9341f1b890c623472f"
+  revision = "3676dd89e8b910f4847360124b0854a87093184f"
 
 [[projects]]
   branch = "master"
   name = "github.com/ekara-platform/model"
   packages = ["."]
-  revision = "324dbe53c036fb8bf1651c20a3e26fe85df86091"
+  revision = "ea92bec26e7663497946567031821336d8ba1b2d"
 
 [[projects]]
   name = "github.com/emirpasic/gods"

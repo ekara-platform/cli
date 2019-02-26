@@ -22,6 +22,7 @@ import (
 const (
 	ROOT_EXCHANGE_FOLDER  string = "out"
 	CHECK_EXCHANGE_FOLDER string = "check"
+	DUMP_EXCHANGE_FOLDER  string = "dump"
 	HEADER_PARSING_FOLDER string = "parsingGName"
 
 	// Environment variables used by default by the docker client
@@ -37,6 +38,7 @@ const (
 	deployFlagKey  = "deploy"
 	updateFlagKey  = "update"
 	checkFlagKey   = "check"
+	dumpFlagKey    = "dump"
 	loginFlagKey   = "login"
 	logoutFlagKey  = "logout"
 	statusFlagKey  = "status"
@@ -72,6 +74,7 @@ var (
 	deploy  *kingpin.CmdClause
 	update  *kingpin.CmdClause
 	check   *kingpin.CmdClause
+	dump    *kingpin.CmdClause
 	login   *kingpin.CmdClause
 	logout  *kingpin.CmdClause
 	status  *kingpin.CmdClause
@@ -115,8 +118,20 @@ func initFlags(app *kingpin.Application) {
 
 	ch = &DockerCheckParams{}
 	check = app.Command(checkFlagKey, "Valid an existing environment descriptor.")
-	addFlags(check)
+	check.Arg(descriptorFlagKey, "The environment descriptor url (the root folder location)").Required().StringVar(&ch.url)
+	check.Flag(descriptorNameFlagKey, "The name of the environment descriptor, if missing we will look for a descriptor named \""+util.DescriptorFileName+"\"").Default(util.DescriptorFileName).StringVar(&ch.file)
+	check.Flag(certPathFlagKey, "The location of the docker certificates (optional)").StringVar(&ch.cert)
+	check.Flag(dockerHostFlagKey, "The url of the docker host (optional)").StringVar(&ch.host)
+	check.Flag(paramFileFlagKey, "The parameters file (optional)").StringVar(&ch.container.paramFile)
 	check.Action(ch.checkParams)
+
+	dump = app.Command(dumpFlagKey, "Dump an existing environment descriptor.")
+	dump.Arg(descriptorFlagKey, "The environment descriptor url (the root folder location)").Required().StringVar(&ch.url)
+	dump.Flag(descriptorNameFlagKey, "The name of the environment descriptor, if missing we will look for a descriptor named \""+util.DescriptorFileName+"\"").Default(util.DescriptorFileName).StringVar(&ch.file)
+	dump.Flag(certPathFlagKey, "The location of the docker certificates (optional)").StringVar(&ch.cert)
+	dump.Flag(dockerHostFlagKey, "The url of the docker host (optional)").StringVar(&ch.host)
+	dump.Flag(paramFileFlagKey, "The parameters file (optional)").StringVar(&ch.container.paramFile)
+	dump.Action(ch.checkParams)
 
 	l = &Login{}
 	login = app.Command(loginFlagKey, "Login into an environment manager API.")
@@ -150,7 +165,7 @@ func addSSHFlags(c *kingpin.CmdClause) {
 }
 func showHeader() {
 
-	log.Printf("Ekara installation based on the Docker image: %s\n", starterImageName)
+	logger.Printf(CLI_IMAGE, starterImageName)
 
 	fullLoginFileName = path.Join("", loginFileName)
 	// this comes from http://www.kammerl.de/ascii/AsciiSignature.php
@@ -168,6 +183,7 @@ func showHeader() {
 		log.Println(`| |   | |    | | `)
 		log.Println(`| |___| |___ | | `)
 		log.Println(` \____|_____|___|`)
+
 	}
 }
 
@@ -194,6 +210,9 @@ func main() {
 	case check.FullCommand():
 		showHeader()
 		runCheck()
+	case dump.FullCommand():
+		showHeader()
+		runDump()
 	case login.FullCommand():
 		showHeader()
 		runLogin()
@@ -206,7 +225,7 @@ func main() {
 	case version.FullCommand():
 		runVersion()
 	}
-	log.Println(LOG_COMMAND_COMPLETED)
+	logger.Println(LOG_COMMAND_COMPLETED)
 }
 
 // parseHeader parses the environment descriptor in order to get the qualified
@@ -219,8 +238,6 @@ func parseHeader() string {
 	if err != nil {
 		logger.Fatalf(ERROR_UNREACHABLE_PARAM_FILE, err.Error())
 	}
-
-	logger.Printf("--> Loaded parameters %v \n", p)
 
 	engine, err := engine.Create(logger, ef.Output.Path(), p)
 	if err != nil {
@@ -242,13 +259,13 @@ func parseHeader() string {
 func runCreate() {
 	b, url, user := isLogged()
 	if b {
-		log.Printf(LOG_LOGGED_AS, user, url)
-		log.Printf(LOG_LOGOUT_REQUIRED)
+		logger.Printf(LOG_LOGGED_AS, user, url)
+		logger.Printf(LOG_LOGOUT_REQUIRED)
 	} else {
 		qName := parseHeader()
 		ef := createEF(qName)
 
-		log.Printf(LOG_CREATING_FROM, cr.url)
+		logger.Printf(LOG_CREATING_FROM, cr.url)
 
 		if cr.privateSSHKey != "" && cr.publicSSHKey != "" {
 			// Move the ssh keys into the exchange folder input
@@ -270,13 +287,13 @@ func runCreate() {
 func runInstall() {
 	b, url, user := isLogged()
 	if b {
-		log.Printf(LOG_LOGGED_AS, user, url)
-		log.Printf(LOG_LOGOUT_REQUIRED)
+		logger.Printf(LOG_LOGGED_AS, user, url)
+		logger.Printf(LOG_LOGOUT_REQUIRED)
 	} else {
 		qName := parseHeader()
 		ef := createEF(qName)
 
-		log.Printf(LOG_INSTALLING_FROM, cr.url)
+		logger.Printf(LOG_INSTALLING_FROM, cr.url)
 
 		if cr.privateSSHKey != "" && cr.publicSSHKey != "" {
 			// Move the ssh keys into the exchange folder input
@@ -298,13 +315,13 @@ func runInstall() {
 func runDeploy() {
 	b, url, user := isLogged()
 	if b {
-		log.Printf(LOG_LOGGED_AS, user, url)
-		log.Printf(LOG_LOGOUT_REQUIRED)
+		logger.Printf(LOG_LOGGED_AS, user, url)
+		logger.Printf(LOG_LOGOUT_REQUIRED)
 	} else {
 		qName := parseHeader()
 		ef := createEF(qName)
 
-		log.Printf(LOG_DEPLOYING_FROM, cr.url)
+		logger.Printf(LOG_DEPLOYING_FROM, cr.url)
 
 		if cr.privateSSHKey != "" && cr.publicSSHKey != "" {
 			// Move the ssh keys into the exchange folder input
@@ -327,26 +344,35 @@ func runDeploy() {
 func runUpdate() {
 	b, url, _ := isLogged()
 	if b {
-		log.Printf(LOG_UPDATING_FROM, url)
+		logger.Printf(LOG_UPDATING_FROM, url)
 		// TODO GET REAL QUALIFIED NAME FROM THE DESCRIPTOR
 		dummyQualifiedName := "DUMMY_QUALIFIED_NAME"
 		_ = createEF(dummyQualifiedName)
 
 		// TODO CALL THE API HERE IN ORDER TO START THE ENVIRONMENT UPDATE
 	} else {
-		log.Printf(LOG_LOGIN_REQUIRED)
+		logger.Printf(LOG_LOGIN_REQUIRED)
 	}
 }
 
 // runCheck checks the validity of the environment descriptor content
 func runCheck() {
-	log.Printf(LOG_CHECKING_FROM, ch.url)
+	logger.Printf(LOG_CHECKING_FROM, ch.url)
 	ef := createEF(CHECK_EXCHANGE_FOLDER)
+	ch.container.output = true
 	starterStart(*ef, "check", ch.url, ch.file, engine.ActionCheckId, ch.container)
 }
 
+// runDump dumps the environment descriptor content
+func runDump() {
+	logger.Printf(LOG_DUMPING_FROM, ch.url)
+	ef := createEF(DUMP_EXCHANGE_FOLDER)
+	ch.container.output = true
+	starterStart(*ef, "check", ch.url, ch.file, engine.ActionDumpId, ch.container)
+}
+
 func starterStart(ef util.ExchangeFolder, name string, descriptor string, file string, action engine.ActionId, cp ContainerParam) {
-	log.Printf(LOG_GET_IMAGE)
+	logger.Printf(LOG_GET_IMAGE)
 	done := make(chan bool, 1)
 	go imagePull(starterImageName, done)
 	<-done
@@ -360,7 +386,7 @@ func starterStart(ef util.ExchangeFolder, name string, descriptor string, file s
 			go stopContainerById(id, done)
 			<-done
 		} else {
-			log.Printf(LOG_FAIL_ON_PROMPT_RESTART)
+			logger.Printf(LOG_FAIL_ON_PROMPT_RESTART)
 			return
 		}
 	}
@@ -372,34 +398,40 @@ func starterStart(ef util.ExchangeFolder, name string, descriptor string, file s
 
 func getHttpProxy(param string) string {
 	if param == "" {
-		return os.Getenv(envHttpProxy)
+		s := os.Getenv(envHttpsProxy)
+		logger.Printf(LOG_GETTING_HTTP_PROXY, s)
+		return s
 	}
 	return param
 }
 
 func getHttpsProxy(param string) string {
 	if param == "" {
-		return os.Getenv(envHttpsProxy)
+		s := os.Getenv(envHttpsProxy)
+		logger.Printf(LOG_GETTING_HTTPS_PROXY, s)
+		return s
 	}
 	return param
 }
 
 func getNoProxy(param string) string {
 	if param == "" {
-		return os.Getenv(envNoProxy)
+		s := os.Getenv(envNoProxy)
+		logger.Printf(LOG_GETTING_NO_PROXY, s)
+		return s
 	}
 	return param
 }
 
 func checkFlag(val string, flagKey string) {
 	if val == "" {
-		log.Fatal(fmt.Errorf(ERROR_REQUIRED_FLAG, flagKey))
+		logger.Fatal(fmt.Errorf(ERROR_REQUIRED_FLAG, flagKey))
 	}
 }
 
 func checkEnvVar(key string) {
 	if os.Getenv(key) == "" {
-		log.Fatal(fmt.Errorf(ERROR_REQUIRED_ENV, key))
+		logger.Fatal(fmt.Errorf(ERROR_REQUIRED_ENV, key))
 	}
 }
 

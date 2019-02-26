@@ -2,6 +2,7 @@ package main
 
 const (
 	CLI_DESCRIPTION string = "Ekara Command Line Interface."
+	CLI_IMAGE       string = "Ekara installation based on the Docker image: %s\n"
 
 	//	// Error messages
 	ERROR_CREATING_EXCHANGE_FOLDER string = "Error creating the exchange folder %s"
@@ -56,13 +57,19 @@ const (
 	LOG_INSTALLING_FROM            string = "Installing from: %s \n"
 	LOG_UPDATING_FROM              string = "Updating from: %s \n"
 
+	LOG_GETTING_HTTP_PROXY  string = "Getting HttpProxy from environment: %s\n"
+	LOG_GETTING_HTTPS_PROXY string = "Getting HttpsProxy from environment: %s\n"
+	LOG_GETTING_NO_PROXY    string = "Getting HttpsProxy from environment: %s\n"
+
 	LOG_CHECKING_FROM string = "Checking from: %s \n"
+	LOG_DUMPING_FROM  string = "Dumping from: %s \n"
 
 	LOG_GETTING_STATUS        string = "Getting the status of %s \n"
 	LOG_LOGGING_INTO          string = "Logging into: %s \n"
 	LOG_CONTAINER_LOG_WRITTEN string = "The container logs have been written into %s\n"
 
-	LOG_LOADING_EXTRA_ENVARS string = "Setting environment variables fron client: %s=%s"
+	LOG_LOADING_EXTRA_ENVARS     string = "Setting environment variables fron client: %s=%s"
+	LOG_PASSING_CONTAINER_ENVARS string = "Env passed to the container %v\n"
 
 	LOG_QUALIFIED_NAME string = "The environemt qualified name is :%s"
 )
