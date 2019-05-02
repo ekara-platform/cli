@@ -34,12 +34,20 @@
   version = "0.3.0"
 
 [[constraint]]
-  branch = "master"
   name = "github.com/ekara-platform/engine"
+  version = "1.0.0-beta1"
 
 [[constraint]]
   branch = "master"
-  name = "golang.org/x/crypto"
+  name = "github.com/ekara-platform/model"
+
+[[constraint]]
+  name = "github.com/spf13/cobra"
+  version = "0.0.3"
+
+[[constraint]]
+  name = "github.com/stretchr/testify"
+  version = "1.3.0"
 
 [[constraint]]
   branch = "master"
