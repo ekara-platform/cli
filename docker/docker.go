@@ -1,4 +1,4 @@
-package main
+package docker
 
 import (
 	"bufio"
@@ -13,15 +13,16 @@ import (
 	"strings"
 	"time"
 
+	"golang.org/x/net/context"
+	_ "gopkg.in/alecthomas/kingpin.v2"
+
 	"docker.io/go-docker"
 	"docker.io/go-docker/api/types"
 	"docker.io/go-docker/api/types/container"
 	"docker.io/go-docker/api/types/mount"
 	"github.com/docker/go-connections/tlsconfig"
-	"golang.org/x/net/context"
 
-	"gopkg.in/alecthomas/kingpin.v2"
-
+	"github.com/ekara-platform/cli/message"
 	"github.com/ekara-platform/engine"
 	"github.com/ekara-platform/engine/util"
 )
@@ -29,13 +30,69 @@ import (
 // The docker client used within the whole application
 var cli docker.Client
 
+const (
+	DefaultContainerLogFileName string = "installer.log"
+	envHttpProxy                string = "HTTP_PROXY"
+	envHttpsProxy               string = "HTTPS_PROXY"
+	envNoProxy                  string = "NO_PROXY"
+)
+
+type CreateParams struct {
+	Daemon     DaemonParams
+	Descriptor DescriptorParams
+	Installer  InstallerParams
+	Host       HostParams
+	User       UserParams
+}
+
+func (c CreateParams) CheckAndLog(logger *log.Logger) error {
+	if e := c.Daemon.checkAndLog(logger); e != nil {
+		return e
+	}
+	if e := c.Descriptor.checkAndLog(logger); e != nil {
+		return e
+	}
+	if e := c.Installer.checkAndLog(logger); e != nil {
+		return e
+	}
+	if e := c.Host.checkAndLog(logger); e != nil {
+		return e
+	}
+	if e := c.User.checkAndLog(logger); e != nil {
+		return e
+	}
+	return nil
+}
+func checkEnvVar(key string) error {
+	if os.Getenv(key) == "" {
+
+		return fmt.Errorf(message.ERROR_REQUIRED_ENV, key)
+	}
+	return nil
+}
+
+func checkFlag(val string, flagKey string) error {
+	if val == "" {
+		return fmt.Errorf(message.ERROR_REQUIRED_FLAG, flagKey)
+	}
+	return nil
+}
+
+// initClient initializes the docker client using the environment variables
+func initClient() {
+	c, err := docker.NewEnvClient()
+	if err != nil {
+		panic(err)
+	}
+	cli = *c
+}
+
 // initFlaggedClient initializes the docker client using the flaged values
 func initFlaggedClient(host string, cert string) {
 
 	var err error
 	var c *docker.Client
 	if cert != "" {
-
 		options := tlsconfig.Options{
 			CAFile:             filepath.Join(cert, "ca.pem"),
 			CertFile:           filepath.Join(cert, "cert.pem"),
@@ -63,18 +120,9 @@ func initFlaggedClient(host string, cert string) {
 	cli = *c
 }
 
-// initClient initializes the docker client using the environment variables
-func initClient() {
-	c, err := docker.NewEnvClient()
-	if err != nil {
-		panic(err)
-	}
-	cli = *c
-}
-
-// containerRunningByImageName returns true if a container, built
+// ContainerRunningByImageName returns true if a container, built
 // on the given image, is running
-func containerRunningByImageName(name string) (string, bool) {
+func ContainerRunningByImageName(name string) (string, bool) {
 	containers := getContainers()
 	for _, container := range containers {
 		if container.Image == name || container.Image+":latest" == name {
@@ -96,7 +144,7 @@ func containerRunningById(id string) bool {
 }
 
 //stopContainerById stops a container corresponding to the provider id
-func stopContainerById(id string, done chan bool) {
+func StopContainerById(id string, done chan bool, logger *log.Logger) {
 	if err := cli.ContainerStop(context.Background(), id, nil); err != nil {
 		panic(err)
 	}
@@ -104,10 +152,10 @@ func stopContainerById(id string, done chan bool) {
 		panic(err)
 	}
 	for {
-		logger.Printf(LOG_WAITING_STOP)
+		logger.Printf(message.LOG_WAITING_STOP)
 		time.Sleep(500 * time.Millisecond)
 		if stillRunning := containerRunningById(id); stillRunning == false {
-			logger.Printf(LOG_STOPPED)
+			logger.Printf(message.LOG_STOPPED)
 			done <- true
 			return
 		}
@@ -118,7 +166,7 @@ func stopContainerById(id string, done chan bool) {
 // Once built the container will be started.
 // The method will wait until the container is started and
 // will notify it using the chanel
-func startContainer(imageName string, done chan bool, name string, descriptor string, file string, ef util.ExchangeFolder, p ContainerParam, action engine.ActionId) {
+func StartContainer(imageName string, done chan bool, name string, descriptor string, file string, ef util.ExchangeFolder, p *CreateParams, action engine.ActionID, logger *log.Logger) {
 
 	envVar := []string{}
 	envVar = append(envVar, util.StarterEnvVariableKey+"="+descriptor)
@@ -126,15 +174,15 @@ func startContainer(imageName string, done chan bool, name string, descriptor st
 	envVar = append(envVar, util.StarterEnvQualifiedVariableKey+"="+name)
 
 	envVar = append(envVar, util.ActionEnvVariableKey+"="+action.String())
-	envVar = append(envVar, "http_proxy="+getHttpProxy(p.httpProxy))
-	envVar = append(envVar, "https_proxy="+getHttpsProxy(p.httpsProxy))
-	envVar = append(envVar, "no_proxy="+getNoProxy(p.noProxy))
+	envVar = append(envVar, "http_proxy="+getHttpProxy(p.Installer.HttpProxy, logger))
+	envVar = append(envVar, "https_proxy="+getHttpsProxy(p.Installer.HttpsProxy, logger))
+	envVar = append(envVar, "no_proxy="+getNoProxy(p.Installer.NoProxy, logger))
 
-	logger.Printf(LOG_PASSING_CONTAINER_ENVARS, envVar)
+	logger.Printf(message.LOG_PASSING_CONTAINER_ENVARS, envVar)
 
 	// Check if we need to load parameters from the comand line
-	if p.paramFile != "" {
-		copyExtraParameters(p.paramFile, ef)
+	if p.Descriptor.ParamFile != "" {
+		copyExtraParameters(p.Descriptor.ParamFile, ef, logger)
 	}
 
 	startedAt := time.Now().UTC()
@@ -150,6 +198,11 @@ func startContainer(imageName string, done chan bool, name string, descriptor st
 				Source: ef.Location.AdaptedPath(),
 				Target: util.InstallerVolume,
 			},
+			{
+				Type:   mount.TypeBind,
+				Source: "/var/run/docker.sock",
+				Target: "/var/run/docker.sock",
+			},
 		},
 	}, nil, "")
 
@@ -162,7 +215,7 @@ func startContainer(imageName string, done chan bool, name string, descriptor st
 
 	loggerNoHearder := log.New(os.Stdout, "", 0)
 
-	if p.output {
+	if p.User.Output {
 		// Rolling output of the container logs
 		go func(start time.Time, exit chan bool) {
 			logMap := make(map[string]string)
@@ -217,7 +270,7 @@ func startContainer(imageName string, done chan bool, name string, descriptor st
 			}
 		}(startedAt, exitCh)
 	}
-	defer logAllFromContainer(resp.ID, ef, done, p)
+	defer logAllFromContainer(resp.ID, ef, done, p, logger)
 	if err := cli.ContainerStart(context.Background(), resp.ID, types.ContainerStartOptions{}); err != nil {
 		panic(err)
 	}
@@ -226,27 +279,27 @@ func startContainer(imageName string, done chan bool, name string, descriptor st
 
 	select {
 	case err := <-errCh:
-		if p.output {
+		if p.User.Output {
 			exitCh <- true
 		}
 		if err != nil {
 			panic(err)
 		}
 	case <-statusCh:
-		if p.output {
+		if p.User.Output {
 			exitCh <- true
 		}
 	}
 }
 
-func logAllFromContainer(id string, ef util.ExchangeFolder, done chan bool, p ContainerParam) {
-	if p.output {
+func logAllFromContainer(id string, ef util.ExchangeFolder, done chan bool, p *CreateParams, logger *log.Logger) {
+	if p.User.Output {
 		out, err := cli.ContainerLogs(context.Background(), id, types.ContainerLogsOptions{ShowStdout: true, ShowStderr: true})
 		if err != nil {
 			panic(err)
 		}
 
-		logFile, err := ContainerLog(ef, p.file)
+		logFile, err := ContainerLog(ef, p.User.File)
 		if err != nil {
 			panic(err)
 		}
@@ -256,7 +309,7 @@ func logAllFromContainer(id string, ef util.ExchangeFolder, done chan bool, p Co
 		if err != nil {
 			panic(err)
 		}
-		logger.Printf(LOG_CONTAINER_LOG_WRITTEN, logFile.Name())
+		logger.Printf(message.LOG_CONTAINER_LOG_WRITTEN, logFile.Name())
 	}
 	// We are done!
 	done <- true
@@ -294,20 +347,20 @@ func getImages() []types.ImageSummary {
 	return images
 }
 
-// imagePull pulls the image corresponding to th given name
+// ImagePull pulls the image corresponding to th given name
 // and wait for the download to be completed.
 //
 // The completion of the download will be notified using the chanel
-func imagePull(taggedName string, done chan bool) {
-	if img := imageExistsByName(starterImageName); !img {
+func ImagePull(taggedName string, done chan bool, logger *log.Logger) {
+	if img := imageExistsByName(taggedName); !img {
 		if _, err := cli.ImagePull(context.Background(), taggedName, types.ImagePullOptions{}); err != nil {
 			panic(err)
 		}
 		for {
-			logger.Printf(LOG_WAITING_DOWNLOAD)
+			logger.Printf(message.LOG_WAITING_DOWNLOAD)
 			time.Sleep(500 * time.Millisecond)
-			if img := imageExistsByName(starterImageName); img {
-				logger.Printf(LOG_DOWNLOAD_COMPLETED)
+			if img := imageExistsByName(taggedName); img {
+				logger.Printf(message.LOG_DOWNLOAD_COMPLETED)
 				done <- true
 				return
 			}
@@ -316,138 +369,38 @@ func imagePull(taggedName string, done chan bool) {
 	done <- true
 }
 
-// Parameters required to connect with the docker API; in creation mode
-type DockerCreateParams struct {
-	// The url of the repository containing the environment descriptor
-	url string
-	// The name of the environment descriptor
-	file string
-	// The docker certificates location
-	cert string
-	// The docker host
-	host string
-	// The public SSH key used to log on the created environment
-	publicSSHKey string
-	// The private SSH key used to log on the created environment
-	privateSSHKey string
-	// The installer container parameters
-	container ContainerParam
-}
-
-// Parameters required to connect with the docker API; in update mode
-type DockerUpdateParams struct {
-	// The url of the repository containing the environment descriptor
-	url string
-	// The name of the environment descriptor
-	file string
-	// The docker certificates location
-	cert string
-	// The docker host
-	host string
-	// The installer container parameters
-	container ContainerParam
-}
-
-// Parameters required to connect with the docker API; in Check mode
-type DockerCheckParams struct {
-	// The url of the repository containing the environment descriptor
-	url string
-	// The name of the environment descriptor
-	file string
-	// The docker certificates location
-	cert string
-	// The docker host
-	host string
-	// The installer container parameters
-	container ContainerParam
-}
-
-type ContainerParam struct {
-	httpProxy  string
-	httpsProxy string
-	noProxy    string
-	paramFile  string
-	output     bool
-	file       string
-}
-
-// checkParams checks the coherence of the parameters received to deal with docker
-// using the flags and/or the environment variables
-func (n *DockerCreateParams) checkParams(c *kingpin.ParseContext) error {
-	logger.Printf("Creation of:%v\n", n.url)
-	logger.Printf("Lauched to run docker with cert:%v, on daemon:%v\n", n.cert, n.host)
-	checkDescriptor(n.url)
-
-	// The SSH public key always comes with the private
-	if n.privateSSHKey != "" && n.publicSSHKey == "" {
-		logger.Fatal(fmt.Errorf(ERROR_REQUIRED_SSH_PUBLIC))
+func getHttpProxy(param string, logger *log.Logger) string {
+	if param == "" {
+		s := os.Getenv(envHttpsProxy)
+		logger.Printf(message.LOG_GETTING_HTTP_PROXY, s)
+		return s
 	}
+	return param
+}
 
-	if n.privateSSHKey == "" && n.publicSSHKey != "" {
-		logger.Fatal(fmt.Errorf(ERROR_REQUIRED_SSH_PRIVATE))
+func getHttpsProxy(param string, logger *log.Logger) string {
+	if param == "" {
+		s := os.Getenv(envHttpsProxy)
+		logger.Printf(message.LOG_GETTING_HTTPS_PROXY, s)
+		return s
 	}
-
-	logger.Printf(LOG_SSH_PUBLIC_CONFIRMATION, n.publicSSHKey)
-	logger.Printf(LOG_SSH_PRIVATE_CONFIRMATION, n.privateSSHKey)
-
-	checkDockerStuff(n.cert, n.host)
-	return nil
+	return param
 }
 
-// checkParams checks the coherence of the parameters received to deal with docker
-// using the flags and/or the environment variables
-func (n *DockerCheckParams) checkParams(c *kingpin.ParseContext) error {
-	logger.Printf("Checking of:%v\n", n.url)
-	logger.Printf("Lauched to run docker with cert:%v, on daemon:%v\n", n.cert, n.host)
-	checkDescriptor(n.url)
-	checkDockerStuff(n.cert, n.host)
-	return nil
-}
-
-// checkParams checks the coherence of the parameters received to deal with docker
-// using the flags and/or the environment variables
-func (n *DockerUpdateParams) checkParams(c *kingpin.ParseContext) error {
-	logger.Printf("Update of:%v\n", n.url)
-	checkDescriptor(n.url)
-	checkDockerStuff(n.cert, n.host)
-	return nil
-}
-
-func checkDescriptor(d string) {
-	// The environment descriptor is always required
-	if d == "" {
-		logger.Fatal(fmt.Errorf(ERROR_REQUIRED_CONFIG))
-	} else {
-		logger.Printf(LOG_CONFIG_CONFIRMATION, descriptorFlagKey, d)
+func getNoProxy(param string, logger *log.Logger) string {
+	if param == "" {
+		s := os.Getenv(envNoProxy)
+		logger.Printf(message.LOG_GETTING_NO_PROXY, s)
+		return s
 	}
-
+	return param
 }
 
-func checkDockerStuff(cert string, host string) {
-
-	// If we use flags then these 3 are required
-	if host != "" || cert != "" {
-		checkFlag(host, dockerHostFlagKey)
-		if cert != "" {
-			logger.Printf(LOG_FLAG_CONFIRMATION, certPathFlagKey, cert)
-		}
-		logger.Printf(LOG_FLAG_CONFIRMATION, dockerHostFlagKey, host)
-		logger.Printf(LOG_INIT_FLAGGED_DOCKER_CLIENT)
-		initFlaggedClient(host, cert)
-	} else {
-		// if the flags are not used then we will ensure
-		// that the environment variables are well defined
-		checkEnvVar(envDockerHost)
-		logger.Printf(LOG_INIT_DOCKER_CLIENT)
-		initClient()
-	}
-}
-
-func copyExtraParameters(file string, ef util.ExchangeFolder) {
+func copyExtraParameters(file string, ef util.ExchangeFolder, logger *log.Logger) {
 	// Check if the parameter file exist
 	if _, err := os.Stat(file); err != nil {
 		if os.IsNotExist(err) {
-			logger.Fatalf(ERROR_UNREACHABLE_PARAM_FILE, file)
+			logger.Fatalf(message.ERROR_UNREACHABLE_PARAM_FILE, file)
 		}
 	}
 
@@ -460,4 +413,18 @@ func copyExtraParameters(file string, ef util.ExchangeFolder) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func ContainerLog(ef util.ExchangeFolder, fileName string) (*os.File, error) {
+	var file string
+	if fileName == "" {
+		file = filepath.Join(ef.Output.Path(), DefaultContainerLogFileName)
+	} else {
+		file = filepath.Join(ef.Output.Path(), fileName)
+	}
+	f, e := os.Create(file)
+	if e != nil {
+		return nil, e
+	}
+	return f, nil
 }
