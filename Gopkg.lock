@@ -77,15 +77,18 @@
   version = "v0.3.3"
 
 [[projects]]
+  branch = "master"
   name = "github.com/ekara-platform/engine"
   packages = [
     ".",
     "ansible",
     "component",
+    "component/scm",
+    "component/scm/file",
+    "component/scm/git",
     "util"
   ]
-  revision = "1cbf9f23c8c35167de961dd593fe926b5e526eb7"
-  version = "1.0.0-beta1"
+  revision = "937f577c994b74c30a3cad70f493aca0acdb62e8"
 
 [[projects]]
   branch = "master"
@@ -231,7 +234,7 @@
     "ssh/agent",
     "ssh/knownhosts"
   ]
-  revision = "c05e17bb3b2dca130fc919668a96b4bec9eb9442"
+  revision = "a29dc8fdc73485234dbef99ebedb95d2eced08de"
 
 [[projects]]
   branch = "master"
@@ -242,7 +245,7 @@
     "internal/socks",
     "proxy"
   ]
-  revision = "4829fb13d2c62012c17688fa7f629f371014946d"
+  revision = "9ce7a6920f093fc0b908c4a5f66ae049110f417e"
 
 [[projects]]
   branch = "master"
@@ -252,7 +255,7 @@
     "unix",
     "windows"
   ]
-  revision = "9f0b1ff7b46a4014ddb5d4bdb6602a43b882cb27"
+  revision = "d89cdac9e8725f2aefce25fcbfef41134c9ad412"
 
 [[projects]]
   name = "gopkg.in/alecthomas/kingpin.v2"
@@ -335,6 +338,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "d5cea0e467deaa6bd6d32da355151d9416bca4e6015b1ab7a3eea2eadff57591"
+  inputs-digest = "ee81716c9b88f58fcbf7a17a405796f2f10f0c289a8cce313907fff5da5338db"
   solver-name = "gps-cdcl"
   solver-version = 1
