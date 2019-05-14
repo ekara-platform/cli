@@ -37,3 +37,6 @@ proxy/proxy_env.yml
 
 # Output content
 out*/
+
+# VS code
+.vscode/
