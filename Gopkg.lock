@@ -32,21 +32,6 @@
   version = "v0.4.12"
 
 [[projects]]
-  branch = "master"
-  name = "github.com/alecthomas/template"
-  packages = [
-    ".",
-    "parse"
-  ]
-  revision = "a0175ee3bccc567396460bf5acd36800cb10c49c"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/alecthomas/units"
-  packages = ["."]
-  revision = "2efee857e7cfd4f3d0138cc3cbb1b4966962b93a"
-
-[[projects]]
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
   revision = "8991bc29aa16c548c550c7ff78260e27b9ab7c73"
@@ -88,13 +73,13 @@
     "component/scm/git",
     "util"
   ]
-  revision = "cb344011f861b017b21e6e228be6b2f26f6de3d1"
+  revision = "8619282e2fede1313925a247d50610ebe7936ac0"
 
 [[projects]]
   branch = "master"
   name = "github.com/ekara-platform/model"
   packages = ["."]
-  revision = "7fb1e74df17ce950c4c5aa952f1d1549515a47f4"
+  revision = "756a4067a38cc11a3d4e9e2fbf10b59bf51e27b9"
 
 [[projects]]
   name = "github.com/emirpasic/gods"
@@ -258,12 +243,6 @@
   revision = "d89cdac9e8725f2aefce25fcbfef41134c9ad412"
 
 [[projects]]
-  name = "gopkg.in/alecthomas/kingpin.v2"
-  packages = ["."]
-  revision = "947dcec5ba9c011838740e680966fd7087a71d0d"
-  version = "v2.2.6"
-
-[[projects]]
   name = "gopkg.in/src-d/go-billy.v4"
   packages = [
     ".",
@@ -338,6 +317,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "ee81716c9b88f58fcbf7a17a405796f2f10f0c289a8cce313907fff5da5338db"
+  inputs-digest = "471e26b0dec0e4af5a31cd0c8601187375b5e852e101824546fd672f34cc3856"
   solver-name = "gps-cdcl"
   solver-version = 1

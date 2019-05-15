@@ -30,13 +30,8 @@ func (d DaemonParams) checkAndLog(logger *log.Logger) error {
 		logger.Printf(message.LOG_INIT_FLAGGED_DOCKER_CLIENT)
 		initFlaggedClient(d.Host, d.Cert)
 	} else {
-		// if the flags are not used then we will ensure
-		// that the environment variables are well defined
-		if e := checkEnvVar(envDockerHost); e != nil {
-			return e
-		}
 		logger.Printf(message.LOG_INIT_DOCKER_CLIENT)
-		initClient()
+		initEnvClient()
 	}
 	return nil
 }

@@ -9,14 +9,15 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
 
 	"golang.org/x/net/context"
-	_ "gopkg.in/alecthomas/kingpin.v2"
 
 	"docker.io/go-docker"
+	"docker.io/go-docker/api"
 	"docker.io/go-docker/api/types"
 	"docker.io/go-docker/api/types/container"
 	"docker.io/go-docker/api/types/mount"
@@ -31,6 +32,8 @@ import (
 var cli docker.Client
 
 const (
+	DefaultWindowsDockerHost    string = "npipe:////./pipe/docker_engine"
+	DefaultUnixDockerHost       string = "npipe:////./pipe/docker_engine"
 	DefaultContainerLogFileName string = "installer.log"
 	envHttpProxy                string = "HTTP_PROXY"
 	envHttpsProxy               string = "HTTPS_PROXY"
@@ -65,7 +68,6 @@ func (c CreateParams) CheckAndLog(logger *log.Logger) error {
 }
 func checkEnvVar(key string) error {
 	if os.Getenv(key) == "" {
-
 		return fmt.Errorf(message.ERROR_REQUIRED_ENV, key)
 	}
 	return nil
@@ -79,8 +81,40 @@ func checkFlag(val string, flagKey string) error {
 }
 
 // initClient initializes the docker client using the environment variables
-func initClient() {
-	c, err := docker.NewEnvClient()
+func initEnvClient() {
+	var client *http.Client
+	if dockerCertPath := os.Getenv("DOCKER_CERT_PATH"); dockerCertPath != "" {
+		options := tlsconfig.Options{
+			CAFile:             filepath.Join(dockerCertPath, "ca.pem"),
+			CertFile:           filepath.Join(dockerCertPath, "cert.pem"),
+			KeyFile:            filepath.Join(dockerCertPath, "key.pem"),
+			InsecureSkipVerify: os.Getenv("DOCKER_TLS_VERIFY") == "",
+		}
+		tlsc, err := tlsconfig.Client(options)
+		if err != nil {
+			panic(err)
+		}
+
+		client = &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: tlsc,
+			},
+			CheckRedirect: docker.CheckRedirect,
+		}
+	}
+	host := os.Getenv("DOCKER_HOST")
+	if host == "" {
+		if runtime.GOOS == "windows" {
+			host = DefaultWindowsDockerHost
+		} else {
+			host = DefaultUnixDockerHost
+		}
+	}
+	version := os.Getenv("DOCKER_API_VERSION")
+	if version == "" {
+		version = api.DefaultVersion
+	}
+	c, err := docker.NewClient(host, version, client, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -89,7 +123,6 @@ func initClient() {
 
 // initFlaggedClient initializes the docker client using the flaged values
 func initFlaggedClient(host string, cert string) {
-
 	var err error
 	var c *docker.Client
 	if cert != "" {
