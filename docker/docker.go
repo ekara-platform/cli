@@ -33,7 +33,7 @@ var cli docker.Client
 
 const (
 	DefaultWindowsDockerHost    string = "npipe:////./pipe/docker_engine"
-	DefaultUnixDockerHost       string = "npipe:////./pipe/docker_engine"
+	DefaultUnixDockerHost       string = "unix:///var/run/docker.sock"
 	DefaultContainerLogFileName string = "installer.log"
 	envHttpProxy                string = "HTTP_PROXY"
 	envHttpsProxy               string = "HTTPS_PROXY"
