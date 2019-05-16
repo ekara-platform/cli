@@ -88,13 +88,13 @@
     "component/scm/git",
     "util"
   ]
-  revision = "937f577c994b74c30a3cad70f493aca0acdb62e8"
+  revision = "8619282e2fede1313925a247d50610ebe7936ac0"
 
 [[projects]]
   branch = "master"
   name = "github.com/ekara-platform/model"
   packages = ["."]
-  revision = "ae6175965396c3ddf59e93e681499eb9dcdbc581"
+  revision = "756a4067a38cc11a3d4e9e2fbf10b59bf51e27b9"
 
 [[projects]]
   name = "github.com/emirpasic/gods"
