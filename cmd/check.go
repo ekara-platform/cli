@@ -19,7 +19,7 @@ var checkCmd = &cobra.Command{
 		logger.Printf(message.LOG_CHECKING_FROM, cr.Descriptor.Url)
 		ef := folder.CreateEF(CheckExchangeFolder, logger)
 		cr.User.Output = true
-		starterStart(*ef, "check", cr.Descriptor.Url, cr.Descriptor.File, engine.ActionCheckID, cr)
+		starterStart(*ef, "check", cr.Descriptor, engine.ActionCheckID, cr)
 	},
 	PersistentPreRun:  showHeader,
 	PersistentPostRun: logDone,

@@ -12,7 +12,7 @@ import (
 func TestNoHost(t *testing.T) {
 	logger := log.New(os.Stdout, "Ekara CLI: ", log.Ldate|log.Ltime)
 
-	dp := DaemonParams{Host: ""}
+	dp := DaemonParams{Host: "http://github.com/dummy/organization"}
 	e := dp.checkAndLog(logger)
-	assert.NotNil(t, e)
+	assert.Nil(t, e)
 }

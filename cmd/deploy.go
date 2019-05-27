@@ -36,7 +36,7 @@ install the orchestrator and deploy stacks.`,
 				logger.Fatal(fmt.Errorf(message.ERROR_COPYING_SSH_PRIV, cr.Host.PrivateSSHKey))
 			}
 		}
-		starterStart(*ef, qName, cr.Descriptor.Url, cr.Descriptor.File, engine.ActionDeployID, cr)
+		starterStart(*ef, qName, cr.Descriptor, engine.ActionDeployID, cr)
 
 	},
 	PersistentPreRun:  showHeader,

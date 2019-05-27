@@ -15,6 +15,10 @@ type DescriptorParams struct {
 	File string
 	// The name of the parameters files
 	ParamFile string
+	// The login required to reach the descriptor
+	Login string
+	// The password required to reach the descriptor
+	Password string
 }
 
 func (d DescriptorParams) checkAndLog(logger *log.Logger) error {

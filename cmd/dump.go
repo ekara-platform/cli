@@ -19,7 +19,7 @@ var dumpCmd = &cobra.Command{
 		logger.Printf(message.LOG_DUMPING_FROM, cr.Descriptor.Url)
 		ef := folder.CreateEF(DUMP_EXCHANGE_FOLDER, logger)
 		cr.User.Output = true
-		starterStart(*ef, "dump", cr.Descriptor.Url, cr.Descriptor.File, engine.ActionDumpID, cr)
+		starterStart(*ef, "dump", cr.Descriptor, engine.ActionDumpID, cr)
 	},
 	PersistentPreRun:  showHeader,
 	PersistentPostRun: logDone,

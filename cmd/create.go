@@ -34,7 +34,7 @@ var createCmd = &cobra.Command{
 				logger.Fatal(fmt.Errorf(message.ERROR_COPYING_SSH_PRIV, cr.Host.PrivateSSHKey))
 			}
 		}
-		starterStart(*ef, qName, cr.Descriptor.Url, cr.Descriptor.File, engine.ActionCreateID, cr)
+		starterStart(*ef, qName, cr.Descriptor, engine.ActionCreateID, cr)
 	},
 	Args: cobra.ExactArgs(1),
 }

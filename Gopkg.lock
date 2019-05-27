@@ -73,13 +73,13 @@
     "component/scm/git",
     "util"
   ]
-  revision = "7371e669f8eb00eb5078f1b2438a66d7edf00d39"
+  revision = "3495fd8b5f507fa0957992defe0ea6d6c489aa8c"
 
 [[projects]]
   branch = "master"
   name = "github.com/ekara-platform/model"
   packages = ["."]
-  revision = "9979ed03e776ebd599c3c5c4c08a91a0251ab237"
+  revision = "a0f4cd3a7cc99e510fc907c00ff0281940a5921a"
 
 [[projects]]
   name = "github.com/emirpasic/gods"
@@ -93,6 +93,21 @@
   ]
   revision = "1615341f118ae12f353cc8a983f35b584342c9b3"
   version = "v1.12.0"
+
+[[projects]]
+  name = "github.com/gobwas/glob"
+  packages = [
+    ".",
+    "compiler",
+    "match",
+    "syntax",
+    "syntax/ast",
+    "syntax/lexer",
+    "util/runes",
+    "util/strings"
+  ]
+  revision = "5ccd90ef52e1e632236f7326478d4faa74f99438"
+  version = "v0.2.3"
 
 [[projects]]
   name = "github.com/gogo/protobuf"

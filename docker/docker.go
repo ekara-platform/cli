@@ -199,12 +199,14 @@ func StopContainerById(id string, done chan bool, logger *log.Logger) {
 // Once built the container will be started.
 // The method will wait until the container is started and
 // will notify it using the chanel
-func StartContainer(imageName string, done chan bool, name string, descriptor string, file string, ef util.ExchangeFolder, p *CreateParams, action engine.ActionID, logger *log.Logger) {
+func StartContainer(imageName string, done chan bool, name string, param DescriptorParams, ef util.ExchangeFolder, p *CreateParams, action engine.ActionID, logger *log.Logger) {
 
 	envVar := []string{}
-	envVar = append(envVar, util.StarterEnvVariableKey+"="+descriptor)
-	envVar = append(envVar, util.StarterEnvNameVariableKey+"="+file)
+	envVar = append(envVar, util.StarterEnvVariableKey+"="+param.Url)
+	envVar = append(envVar, util.StarterEnvNameVariableKey+"="+param.File)
 	envVar = append(envVar, util.StarterEnvQualifiedVariableKey+"="+name)
+	envVar = append(envVar, util.StarterEnvLoginVariableKey+"="+param.Login)
+	envVar = append(envVar, util.StarterEnvPasswordVariableKey+"="+param.Password)
 
 	envVar = append(envVar, util.ActionEnvVariableKey+"="+action.String())
 	envVar = append(envVar, "http_proxy="+getHttpProxy(p.Installer.HttpProxy, logger))
