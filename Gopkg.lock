@@ -68,18 +68,16 @@
     ".",
     "ansible",
     "component",
-    "component/scm",
-    "component/scm/file",
-    "component/scm/git",
     "util"
   ]
-  revision = "3495fd8b5f507fa0957992defe0ea6d6c489aa8c"
+  revision = "ff1ee0d09d36d892459896868ab6a62a1b1bae4b"
+  
 
 [[projects]]
   branch = "master"
   name = "github.com/ekara-platform/model"
   packages = ["."]
-  revision = "a0f4cd3a7cc99e510fc907c00ff0281940a5921a"
+  revision = "88759bf9322165097b8f3494181551c16363dae0"
 
 [[projects]]
   name = "github.com/emirpasic/gods"
@@ -93,21 +91,6 @@
   ]
   revision = "1615341f118ae12f353cc8a983f35b584342c9b3"
   version = "v1.12.0"
-
-[[projects]]
-  name = "github.com/gobwas/glob"
-  packages = [
-    ".",
-    "compiler",
-    "match",
-    "syntax",
-    "syntax/ast",
-    "syntax/lexer",
-    "util/runes",
-    "util/strings"
-  ]
-  revision = "5ccd90ef52e1e632236f7326478d4faa74f99438"
-  version = "v0.2.3"
 
 [[projects]]
   name = "github.com/gogo/protobuf"
@@ -181,8 +164,8 @@
 [[projects]]
   name = "github.com/spf13/cobra"
   packages = ["."]
-  revision = "ef82de70bb3f60c65fb8eebacbb2d122ef517385"
-  version = "v0.0.3"
+  revision = "67fc4837d267bc9bfd6e47f77783fcc3dffc68de"
+  version = "v0.0.4"
 
 [[projects]]
   name = "github.com/spf13/pflag"
@@ -234,7 +217,7 @@
     "ssh/agent",
     "ssh/knownhosts"
   ]
-  revision = "a29dc8fdc73485234dbef99ebedb95d2eced08de"
+  revision = "f99c8df09eb5bff426315721bfa5f16a99cad32c"
 
 [[projects]]
   branch = "master"
@@ -245,17 +228,16 @@
     "internal/socks",
     "proxy"
   ]
-  revision = "9ce7a6920f093fc0b908c4a5f66ae049110f417e"
+  revision = "1492cefac77f61bc789c00f41ead8f8d7307cd21"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
   packages = [
     "cpu",
-    "unix",
     "windows"
   ]
-  revision = "d89cdac9e8725f2aefce25fcbfef41134c9ad412"
+  revision = "7fc4e5ec1444df20dd195ae7c3bbfcd7114d3faa"
 
 [[projects]]
   name = "gopkg.in/src-d/go-billy.v4"
@@ -332,6 +314,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "471e26b0dec0e4af5a31cd0c8601187375b5e852e101824546fd672f34cc3856"
+  inputs-digest = "8646fc4c8747514dd5fe2a33825dc6f47133c6b62c8bce989e6112b5990da855"
   solver-name = "gps-cdcl"
   solver-version = 1

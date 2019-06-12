@@ -27,7 +27,9 @@ var (
 )
 
 const (
-	HEADER_PARSING_FOLDER string = "parsingGName"
+	//HeaderParsingFolder is th folder name where the header name will be parsed.
+	// It's supposed to be deleted once the parsing is over.
+	HeaderParsingFolder string = "parsingGName"
 )
 
 func Execute(l *log.Logger) {
@@ -122,15 +124,16 @@ func starterStart(ef util.ExchangeFolder, name string, descParam docker.Descript
 // parseHeader parses the environment descriptor in order to get the qualified
 // environement name
 func parseHeader() string {
-	ef := folder.CreateEF(HEADER_PARSING_FOLDER, logger)
+	ef := folder.CreateEF(HeaderParsingFolder, logger)
 	defer ef.Delete()
 
 	p, err := ansible.ParseParams(cr.Descriptor.ParamFile)
 	if err != nil {
 		logger.Fatalf(message.ERROR_UNREACHABLE_PARAM_FILE, err.Error())
 	}
+	vars := model.CreateContext(p)
 
-	engine, err := engine.Create(logger, ef.Output.Path(), p)
+	engine, err := engine.Create(logger, ef.Output.Path(), vars)
 	if err != nil {
 		ef.Delete()
 		logger.Fatalf(message.ERROR_CREATING_EKARA_ENGINE, err.Error())
@@ -186,7 +189,7 @@ type (
 		name                 string
 		user                 string
 		password             string
-		cliparams            ansible.ParamContent
+		templateContext      *model.TemplateContext
 		ekaraError           error
 	}
 )
@@ -231,13 +234,13 @@ func (lC cliContext) Location() string {
 	return lC.locationContent
 }
 
-//HttpProxy implements the corresponding method in LaunchContext for testing purposes
-func (lC cliContext) HttpProxy() string {
+//HTTPProxy implements the corresponding method in LaunchContext for testing purposes
+func (lC cliContext) HTTPProxy() string {
 	return ""
 }
 
-//HttpsProxy implements the corresponding method in LaunchContext for testing purposes
-func (lC cliContext) HttpsProxy() string {
+//HTTPSProxy implements the corresponding method in LaunchContext for testing purposes
+func (lC cliContext) HTTPSProxy() string {
 	return ""
 }
 
@@ -246,19 +249,19 @@ func (lC cliContext) NoProxy() string {
 	return ""
 }
 
-//SshPublicKey implements the corresponding method in LaunchContext for testing purposes
-func (lC cliContext) SshPublicKey() string {
+//SSHPublicKey implements the corresponding method in LaunchContext for testing purposes
+func (lC cliContext) SSHPublicKey() string {
 	return lC.sshPublicKeyContent
 }
 
-//SshPrivateKey implements the corresponding method in LaunchContext for testing purposes
-func (lC cliContext) SshPrivateKey() string {
+//SSHPrivateKey implements the corresponding method in LaunchContext for testing purposes
+func (lC cliContext) SSHPrivateKey() string {
 	return lC.sshPrivateKeyContent
 }
 
-//Cliparams implements the corresponding method in LaunchContext for testing purposes
-func (lC cliContext) Cliparams() ansible.ParamContent {
-	return lC.cliparams
+//TemplateContext implements the corresponding method in LaunchContext for testing purposes
+func (lC cliContext) TemplateContext() *model.TemplateContext {
+	return lC.templateContext
 }
 
 //Error implements the corresponding method in LaunchContext for testing purposes
