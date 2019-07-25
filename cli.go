@@ -21,4 +21,5 @@ func main() {
 	}()
 	logger := log.New(os.Stdout, "Ekara CLI: ", log.Ldate|log.Ltime)
 	cmd.Execute(logger)
+
 }

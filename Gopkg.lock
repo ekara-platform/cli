@@ -27,9 +27,12 @@
 
 [[projects]]
   name = "github.com/Microsoft/go-winio"
-  packages = ["."]
-  revision = "1a8911d1ed007260465c3bfbbc785ac6915a0bb8"
-  version = "v0.4.12"
+  packages = [
+    ".",
+    "pkg/guid"
+  ]
+  revision = "a969fb018bd3439cc50861ce06796c40430e3a65"
+  version = "v0.4.13"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -62,7 +65,6 @@
   version = "v0.3.3"
 
 [[projects]]
-  branch = "master"
   name = "github.com/ekara-platform/engine"
   packages = [
     ".",
@@ -70,14 +72,14 @@
     "component",
     "util"
   ]
-  revision = "ff1ee0d09d36d892459896868ab6a62a1b1bae4b"
-  
+  revision = "1cbf9f23c8c35167de961dd593fe926b5e526eb7"
+  version = "1.0.0-beta1"
 
 [[projects]]
   branch = "master"
   name = "github.com/ekara-platform/model"
   packages = ["."]
-  revision = "88759bf9322165097b8f3494181551c16363dae0"
+  revision = "8c32d916d774e68bdfba7c4c98f4fb3d4bda21b7"
 
 [[projects]]
   name = "github.com/emirpasic/gods"
@@ -164,8 +166,8 @@
 [[projects]]
   name = "github.com/spf13/cobra"
   packages = ["."]
-  revision = "67fc4837d267bc9bfd6e47f77783fcc3dffc68de"
-  version = "v0.0.4"
+  revision = "f2b07da1e2c38d5f12845a4f607e2e1018cbb1f5"
+  version = "v0.0.5"
 
 [[projects]]
   name = "github.com/spf13/pflag"
@@ -217,7 +219,7 @@
     "ssh/agent",
     "ssh/knownhosts"
   ]
-  revision = "f99c8df09eb5bff426315721bfa5f16a99cad32c"
+  revision = "4def268fd1a49955bfb3dda92fe3db4f924f2285"
 
 [[projects]]
   branch = "master"
@@ -228,16 +230,17 @@
     "internal/socks",
     "proxy"
   ]
-  revision = "1492cefac77f61bc789c00f41ead8f8d7307cd21"
+  revision = "da137c7871d730100384dbcf36e6f8fa493aef5b"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
   packages = [
     "cpu",
+    "unix",
     "windows"
   ]
-  revision = "7fc4e5ec1444df20dd195ae7c3bbfcd7114d3faa"
+  revision = "fae7ac547cb717d141c433a2a173315e216b64c4"
 
 [[projects]]
   name = "gopkg.in/src-d/go-billy.v4"
@@ -248,8 +251,8 @@
     "osfs",
     "util"
   ]
-  revision = "982626487c60a5252e7d0b695ca23fb0fa2fd670"
-  version = "v4.3.0"
+  revision = "711f3aa5b30ce9bbc7d708792ca98b913cbbd4a5"
+  version = "v4.3.1"
 
 [[projects]]
   name = "gopkg.in/src-d/go-git.v4"
@@ -296,8 +299,8 @@
     "utils/merkletrie/internal/frame",
     "utils/merkletrie/noder"
   ]
-  revision = "aa6f288c256ff8baf8a7745546a9752323dc0d89"
-  version = "v4.11.0"
+  revision = "f9a30199e7083bdda8adad3a4fa2ec42d25c1fdb"
+  version = "v4.12.0"
 
 [[projects]]
   name = "gopkg.in/warnings.v0"
@@ -314,6 +317,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "8646fc4c8747514dd5fe2a33825dc6f47133c6b62c8bce989e6112b5990da855"
+  inputs-digest = "39d4dc8041375f7d7d9c9febb7001ff865f5faafb88e700f5175507dcaabb436"
   solver-name = "gps-cdcl"
   solver-version = 1
