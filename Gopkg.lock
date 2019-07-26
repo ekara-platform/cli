@@ -71,6 +71,9 @@
     ".",
     "ansible",
     "component",
+    "component/scm",
+    "component/scm/file",
+    "component/scm/git",
     "util"
   ]
   revision = "82c3eb9a3cd5cf613088c847965518570521ad52"
@@ -95,6 +98,21 @@
   version = "v1.12.0"
 
 [[projects]]
+  name = "github.com/gobwas/glob"
+  packages = [
+    ".",
+    "compiler",
+    "match",
+    "syntax",
+    "syntax/ast",
+    "syntax/lexer",
+    "util/runes",
+    "util/strings"
+  ]
+  revision = "5ccd90ef52e1e632236f7326478d4faa74f99438"
+  version = "v0.2.3"
+
+[[projects]]
   name = "github.com/gogo/protobuf"
   packages = ["proto"]
   revision = "100ba4e885062801d56799d78530b73b178a78f3"
@@ -115,14 +133,20 @@
 [[projects]]
   name = "github.com/kevinburke/ssh_config"
   packages = ["."]
-  revision = "81db2a75821ed34e682567d48be488a1c3121088"
-  version = "0.5"
+  revision = "6cfae18c12b8934b1afba3ce8159476fdef666ba"
+  version = "1.0"
 
 [[projects]]
   name = "github.com/mitchellh/go-homedir"
   packages = ["."]
   revision = "af06845cf3004701891bf4fdb884bfe4920b3727"
   version = "v1.1.0"
+
+[[projects]]
+  name = "github.com/oklog/ulid"
+  packages = ["."]
+  revision = "be3bccf06dda9a40aa6800c4736ac77f2fef987f"
+  version = "v2.0.2"
 
 [[projects]]
   name = "github.com/opencontainers/go-digest"
@@ -138,12 +162,6 @@
   ]
   revision = "d60099175f88c47cd379c4738d158884749ed235"
   version = "v1.0.1"
-
-[[projects]]
-  name = "github.com/pelletier/go-buffruneio"
-  packages = ["."]
-  revision = "c37440a7cf42ac63b919c752ca73a85067e05992"
-  version = "v0.2.0"
 
 [[projects]]
   name = "github.com/pkg/errors"
@@ -230,7 +248,7 @@
     "internal/socks",
     "proxy"
   ]
-  revision = "da137c7871d730100384dbcf36e6f8fa493aef5b"
+  revision = "ca1201d0de80cfde86cb01aea620983605dfe99b"
 
 [[projects]]
   branch = "master"
@@ -240,7 +258,7 @@
     "unix",
     "windows"
   ]
-  revision = "fae7ac547cb717d141c433a2a173315e216b64c4"
+  revision = "94b544f455efde7a614f75a3e43a2a65bce93113"
 
 [[projects]]
   name = "gopkg.in/src-d/go-billy.v4"
@@ -317,6 +335,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "39d4dc8041375f7d7d9c9febb7001ff865f5faafb88e700f5175507dcaabb436"
+  inputs-digest = "ebe161cf0720b8a275f2e6bc26eeccb5c1652030c91119c6cc410e7f799bd7c6"
   solver-name = "gps-cdcl"
   solver-version = 1

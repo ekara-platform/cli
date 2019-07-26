@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	DUMP_EXCHANGE_FOLDER string = "dump"
+	dumpExchangeFolder string = "dump"
 )
 
 var dumpCmd = &cobra.Command{
@@ -17,7 +17,7 @@ var dumpCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 
 		logger.Printf(message.LOG_DUMPING_FROM, cr.Descriptor.Url)
-		ef := folder.CreateEF(DUMP_EXCHANGE_FOLDER, logger)
+		ef := folder.CreateEF(dumpExchangeFolder, logger)
 		cr.User.Output = true
 		starterStart(*ef, "dump", cr.Descriptor, engine.ActionDumpID, cr)
 	},

@@ -156,6 +156,7 @@ func parseHeader() string {
 	return qName
 }
 
+// Copy copies the file identified with the "src" path to the "dst" path.
 func Copy(src, dst string) error {
 	in, err := os.Open(src)
 	if err != nil {
@@ -234,19 +235,9 @@ func (lC cliContext) Location() string {
 	return lC.locationContent
 }
 
-//HTTPProxy implements the corresponding method in LaunchContext for testing purposes
-func (lC cliContext) HTTPProxy() string {
-	return ""
-}
-
-//HTTPSProxy implements the corresponding method in LaunchContext for testing purposes
-func (lC cliContext) HTTPSProxy() string {
-	return ""
-}
-
-//NoProxy implements the corresponding method in LaunchContext for testing purposes
-func (lC cliContext) NoProxy() string {
-	return ""
+//Proxy returns launch context proxy settings
+func (lC cliContext) Proxy() model.Proxy {
+	return model.Proxy{}
 }
 
 //SSHPublicKey implements the corresponding method in LaunchContext for testing purposes
