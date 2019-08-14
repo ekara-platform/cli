@@ -35,9 +35,9 @@ const (
 	DefaultWindowsDockerHost    string = "npipe:////./pipe/docker_engine"
 	DefaultUnixDockerHost       string = "unix:///var/run/docker.sock"
 	DefaultContainerLogFileName string = "installer.log"
-	envHttpProxy                string = "HTTP_PROXY"
-	envHttpsProxy               string = "HTTPS_PROXY"
-	envNoProxy                  string = "NO_PROXY"
+	envHttpProxy                string = "http_proxy"
+	envHttpsProxy               string = "https_proxy"
+	envNoProxy                  string = "no_proxy"
 )
 
 type CreateParams struct {
