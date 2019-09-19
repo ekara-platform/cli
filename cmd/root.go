@@ -1,261 +1,147 @@
 package cmd
 
 import (
-	"bufio"
 	"fmt"
-	"io"
+	"github.com/ekara-platform/cli/docker"
 	"log"
 	"os"
 
-	"strings"
-
-	"github.com/ekara-platform/cli/docker"
-	"github.com/ekara-platform/cli/folder"
-	"github.com/ekara-platform/cli/header"
-	"github.com/ekara-platform/cli/image"
-	"github.com/ekara-platform/cli/message"
+	"github.com/ekara-platform/cli/common"
 	"github.com/ekara-platform/engine"
-	"github.com/ekara-platform/engine/ansible"
 	"github.com/ekara-platform/engine/util"
 	"github.com/ekara-platform/model"
 	"github.com/spf13/cobra"
 )
 
-var (
-	logger *log.Logger
-	cr     *docker.CreateParams
-)
-
 const (
-	//HeaderParsingFolder is th folder name where the header name will be parsed.
-	// It's supposed to be deleted once the parsing is over.
-	HeaderParsingFolder string = "parsingGName"
+	envHTTPProxy       string = "http_proxy"
+	envHTTPSProxy      string = "https_proxy"
+	envNoProxy         string = "no_proxy"
+	defaultLogFileName string = "installer.log"
+	defaultVarFileName string = "vars.yaml"
+	userExchangeFolder string = "out"
 )
 
-func Execute(l *log.Logger) {
-	logger = l
-
-	cr = &docker.CreateParams{}
-
-	addCreationFlags(deployCmd)
-	addSSHFlags(deployCmd)
-
-	addLightFlags(checkCmd, dumpCmd)
-
-	var rootCmd = &cobra.Command{}
-	rootCmd.AddCommand(deployCmd, checkCmd, dumpCmd, versionCmd)
-	deployCmd.AddCommand(createCmd, installCmd)
-	rootCmd.Execute()
-}
-
-func addCreationFlags(cs ...*cobra.Command) {
-	for _, c := range cs {
-		c.PersistentFlags().StringVarP(&cr.Descriptor.File, "descriptor", "d", model.DefaultDescriptorName, "The name of the environment descriptor, if missing we will look for the defaulted name.")
-		c.PersistentFlags().StringVarP(&cr.Descriptor.ParamFile, "param", "p", "", "Location of the parameters file that will be substitutable in the descriptor.")
-		c.PersistentFlags().StringVarP(&cr.Descriptor.Login, "user", "U", "", "User to log into the descriptor repository.")
-		c.PersistentFlags().StringVarP(&cr.Descriptor.Password, "password", "P", "", "Password to log into the descriptor repository.")
-		c.PersistentFlags().StringVarP(&cr.Daemon.Cert, "cert", "c", "", "Location of the docker certificates (optional, can be substituted by an environment variable).")
-		c.PersistentFlags().StringVarP(&cr.Daemon.Host, "host", "H", "", "URL of the docker host(optional, can be substituted by an environment variable).")
-		c.PersistentFlags().BoolVarP(&cr.User.Output, "logs", "l", false, "Allows to turn on the installer logs.")
-		c.PersistentFlags().StringVarP(&cr.User.File, "log-file", "L", "", "The output file where to write the logs, if missing the log content will be written in \""+docker.DefaultContainerLogFileName+"\".")
-
-		c.PersistentFlags().StringVar(&cr.Installer.HttpProxy, "http-proxy", "", "The http proxy(optional).")
-		c.PersistentFlags().StringVar(&cr.Installer.HttpsProxy, "https-proxy", "", "The https proxy(optional).")
-		c.PersistentFlags().StringVar(&cr.Installer.NoProxy, "no-proxy", "", "The no proxy(optional).")
-
-	}
-}
-
-func addLightFlags(cs ...*cobra.Command) {
-	for _, c := range cs {
-		c.PersistentFlags().StringVarP(&cr.Descriptor.File, "descriptor", "d", model.DefaultDescriptorName, "The name of the environment descriptor, if missing we will look for the defaulted name.")
-		c.PersistentFlags().StringVarP(&cr.Descriptor.ParamFile, "param", "p", "", "Location of the parameters file that will be substitutable in the descriptor.")
-		c.PersistentFlags().StringVarP(&cr.Descriptor.Login, "user", "U", "", "User to log into the descriptor repository.")
-		c.PersistentFlags().StringVarP(&cr.Descriptor.Password, "password", "P", "", "Password to log into the descriptor repository.")
-		c.PersistentFlags().StringVarP(&cr.Daemon.Cert, "cert", "c", "", "Location of the docker certificates (optional, can be substituted by an environment variable).")
-		c.PersistentFlags().StringVarP(&cr.Daemon.Host, "host", "H", "", "URL of the docker host(optional, can be substituted by an environment variable).")
-	}
-}
-
-func addSSHFlags(cs ...*cobra.Command) {
-	for _, c := range cs {
-		c.PersistentFlags().StringVar(&cr.Host.PublicSSHKey, "public-ssh", "", "Path to the public SSH key to be used for remote node access (if none given a key will be generated).")
-		c.PersistentFlags().StringVar(&cr.Host.PrivateSSHKey, "private-ssh", "", "Path to the private SSH key to be used for remote node access (if none given a key will be generated).")
-	}
-}
-
-func showHeader(cmd *cobra.Command, args []string) {
-	header.ShowHeader()
-	cr.Descriptor.Url = args[0]
-	if e := cr.CheckAndLog(logger); e != nil {
-		logger.Fatal(e)
-	}
-}
-
-func logDone(cmd *cobra.Command, args []string) {
-	logger.Println(message.LOG_COMMAND_COMPLETED)
-}
-
-func starterStart(ef util.ExchangeFolder, name string, descParam docker.DescriptorParams, action engine.ActionID, cp *docker.CreateParams) {
-	logger.Printf(message.LOG_GET_IMAGE)
-	done := make(chan bool, 1)
-	go docker.ImagePull(image.StarterImageName, done, logger)
-	<-done
-
-	if id, running := docker.ContainerRunningByImageName(image.StarterImageName); running {
-		reader := bufio.NewReader(os.Stdin)
-		fmt.Print(message.PROMPT_RESTART)
-		text, _ := reader.ReadString('\n')
-		if strings.TrimSpace(text) == "Y" {
-			done := make(chan bool, 1)
-			go docker.StopContainerById(id, done, logger)
-			<-done
-		} else {
-			logger.Printf(message.LOG_FAIL_ON_PROMPT_RESTART)
+var rootCmd = &cobra.Command{
+	Use:   "ekara",
+	Short: "Ekara is a lightweight platform for deploying cloud applications.",
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		info, e := os.Stdout.Stat()
+		if e != nil {
 			return
+		} else if (info.Mode() & os.ModeCharDevice) == os.ModeCharDevice {
+			if common.Flags.Logging.ShouldOutputLogs() {
+				common.Logger = log.New(os.Stdout, "CLI  > ", log.Ldate|log.Ltime)
+			}
+
+			// this comes from http://www.kammerl.de/ascii/AsciiSignature.php
+			// the font used id "standard"
+			fmt.Println(" _____ _                   ")
+			fmt.Println("| ____| | ____ _ _ __ __ _ ")
+			fmt.Println("|  _| | |/ / _` | '__/ _` |")
+			fmt.Println("| |___|   < (_| | | | (_| |")
+			fmt.Println(`|_____|_|\_\__,_|_|  \__,_|`)
+			if isDescriptorCommand(cmd, args) {
+				fmt.Println(args[0])
+			}
+			fmt.Println("")
 		}
-	}
-
-	done = make(chan bool, 1)
-	docker.StartContainer(image.StarterImageName, done, name, descParam, ef, cp, action, logger)
-	<-done
+	},
+	PersistentPostRun: func(cmd *cobra.Command, args []string) {
+		fmt.Println("Done")
+	},
 }
 
-// parseHeader parses the environment descriptor in order to get the qualified
-// environement name
-func parseHeader() string {
-	ef := folder.CreateEF(HeaderParsingFolder, logger)
-	defer ef.Delete()
+func isDescriptorCommand(cmd *cobra.Command, args []string) bool {
+	return len(args) > 0 && (cmd.Name() == "apply" || cmd.Name() == "dump" || cmd.Name() == "validate")
+}
 
-	p, err := ansible.ParseParams(cr.Descriptor.ParamFile)
+func init() {
+	// Proxy flags
+	rootCmd.PersistentFlags().StringVar(&common.Flags.Proxy.HTTP, "http-proxy", os.Getenv(envHTTPProxy), "HTTP proxy url")
+	rootCmd.PersistentFlags().StringVar(&common.Flags.Proxy.HTTPS, "https-proxy", os.Getenv(envHTTPSProxy), "HTTPS proxy url")
+	rootCmd.PersistentFlags().StringVar(&common.Flags.Proxy.Exclusions, "no-proxy", os.Getenv(envNoProxy), "Proxy exclusion(s)")
+
+	// Logging flags
+	rootCmd.PersistentFlags().BoolVar(&common.Flags.Logging.Verbose, "verbose", false, "Verbose standard output")
+	rootCmd.PersistentFlags().BoolVar(&common.Flags.Logging.VeryVerbose, "very-verbose", false, "Very verbose standard output")
+	rootCmd.PersistentFlags().StringVar(&common.Flags.Logging.File, "logfile", defaultLogFileName, "Installer logfile")
+
+	// Debug flags
+	rootCmd.PersistentFlags().BoolVar(&common.Flags.Debug, "debug", false, "Installer logfile")
+}
+
+// Execute launchs the adequate command
+func Execute() {
+	if err := rootCmd.Execute(); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+}
+
+func StopCurrentContainerIfRunning() {
+	if id, running := docker.ContainerRunningByImageName(starterImageName); running {
+		done := make(chan bool, 1)
+		go docker.StopContainerById(id, done)
+		<-done
+	}
+}
+
+func applyDescriptorFlags(cmd *cobra.Command) {
+	cmd.PersistentFlags().StringVarP(&common.Flags.Descriptor.File, "descriptor", "d", model.DefaultDescriptorName, "Name of the main environment descriptor")
+	cmd.PersistentFlags().StringVarP(&common.Flags.Descriptor.ParamFile, "vars", "v", checkDefaultVarFile(), "Path to the external variable file")
+	cmd.PersistentFlags().StringVarP(&common.Flags.Descriptor.Login, "user", "u", "", "Username for the main descriptor repository")
+	cmd.PersistentFlags().StringVarP(&common.Flags.Descriptor.Password, "password", "p", "", "Password for the main descriptor repository")
+}
+
+func checkDefaultVarFile() string {
+	if _, err := os.Stat(defaultVarFileName); !os.IsNotExist(err) {
+		return defaultVarFileName
+	}
+	return ""
+}
+
+func createEF(folder string) util.ExchangeFolder {
+	ef, e := util.CreateExchangeFolder(folder, "")
+	if e != nil {
+		common.Logger.Fatal(fmt.Errorf(common.ERROR_CREATING_EXCHANGE_FOLDER, folder))
+	}
+	e = ef.Create()
+	if e != nil {
+		common.Logger.Fatal(fmt.Errorf(common.ERROR_CREATING_EXCHANGE_FOLDER, e.Error()))
+	}
+	return ef
+}
+
+func initLocalEngine(workDir string, descriptorURL string) engine.Ekara {
+	var p model.Parameters
+	if common.Flags.Descriptor.ParamFile != "" {
+		var err error
+		p, err = model.ParseParameters(common.Flags.Descriptor.ParamFile)
+		if err != nil {
+			common.Logger.Fatalf(common.ERROR_UNREACHABLE_PARAM_FILE, err.Error())
+		}
+	} else {
+		p = model.Parameters{}
+	}
+
+	e, err := engine.Create(&cliContext{
+		ef:             createEF(userExchangeFolder),
+		logger:         common.Logger,
+		location:       descriptorURL,
+		descriptorName: common.Flags.Descriptor.File,
+		user:           common.Flags.Descriptor.Login,
+		password:       common.Flags.Descriptor.Password,
+		extVars:        p,
+	}, workDir)
 	if err != nil {
-		logger.Fatalf(message.ERROR_UNREACHABLE_PARAM_FILE, err.Error())
+		common.Logger.Fatalf(common.ERROR_CREATING_EKARA_ENGINE, err.Error())
 	}
-	vars := model.CreateContext(p)
 
-	engine, err := engine.Create(logger, ef.Output.Path(), vars)
+	err = e.Init()
 	if err != nil {
-		ef.Delete()
-		logger.Fatalf(message.ERROR_CREATING_EKARA_ENGINE, err.Error())
+		common.Logger.Fatalf(common.ERROR_INITIALIZING_EKARA_ENGINE, err.Error())
 	}
 
-	ctx := cliContext{
-		locationContent: cr.Descriptor.Url,
-		name:            cr.Descriptor.File,
-		user:            cr.Descriptor.Login,
-		password:        cr.Descriptor.Password,
-	}
-
-	err = engine.Init(ctx)
-	if err != nil {
-		ef.Delete()
-		logger.Fatalf(message.ERROR_INITIALIZING_EKARA_ENGINE, err.Error())
-	}
-	qName := engine.ComponentManager().Environment().QualifiedName().String()
-	logger.Printf(message.LOG_QUALIFIED_NAME, qName)
-	return qName
-}
-
-// Copy copies the file identified with the "src" path to the "dst" path.
-func Copy(src, dst string) error {
-	in, err := os.Open(src)
-	if err != nil {
-		return err
-	}
-	defer in.Close()
-
-	out, err := os.Create(dst)
-	if err != nil {
-		return err
-	}
-	defer out.Close()
-
-	_, err = io.Copy(out, in)
-	if err != nil {
-		return err
-	}
-	return out.Close()
-}
-
-type (
-	//cliContext simulates the LaunchContext for testing purposes
-	cliContext struct {
-		efolder              *util.ExchangeFolder
-		logger               *log.Logger
-		qualifiedNameContent string
-		locationContent      string
-		sshPublicKeyContent  string
-		sshPrivateKeyContent string
-		engine               engine.Engine
-		name                 string
-		user                 string
-		password             string
-		templateContext      *model.TemplateContext
-		ekaraError           error
-	}
-)
-
-//Name implements the corresponding method in LaunchContext for testing purposes
-func (lC cliContext) Name() string {
-	return lC.name
-}
-
-//User implements the corresponding method in LaunchContext for testing purposes
-func (lC cliContext) User() string {
-	return lC.user
-}
-
-//Password implements the corresponding method in LaunchContext for testing purposes
-func (lC cliContext) Password() string {
-	return lC.password
-}
-
-//Log implements the corresponding method in LaunchContext for testing purposes
-func (lC cliContext) Log() *log.Logger {
-	return lC.logger
-}
-
-//Ef implements the corresponding method in LaunchContext for testing purposes
-func (lC cliContext) Ef() *util.ExchangeFolder {
-	return lC.efolder
-}
-
-//Ekara implements the corresponding method in LaunchContext for testing purposes
-func (lC cliContext) Ekara() engine.Engine {
-	return lC.engine
-}
-
-//QualifiedName implements the corresponding method in LaunchContext for testing purposes
-func (lC cliContext) QualifiedName() string {
-	return lC.qualifiedNameContent
-}
-
-//Location implements the corresponding method in LaunchContext for testing purposes
-func (lC cliContext) Location() string {
-	return lC.locationContent
-}
-
-//Proxy returns launch context proxy settings
-func (lC cliContext) Proxy() model.Proxy {
-	return model.Proxy{}
-}
-
-//SSHPublicKey implements the corresponding method in LaunchContext for testing purposes
-func (lC cliContext) SSHPublicKey() string {
-	return lC.sshPublicKeyContent
-}
-
-//SSHPrivateKey implements the corresponding method in LaunchContext for testing purposes
-func (lC cliContext) SSHPrivateKey() string {
-	return lC.sshPrivateKeyContent
-}
-
-//TemplateContext implements the corresponding method in LaunchContext for testing purposes
-func (lC cliContext) TemplateContext() *model.TemplateContext {
-	return lC.templateContext
-}
-
-//Error implements the corresponding method in LaunchContext for testing purposes
-func (lC cliContext) Error() error {
-	return lC.ekaraError
+	return e
 }

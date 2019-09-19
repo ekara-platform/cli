@@ -12,18 +12,18 @@ import (
 //
 //*****************************************************************************
 
-var VersionString = "unset"
-var StarterImageName = "ekaraplatform/installer:latest"
-
-var versionCmd = &cobra.Command{
-	Use:   "version",
-	Short: "Returns the version details of the CLI.",
-	Run: func(cmd *cobra.Command, args []string) {
-		log.Println("CLI version details :")
-		log.Println("")
-		log.Printf("CLI version: %s\n", VersionString)
-		log.Println("")
-		log.Printf("Ekara installation based on the Docker image: %s\n", StarterImageName)
-		log.Println("")
-	},
+func init() {
+	rootCmd.AddCommand(versionCmd)
 }
+
+var (
+	versionString = "Unknown"
+	versionCmd = &cobra.Command{
+		Use:   "version",
+		Short: "Displays the version of Ekara.",
+		Run: func(cmd *cobra.Command, args []string) {
+			log.Printf("CLI executable version: %s\n", versionString)
+			log.Printf("Installer image: %s\n", starterImageName)
+		},
+	}
+)

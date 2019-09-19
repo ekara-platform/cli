@@ -1,4 +1,4 @@
-package docker
+package common
 
 import (
 	"log"
@@ -12,7 +12,7 @@ import (
 func TestNoSSH(t *testing.T) {
 	logger := log.New(os.Stdout, "Ekara CLI: ", log.Ldate|log.Ltime)
 
-	hp := HostParams{PublicSSHKey: "", PrivateSSHKey: ""}
+	hp := SSHFlags{PublicSSHKey: "", PrivateSSHKey: ""}
 	e := hp.checkAndLog(logger)
 	assert.Nil(t, e)
 }
@@ -20,7 +20,7 @@ func TestNoSSH(t *testing.T) {
 func TestSSHOkay(t *testing.T) {
 	logger := log.New(os.Stdout, "Ekara CLI: ", log.Ldate|log.Ltime)
 
-	hp := HostParams{PublicSSHKey: "content", PrivateSSHKey: "content"}
+	hp := SSHFlags{PublicSSHKey: "content", PrivateSSHKey: "content"}
 	e := hp.checkAndLog(logger)
 	assert.Nil(t, e)
 }
@@ -28,7 +28,7 @@ func TestSSHOkay(t *testing.T) {
 func TestSSHKoNoPrivate(t *testing.T) {
 	logger := log.New(os.Stdout, "Ekara CLI: ", log.Ldate|log.Ltime)
 
-	hp := HostParams{PublicSSHKey: "content", PrivateSSHKey: ""}
+	hp := SSHFlags{PublicSSHKey: "content", PrivateSSHKey: ""}
 	e := hp.checkAndLog(logger)
 	assert.NotNil(t, e)
 }
@@ -36,7 +36,7 @@ func TestSSHKoNoPrivate(t *testing.T) {
 func TestSSHKoNoPublic(t *testing.T) {
 	logger := log.New(os.Stdout, "Ekara CLI: ", log.Ldate|log.Ltime)
 
-	hp := HostParams{PublicSSHKey: "", PrivateSSHKey: "content"}
+	hp := SSHFlags{PublicSSHKey: "", PrivateSSHKey: "content"}
 	e := hp.checkAndLog(logger)
 	assert.NotNil(t, e)
 }
