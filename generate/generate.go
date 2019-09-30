@@ -5,20 +5,16 @@ import (
 	"os"
 
 	"text/template"
-
-	"github.com/ekara-platform/cli/image"
 )
 
+// Content is the data structure used for go:generate templating
 type Content struct {
-	Version   string
-	ImageName string
-	Count     uint
+	Version string
+	Count   uint
 }
 
 func main() {
-
 	c := Content{}
-	c.ImageName = image.StarterImageName
 	tag := os.Getenv("TRAVIS_TAG")
 	if len(tag) > 0 {
 		c.Version = tag
@@ -27,13 +23,13 @@ func main() {
 		if commit != "" {
 			c.Version = "Commit:" + commit
 		} else {
-			c.Version = "unset"
+			c.Version = "Unknown"
 		}
 	}
 
 	fmt.Printf("Generating the CLI version %s\n", c.Version)
 
-	w, err := os.Create("./cmd/version.go")
+	w, err := os.Create("cmd/version.go")
 	if err != nil {
 		panic(err)
 	}
@@ -48,5 +44,4 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
 }

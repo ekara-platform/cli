@@ -3,13 +3,13 @@ package docker
 import (
 	"bufio"
 	"fmt"
+	"github.com/ekara-platform/engine/action"
 	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -17,140 +17,51 @@ import (
 	"golang.org/x/net/context"
 
 	"docker.io/go-docker"
-	"docker.io/go-docker/api"
 	"docker.io/go-docker/api/types"
 	"docker.io/go-docker/api/types/container"
 	"docker.io/go-docker/api/types/mount"
 	"github.com/docker/go-connections/tlsconfig"
 
-	"github.com/ekara-platform/cli/message"
-	"github.com/ekara-platform/engine"
+	"github.com/ekara-platform/cli/common"
 	"github.com/ekara-platform/engine/util"
 )
 
 // The docker client used within the whole application
-var cli docker.Client
+var client *docker.Client
+var runningContainerId string
 
-const (
-	DefaultWindowsDockerHost    string = "npipe:////./pipe/docker_engine"
-	DefaultUnixDockerHost       string = "unix:///var/run/docker.sock"
-	DefaultContainerLogFileName string = "installer.log"
-	envHttpProxy                string = "http_proxy"
-	envHttpsProxy               string = "https_proxy"
-	envNoProxy                  string = "no_proxy"
-)
-
-type CreateParams struct {
-	Daemon     DaemonParams
-	Descriptor DescriptorParams
-	Installer  InstallerParams
-	Host       HostParams
-	User       UserParams
-}
-
-func (c CreateParams) CheckAndLog(logger *log.Logger) error {
-	if e := c.Daemon.checkAndLog(logger); e != nil {
-		return e
-	}
-	if e := c.Descriptor.checkAndLog(logger); e != nil {
-		return e
-	}
-	if e := c.Installer.checkAndLog(logger); e != nil {
-		return e
-	}
-	if e := c.Host.checkAndLog(logger); e != nil {
-		return e
-	}
-	if e := c.User.checkAndLog(logger); e != nil {
-		return e
-	}
-	return nil
-}
-func checkEnvVar(key string) error {
-	if os.Getenv(key) == "" {
-		return fmt.Errorf(message.ERROR_REQUIRED_ENV, key)
-	}
-	return nil
-}
-
-func checkFlag(val string, flagKey string) error {
-	if val == "" {
-		return fmt.Errorf(message.ERROR_REQUIRED_FLAG, flagKey)
-	}
-	return nil
-}
-
-// initClient initializes the docker client using the environment variables
-func initEnvClient() {
-	var client *http.Client
-	if dockerCertPath := os.Getenv("DOCKER_CERT_PATH"); dockerCertPath != "" {
-		options := tlsconfig.Options{
-			CAFile:             filepath.Join(dockerCertPath, "ca.pem"),
-			CertFile:           filepath.Join(dockerCertPath, "cert.pem"),
-			KeyFile:            filepath.Join(dockerCertPath, "key.pem"),
-			InsecureSkipVerify: os.Getenv("DOCKER_TLS_VERIFY") == "",
-		}
-		tlsc, err := tlsconfig.Client(options)
-		if err != nil {
-			panic(err)
-		}
-
-		client = &http.Client{
-			Transport: &http.Transport{
-				TLSClientConfig: tlsc,
-			},
-			CheckRedirect: docker.CheckRedirect,
-		}
-	}
-	host := os.Getenv("DOCKER_HOST")
-	if host == "" {
-		if runtime.GOOS == "windows" {
-			host = DefaultWindowsDockerHost
+//EnsureDockerInit ensures that the Docker client is properly initialized
+func EnsureDockerInit() {
+	if client == nil {
+		var err error
+		var c *docker.Client
+		if common.Flags.Docker.Cert != "" {
+			options := tlsconfig.Options{
+				CAFile:             filepath.Join(common.Flags.Docker.Cert, "ca.pem"),
+				CertFile:           filepath.Join(common.Flags.Docker.Cert, "cert.pem"),
+				KeyFile:            filepath.Join(common.Flags.Docker.Cert, "key.pem"),
+				InsecureSkipVerify: common.Flags.Docker.TLS,
+			}
+			tlsc, err := tlsconfig.Client(options)
+			if err != nil {
+				panic(err)
+			}
+			httpClient := &http.Client{
+				Transport: &http.Transport{
+					TLSClientConfig: tlsc,
+				},
+				CheckRedirect: docker.CheckRedirect,
+			}
+			c, err = docker.NewClient(common.Flags.Docker.Host, "", httpClient, nil)
 		} else {
-			host = DefaultUnixDockerHost
+			c, err = docker.NewClient(common.Flags.Docker.Host, "", nil, nil)
 		}
-	}
-	version := os.Getenv("DOCKER_API_VERSION")
-	if version == "" {
-		version = api.DefaultVersion
-	}
-	c, err := docker.NewClient(host, version, client, nil)
-	if err != nil {
-		panic(err)
-	}
-	cli = *c
-}
 
-// initFlaggedClient initializes the docker client using the flaged values
-func initFlaggedClient(host string, cert string) {
-	var err error
-	var c *docker.Client
-	if cert != "" {
-		options := tlsconfig.Options{
-			CAFile:             filepath.Join(cert, "ca.pem"),
-			CertFile:           filepath.Join(cert, "cert.pem"),
-			KeyFile:            filepath.Join(cert, "key.pem"),
-			InsecureSkipVerify: false,
-		}
-		tlsc, err := tlsconfig.Client(options)
 		if err != nil {
 			panic(err)
 		}
-		httpClient := &http.Client{
-			Transport: &http.Transport{
-				TLSClientConfig: tlsc,
-			},
-			CheckRedirect: docker.CheckRedirect,
-		}
-		c, err = docker.NewClient(host, "", httpClient, nil)
-	} else {
-		c, err = docker.NewClient(host, "", nil, nil)
+		client = c
 	}
-
-	if err != nil {
-		panic(err)
-	}
-	cli = *c
 }
 
 // ContainerRunningByImageName returns true if a container, built
@@ -177,52 +88,51 @@ func containerRunningById(id string) bool {
 }
 
 //stopContainerById stops a container corresponding to the provider id
-func StopContainerById(id string, done chan bool, logger *log.Logger) {
-	if err := cli.ContainerStop(context.Background(), id, nil); err != nil {
+func StopContainerById(id string, done chan bool) {
+	if err := client.ContainerStop(context.Background(), id, nil); err != nil {
 		panic(err)
 	}
-	if err := cli.ContainerRemove(context.Background(), id, types.ContainerRemoveOptions{}); err != nil {
+	if err := client.ContainerRemove(context.Background(), id, types.ContainerRemoveOptions{}); err != nil {
 		panic(err)
 	}
 	for {
-		logger.Printf(message.LOG_WAITING_STOP)
+		common.Logger.Printf(common.LOG_WAITING_STOP)
 		time.Sleep(500 * time.Millisecond)
 		if stillRunning := containerRunningById(id); stillRunning == false {
-			logger.Printf(message.LOG_STOPPED)
+			common.Logger.Printf(common.LOG_STOPPED)
 			done <- true
 			return
 		}
 	}
 }
 
-// startContainer builds or updates a container base on the provided image name
+// StartContainer builds or updates a container base on the provided image name
 // Once built the container will be started.
 // The method will wait until the container is started and
 // will notify it using the chanel
-func StartContainer(imageName string, done chan bool, name string, param DescriptorParams, ef util.ExchangeFolder, p *CreateParams, action engine.ActionID, logger *log.Logger) {
-
+func StartContainer(url string, imageName string, done chan bool, ef util.ExchangeFolder, action action.ActionID) {
 	envVar := []string{}
-	envVar = append(envVar, util.StarterEnvVariableKey+"="+param.Url)
-	envVar = append(envVar, util.StarterEnvNameVariableKey+"="+param.File)
-	envVar = append(envVar, util.StarterEnvQualifiedVariableKey+"="+name)
-	envVar = append(envVar, util.StarterEnvLoginVariableKey+"="+param.Login)
-	envVar = append(envVar, util.StarterEnvPasswordVariableKey+"="+param.Password)
+	envVar = append(envVar, util.StarterEnvVariableKey+"="+url)
+	envVar = append(envVar, util.StarterEnvNameVariableKey+"="+common.Flags.Descriptor.File)
+	envVar = append(envVar, util.StarterEnvLoginVariableKey+"="+common.Flags.Descriptor.Login)
+	envVar = append(envVar, util.StarterEnvPasswordVariableKey+"="+common.Flags.Descriptor.Password)
 
 	envVar = append(envVar, util.ActionEnvVariableKey+"="+action.String())
-	envVar = append(envVar, "http_proxy="+getHttpProxy(p.Installer.HttpProxy, logger))
-	envVar = append(envVar, "https_proxy="+getHttpsProxy(p.Installer.HttpsProxy, logger))
-	envVar = append(envVar, "no_proxy="+getNoProxy(p.Installer.NoProxy, logger))
+	envVar = append(envVar, "http_proxy="+common.Flags.Proxy.HTTP)
+	envVar = append(envVar, "https_proxy="+common.Flags.Proxy.HTTPS)
+	envVar = append(envVar, "no_proxy="+common.Flags.Proxy.Exclusions)
 
-	logger.Printf(message.LOG_PASSING_CONTAINER_ENVARS, envVar)
+	common.Logger.Printf(common.LOG_PASSING_CONTAINER_ENVARS, envVar)
 
 	// Check if we need to load parameters from the comand line
-	if p.Descriptor.ParamFile != "" {
-		copyExtraParameters(p.Descriptor.ParamFile, ef, logger)
+	fmt.Println(common.Flags.Descriptor.ParamFile)
+	if common.Flags.Descriptor.ParamFile != "" {
+		copyExtraParameters(common.Flags.Descriptor.ParamFile, ef)
 	}
 
 	startedAt := time.Now().UTC()
 	startedAt = startedAt.Add(time.Second * -2)
-	resp, err := cli.ContainerCreate(context.Background(), &container.Config{
+	resp, err := client.ContainerCreate(context.Background(), &container.Config{
 		Image:      imageName,
 		WorkingDir: util.InstallerVolume,
 		Env:        envVar,
@@ -240,6 +150,7 @@ func StartContainer(imageName string, done chan bool, name string, param Descrip
 			},
 		},
 	}, nil, "")
+	runningContainerId = resp.ID
 
 	if err != nil {
 		panic(err)
@@ -250,7 +161,7 @@ func StartContainer(imageName string, done chan bool, name string, param Descrip
 
 	loggerNoHearder := log.New(os.Stdout, "", 0)
 
-	if p.User.Output {
+	if common.Flags.Logging.ShouldOutputLogs() {
 		// Rolling output of the container logs
 		go func(start time.Time, exit chan bool) {
 			logMap := make(map[string]string)
@@ -271,10 +182,9 @@ func StartContainer(imageName string, done chan bool, name string, param Descrip
 
 			// Request to get the logs content from the container
 			req := func(sr string) {
-				out, err := cli.ContainerLogs(context.Background(), resp.ID, types.ContainerLogsOptions{Since: sr, ShowStdout: true, ShowStderr: true})
+				out, err := client.ContainerLogs(context.Background(), resp.ID, types.ContainerLogsOptions{Since: sr, ShowStdout: true, ShowStderr: true})
 				if err != nil {
-					// TODO REMOVE PANIC
-					panic(err)
+					exitCh <- true
 				}
 				s := bufio.NewScanner(out)
 				for s.Scan() {
@@ -305,36 +215,37 @@ func StartContainer(imageName string, done chan bool, name string, param Descrip
 			}
 		}(startedAt, exitCh)
 	}
-	defer logAllFromContainer(resp.ID, ef, done, p, logger)
-	if err := cli.ContainerStart(context.Background(), resp.ID, types.ContainerStartOptions{}); err != nil {
+
+	defer logAllFromContainer(resp.ID, ef, done)
+	if err := client.ContainerStart(context.Background(), resp.ID, types.ContainerStartOptions{}); err != nil {
 		panic(err)
 	}
 
-	statusCh, errCh := cli.ContainerWait(context.Background(), resp.ID, container.WaitConditionNotRunning)
+	statusCh, errCh := client.ContainerWait(context.Background(), resp.ID, container.WaitConditionNotRunning)
 
 	select {
 	case err := <-errCh:
-		if p.User.Output {
+		if common.Flags.Logging.ShouldOutputLogs() {
 			exitCh <- true
 		}
-		if err != nil {
-			panic(err)
-		}
+		panic(err)
 	case <-statusCh:
-		if p.User.Output {
+		if common.Flags.Logging.ShouldOutputLogs() {
 			exitCh <- true
 		}
 	}
 }
 
-func logAllFromContainer(id string, ef util.ExchangeFolder, done chan bool, p *CreateParams, logger *log.Logger) {
-	if p.User.Output {
-		out, err := cli.ContainerLogs(context.Background(), id, types.ContainerLogsOptions{ShowStdout: true, ShowStderr: true})
+func logAllFromContainer(id string, ef util.ExchangeFolder, done chan bool) {
+	if common.Flags.Logging.ShouldOutputLogs() {
+		out, err := client.ContainerLogs(context.Background(), id, types.ContainerLogsOptions{ShowStdout: true, ShowStderr: true})
 		if err != nil {
-			panic(err)
+			// we stop now
+			done <- true
+			return
 		}
 
-		logFile, err := ContainerLog(ef, p.User.File)
+		logFile, err := containerLog(ef, common.Flags.Logging.File)
 		if err != nil {
 			panic(err)
 		}
@@ -344,15 +255,16 @@ func logAllFromContainer(id string, ef util.ExchangeFolder, done chan bool, p *C
 		if err != nil {
 			panic(err)
 		}
-		logger.Printf(message.LOG_CONTAINER_LOG_WRITTEN, logFile.Name())
+		common.Logger.Printf(common.LOG_CONTAINER_LOG_WRITTEN, logFile.Name())
 	}
+
 	// We are done!
 	done <- true
 }
 
 // getContainers returns the detail of all running containers
 func getContainers() []types.Container {
-	containers, err := cli.ContainerList(context.Background(), types.ContainerListOptions{})
+	containers, err := client.ContainerList(context.Background(), types.ContainerListOptions{})
 	if err != nil {
 		panic(err)
 	}
@@ -375,7 +287,7 @@ func imageExistsByName(name string) bool {
 
 // getImages returns the summary of all images already downloaded
 func getImages() []types.ImageSummary {
-	images, err := cli.ImageList(context.Background(), types.ImageListOptions{})
+	images, err := client.ImageList(context.Background(), types.ImageListOptions{})
 	if err != nil {
 		panic(err)
 	}
@@ -386,16 +298,16 @@ func getImages() []types.ImageSummary {
 // and wait for the download to be completed.
 //
 // The completion of the download will be notified using the chanel
-func ImagePull(taggedName string, done chan bool, logger *log.Logger) {
+func ImagePull(taggedName string, done chan bool) {
 	if img := imageExistsByName(taggedName); !img {
-		if _, err := cli.ImagePull(context.Background(), taggedName, types.ImagePullOptions{}); err != nil {
+		if _, err := client.ImagePull(context.Background(), taggedName, types.ImagePullOptions{}); err != nil {
 			panic(err)
 		}
 		for {
-			logger.Printf(message.LOG_WAITING_DOWNLOAD)
+			common.Logger.Printf(common.LOG_WAITING_DOWNLOAD)
 			time.Sleep(500 * time.Millisecond)
 			if img := imageExistsByName(taggedName); img {
-				logger.Printf(message.LOG_DOWNLOAD_COMPLETED)
+				common.Logger.Printf(common.LOG_DOWNLOAD_COMPLETED)
 				done <- true
 				return
 			}
@@ -404,38 +316,10 @@ func ImagePull(taggedName string, done chan bool, logger *log.Logger) {
 	done <- true
 }
 
-func getHttpProxy(param string, logger *log.Logger) string {
-	if param == "" {
-		s := os.Getenv(envHttpsProxy)
-		logger.Printf(message.LOG_GETTING_HTTP_PROXY, s)
-		return s
-	}
-	return param
-}
-
-func getHttpsProxy(param string, logger *log.Logger) string {
-	if param == "" {
-		s := os.Getenv(envHttpsProxy)
-		logger.Printf(message.LOG_GETTING_HTTPS_PROXY, s)
-		return s
-	}
-	return param
-}
-
-func getNoProxy(param string, logger *log.Logger) string {
-	if param == "" {
-		s := os.Getenv(envNoProxy)
-		logger.Printf(message.LOG_GETTING_NO_PROXY, s)
-		return s
-	}
-	return param
-}
-
-func copyExtraParameters(file string, ef util.ExchangeFolder, logger *log.Logger) {
-	// Check if the parameter file exist
+func copyExtraParameters(file string, ef util.ExchangeFolder) {
 	if _, err := os.Stat(file); err != nil {
 		if os.IsNotExist(err) {
-			logger.Fatalf(message.ERROR_UNREACHABLE_PARAM_FILE, file)
+			common.Logger.Fatalf(common.ERROR_UNREACHABLE_PARAM_FILE, file)
 		}
 	}
 
@@ -444,20 +328,14 @@ func copyExtraParameters(file string, ef util.ExchangeFolder, logger *log.Logger
 		panic(err)
 	}
 
-	err = ef.Location.Write(b, util.CliParametersFileName)
+	err = ef.Location.Write(b, util.ExternalVarsFilename)
 	if err != nil {
 		panic(err)
 	}
 }
 
-func ContainerLog(ef util.ExchangeFolder, fileName string) (*os.File, error) {
-	var file string
-	if fileName == "" {
-		file = filepath.Join(ef.Output.Path(), DefaultContainerLogFileName)
-	} else {
-		file = filepath.Join(ef.Output.Path(), fileName)
-	}
-	f, e := os.Create(file)
+func containerLog(ef util.ExchangeFolder, fileName string) (*os.File, error) {
+	f, e := os.Create(filepath.Join(ef.Output.Path(), common.Flags.Logging.File))
 	if e != nil {
 		return nil, e
 	}
