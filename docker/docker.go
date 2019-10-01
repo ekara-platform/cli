@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -28,7 +29,6 @@ import (
 
 // The docker client used within the whole application
 var client *docker.Client
-var runningContainerId string
 
 //EnsureDockerInit ensures that the Docker client is properly initialized
 func EnsureDockerInit() {
@@ -48,7 +48,17 @@ func EnsureDockerInit() {
 			}
 			httpClient := &http.Client{
 				Transport: &http.Transport{
-					TLSClientConfig: tlsc,
+					Proxy: http.ProxyFromEnvironment,
+					DialContext: (&net.Dialer{
+						Timeout:   30 * time.Second,
+						KeepAlive: 30 * time.Second,
+					}).DialContext,
+					ForceAttemptHTTP2:     true,
+					MaxIdleConns:          100,
+					IdleConnTimeout:       90 * time.Second,
+					TLSHandshakeTimeout:   10 * time.Second,
+					ExpectContinueTimeout: 1 * time.Second,
+					TLSClientConfig:       tlsc,
 				},
 				CheckRedirect: docker.CheckRedirect,
 			}
@@ -150,7 +160,6 @@ func StartContainer(url string, imageName string, done chan bool, ef util.Exchan
 			},
 		},
 	}, nil, "")
-	runningContainerId = resp.ID
 
 	if err != nil {
 		panic(err)
@@ -240,7 +249,7 @@ func logAllFromContainer(id string, ef util.ExchangeFolder, done chan bool) {
 	if common.Flags.Logging.ShouldOutputLogs() {
 		out, err := client.ContainerLogs(context.Background(), id, types.ContainerLogsOptions{ShowStdout: true, ShowStderr: true})
 		if err != nil {
-			// we stop now
+			// we stop now (cannot fetch any more log)
 			done <- true
 			return
 		}

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/ekara-platform/engine/action"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -46,16 +45,16 @@ var applyCmd = &cobra.Command{
 	Long:  `The apply command will ensure that everything declared in the descriptor matches reality by taking the necessary actions.`,
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		dir, err := ioutil.TempDir(".", "ekara_apply")
-		if err != nil {
-			fmt.Println("unable to create temporary directory", err)
-			os.Exit(1)
-		}
-		if !common.Flags.Debug {
-			defer os.RemoveAll(dir)
-		}
-
-		ef := createEF(dir)
+		//dir, err := ioutil.TempDir(".", "ekara_apply")
+		//if err != nil {
+		//	fmt.Println("unable to create temporary directory", err)
+		//	os.Exit(1)
+		//}
+		//if !common.Flags.Debug {
+		//	defer os.RemoveAll(dir)
+		//}
+		
+		ef := createEF(rootExchangeFolder)
 		fmt.Println("Applying environment...")
 		if common.Flags.SSH.PrivateSSHKey != "" && common.Flags.SSH.PublicSSHKey != "" {
 			// Move the ssh keys into the exchange folder input
@@ -70,6 +69,7 @@ var applyCmd = &cobra.Command{
 				os.Exit(1)
 			}
 		}
+
 		starterStart(args[0], ef, action.ApplyActionID)
 	},
 }

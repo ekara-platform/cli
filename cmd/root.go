@@ -19,7 +19,7 @@ const (
 	envNoProxy         string = "no_proxy"
 	defaultLogFileName string = "installer.log"
 	defaultVarFileName string = "vars.yaml"
-	userExchangeFolder string = "out"
+	rootExchangeFolder string = "ekara"
 )
 
 var rootCmd = &cobra.Command{
@@ -126,7 +126,7 @@ func initLocalEngine(workDir string, descriptorURL string) engine.Ekara {
 	}
 
 	e, err := engine.Create(&cliContext{
-		ef:             createEF(userExchangeFolder),
+		ef:             createEF(rootExchangeFolder),
 		logger:         common.Logger,
 		location:       descriptorURL,
 		descriptorName: common.Flags.Descriptor.File,
