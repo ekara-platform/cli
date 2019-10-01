@@ -1,4 +1,4 @@
-docker run --rm -it -v "$PWD":/go/src/github.com/ekara-platform/cli -w /go/src/github.com/ekara-platform/cli dockercore/golang-cross:1.11.0 sh -c '
+docker run --rm -it -v "$PWD":/go/src/github.com/ekara-platform/cli -w /go/src/github.com/ekara-platform/cli dockercore/golang-cross:1.12.10 sh -c '
     for GOOS in darwin linux windows; do
       for GOARCH in amd64; do
         echo "Building $GOOS-$GOARCH"
