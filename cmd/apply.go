@@ -3,12 +3,13 @@ package cmd
 import (
 	"bufio"
 	"fmt"
-	"github.com/ekara-platform/engine/action"
 	"io"
 	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
+
+	"github.com/ekara-platform/engine/action"
 
 	"github.com/ekara-platform/cli/common"
 	"github.com/ekara-platform/cli/docker"
@@ -17,7 +18,7 @@ import (
 )
 
 const (
-	starterImageName         string = "ekaraplatform/installer:latest"
+	starterImageName         string = "ekaraplatform/installer:v1.0.0"
 	defaultWindowsDockerHost string = "npipe:////./pipe/docker_engine"
 	defaultUnixDockerHost    string = "unix:///var/run/docker.sock"
 )
@@ -53,7 +54,7 @@ var applyCmd = &cobra.Command{
 		//if !common.Flags.Debug {
 		//	defer os.RemoveAll(dir)
 		//}
-		
+
 		ef := createEF(rootExchangeFolder)
 		fmt.Println("Applying environment...")
 		if common.Flags.SSH.PrivateSSHKey != "" && common.Flags.SSH.PublicSSHKey != "" {
