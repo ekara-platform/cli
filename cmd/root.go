@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"github.com/ekara-platform/cli/docker"
+	"github.com/fatih/color"
 	"log"
 	"os"
 
@@ -19,38 +20,46 @@ const (
 	envNoProxy         string = "no_proxy"
 	defaultLogFileName string = "installer.log"
 	defaultVarFileName string = "vars.yaml"
-	rootExchangeFolder string = "ekara"
+	exchangeFolderName string = "ekara"
 )
 
-var rootCmd = &cobra.Command{
-	Use:   "ekara",
-	Short: "Ekara is a lightweight platform for deploying cloud applications.",
-	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		info, e := os.Stdout.Stat()
-		if e != nil {
-			return
-		} else if (info.Mode() & os.ModeCharDevice) == os.ModeCharDevice {
+var (
+	ef      = createEF(exchangeFolderName)
+	rootCmd = &cobra.Command{
+		Use:   "ekara",
+		Short: "Ekara is a lightweight platform for deploying cloud applications.",
+		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			if common.Flags.Logging.ShouldOutputLogs() {
 				common.Logger = log.New(os.Stdout, "CLI  > ", log.Ldate|log.Ltime)
+				color.NoColor = true
+				common.NoProgress = true
+			} else {
+				info, e := os.Stdout.Stat()
+				if e != nil {
+					color.NoColor = true
+					common.NoProgress = true
+					return
+				} else if (info.Mode() & os.ModeCharDevice) == os.ModeCharDevice {
+					// this comes from http://www.kammerl.de/ascii/AsciiSignature.php
+					// the font used id "standard"
+					blue := color.New(color.FgHiBlue)
+					blue.Println(" _____ _                   ")
+					blue.Println("| ____| | ____ _ _ __ __ _ ")
+					blue.Println("|  _| | |/ / _` | '__/ _` |")
+					blue.Println("| |___|   < (_| | | | (_| |")
+					blue.Println(`|_____|_|\_\__,_|_|  \__,_|`)
+					if isDescriptorCommand(cmd, args) {
+						color.New(color.FgCyan).Println(args[0])
+					}
+					fmt.Println("")
+				} else {
+					color.NoColor = true
+					common.NoProgress = true
+				}
 			}
-
-			// this comes from http://www.kammerl.de/ascii/AsciiSignature.php
-			// the font used id "standard"
-			fmt.Println(" _____ _                   ")
-			fmt.Println("| ____| | ____ _ _ __ __ _ ")
-			fmt.Println("|  _| | |/ / _` | '__/ _` |")
-			fmt.Println("| |___|   < (_| | | | (_| |")
-			fmt.Println(`|_____|_|\_\__,_|_|  \__,_|`)
-			if isDescriptorCommand(cmd, args) {
-				fmt.Println(args[0])
-			}
-			fmt.Println("")
-		}
-	},
-	PersistentPostRun: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Done")
-	},
-}
+		},
+	}
+)
 
 func isDescriptorCommand(cmd *cobra.Command, args []string) bool {
 	return len(args) > 0 && (cmd.Name() == "apply" || cmd.Name() == "dump" || cmd.Name() == "validate")
@@ -71,17 +80,18 @@ func init() {
 	rootCmd.PersistentFlags().BoolVar(&common.Flags.Debug, "debug", false, "Installer logfile")
 }
 
-// Execute launchs the adequate command
+// Execute launch the command
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		panic(err)
 	}
 }
 
 func StopCurrentContainerIfRunning() {
 	if id, running := docker.ContainerRunningByImageName(starterImageName); running {
 		done := make(chan bool, 1)
+		go docker.LogAllFromContainer(id, ef, done)
+		<-done
 		go docker.StopContainerById(id, done)
 		<-done
 	}
@@ -126,7 +136,7 @@ func initLocalEngine(workDir string, descriptorURL string) engine.Ekara {
 	}
 
 	e, err := engine.Create(&cliContext{
-		ef:             createEF(rootExchangeFolder),
+		ef:             ef,
 		logger:         common.Logger,
 		location:       descriptorURL,
 		descriptorName: common.Flags.Descriptor.File,

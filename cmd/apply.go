@@ -1,24 +1,22 @@
 package cmd
 
 import (
-	"bufio"
-	"fmt"
+	"github.com/ekara-platform/cli/common"
+	"github.com/ekara-platform/cli/docker"
+	"github.com/ekara-platform/engine/action"
+	"github.com/ekara-platform/engine/util"
+	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
 	"io"
 	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
-
-	"github.com/ekara-platform/engine/action"
-
-	"github.com/ekara-platform/cli/common"
-	"github.com/ekara-platform/cli/docker"
-	"github.com/ekara-platform/engine/util"
-	"github.com/spf13/cobra"
+	"time"
 )
 
 const (
-	starterImageName         string = "ekaraplatform/installer:v1.0.0"
+	starterImageName         string = "ekaraplatform/installer:latest"
 	defaultWindowsDockerHost string = "npipe:////./pipe/docker_engine"
 	defaultUnixDockerHost    string = "unix:///var/run/docker.sock"
 )
@@ -46,32 +44,26 @@ var applyCmd = &cobra.Command{
 	Long:  `The apply command will ensure that everything declared in the descriptor matches reality by taking the necessary actions.`,
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		//dir, err := ioutil.TempDir(".", "ekara_apply")
-		//if err != nil {
-		//	fmt.Println("unable to create temporary directory", err)
-		//	os.Exit(1)
-		//}
-		//if !common.Flags.Debug {
-		//	defer os.RemoveAll(dir)
-		//}
-
-		ef := createEF(rootExchangeFolder)
-		fmt.Println("Applying environment...")
+		common.ShowWorking(common.LOG_APPLYING_ENV)
 		if common.Flags.SSH.PrivateSSHKey != "" && common.Flags.SSH.PublicSSHKey != "" {
 			// Move the ssh keys into the exchange folder input
 			err := copyFile(common.Flags.SSH.PublicSSHKey, filepath.Join(ef.Input.Path(), util.SSHPuplicKeyFileName))
 			if err != nil {
-				fmt.Println("Error copying the SSH public key")
+				common.ShowError("Error copying the SSH public key")
 				os.Exit(1)
 			}
 			err = copyFile(common.Flags.SSH.PrivateSSHKey, filepath.Join(ef.Input.Path(), util.SSHPrivateKeyFileName))
 			if err != nil {
-				fmt.Println("Error copying the SSH private key")
+				common.ShowError("Error copying the SSH private key")
 				os.Exit(1)
 			}
 		}
-
-		starterStart(args[0], ef, action.ApplyActionID)
+		status := starterStart(args[0], ef, action.ApplyActionID)
+		if status == 0 {
+			common.ShowDone("Done in %s!", common.HumanizeDuration(time.Since(common.StartTime)))
+		} else {
+			common.ShowError("Errored (%d) after %s!", status, common.HumanizeDuration(time.Since(common.StartTime)))
+		}
 	},
 }
 
@@ -87,7 +79,7 @@ func getEnvDockerHost() string {
 	return host
 }
 
-func starterStart(url string, ef util.ExchangeFolder, action action.ActionID) {
+func starterStart(url string, ef util.ExchangeFolder, action action.ActionID) int {
 	docker.EnsureDockerInit()
 
 	done := make(chan bool, 1)
@@ -95,22 +87,20 @@ func starterStart(url string, ef util.ExchangeFolder, action action.ActionID) {
 	<-done
 
 	if id, running := docker.ContainerRunningByImageName(starterImageName); running {
-		reader := bufio.NewReader(os.Stdin)
-		fmt.Print(common.PROMPT_RESTART)
-		text, _ := reader.ReadString('\n')
-		if strings.TrimSpace(text) == "Y" {
+		text := common.ShowPrompt(common.PROMPT_RESTART)
+		if strings.ToUpper(strings.TrimSpace(text)) == "Y" {
 			done := make(chan bool, 1)
 			go docker.StopContainerById(id, done)
 			<-done
 		} else {
-			common.Logger.Printf(common.LOG_FAIL_ON_PROMPT_RESTART)
-			return
+			panic(errors.New(common.LOG_FAIL_ON_PROMPT_RESTART))
 		}
 	}
 
 	done = make(chan bool, 1)
-	docker.StartContainer(url, starterImageName, done, ef, action)
+	status := docker.StartContainer(url, starterImageName, done, ef, action)
 	<-done
+	return status
 }
 
 func copyFile(src, dst string) error {

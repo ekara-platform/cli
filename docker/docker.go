@@ -2,11 +2,10 @@ package docker
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"github.com/ekara-platform/engine/action"
-	"io"
 	"io/ioutil"
-	"log"
 	"net"
 	"net/http"
 	"os"
@@ -21,6 +20,7 @@ import (
 	"docker.io/go-docker/api/types"
 	"docker.io/go-docker/api/types/container"
 	"docker.io/go-docker/api/types/mount"
+	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/docker/go-connections/tlsconfig"
 
 	"github.com/ekara-platform/cli/common"
@@ -120,14 +120,14 @@ func StopContainerById(id string, done chan bool) {
 // Once built the container will be started.
 // The method will wait until the container is started and
 // will notify it using the chanel
-func StartContainer(url string, imageName string, done chan bool, ef util.ExchangeFolder, action action.ActionID) {
+func StartContainer(url string, imageName string, done chan bool, ef util.ExchangeFolder, a action.ActionID) int {
 	envVar := []string{}
 	envVar = append(envVar, util.StarterEnvVariableKey+"="+url)
 	envVar = append(envVar, util.StarterEnvNameVariableKey+"="+common.Flags.Descriptor.File)
 	envVar = append(envVar, util.StarterEnvLoginVariableKey+"="+common.Flags.Descriptor.Login)
 	envVar = append(envVar, util.StarterEnvPasswordVariableKey+"="+common.Flags.Descriptor.Password)
 
-	envVar = append(envVar, util.ActionEnvVariableKey+"="+action.String())
+	envVar = append(envVar, util.ActionEnvVariableKey+"="+a.String())
 	envVar = append(envVar, "http_proxy="+common.Flags.Proxy.HTTP)
 	envVar = append(envVar, "https_proxy="+common.Flags.Proxy.HTTPS)
 	envVar = append(envVar, "no_proxy="+common.Flags.Proxy.Exclusions)
@@ -135,7 +135,6 @@ func StartContainer(url string, imageName string, done chan bool, ef util.Exchan
 	common.Logger.Printf(common.LOG_PASSING_CONTAINER_ENVARS, envVar)
 
 	// Check if we need to load parameters from the comand line
-	fmt.Println(common.Flags.Descriptor.ParamFile)
 	if common.Flags.Descriptor.ParamFile != "" {
 		copyExtraParameters(common.Flags.Descriptor.ParamFile, ef)
 	}
@@ -168,106 +167,113 @@ func StartContainer(url string, imageName string, done chan bool, ef util.Exchan
 	// Chan used to turn off the rolling log
 	exitCh := make(chan bool)
 
-	loggerNoHearder := log.New(os.Stdout, "", 0)
+	// Rolling output of the container logs
+	go func(start time.Time, exit chan bool) {
+		logMap := make(map[string]string)
+		// Trick to avoid tracing twice the same log line
+		notExist := func(s string) (bool, string) {
+			tab := strings.Split(s, util.InstallerLogPrefix)
+			if len(tab) > 1 {
+				sTrim := strings.Trim(tab[1], " ")
+				if _, ok := logMap[sTrim]; ok {
+					return false, ""
+				}
+				logMap[sTrim] = ""
+				return true, util.InstallerLogPrefix + sTrim
+			} else {
+				return true, s
+			}
+		}
 
-	if common.Flags.Logging.ShouldOutputLogs() {
-		// Rolling output of the container logs
-		go func(start time.Time, exit chan bool) {
-			logMap := make(map[string]string)
-			// Trick to avoid tracing twice the same log line
-			notExist := func(s string) (bool, string) {
-				tab := strings.Split(s, util.InstallerLogPrefix)
-				if len(tab) > 1 {
-					sTrim := strings.Trim(tab[1], " ")
-					if _, ok := logMap[sTrim]; ok {
-						return false, ""
+		// Request to get the logs content from the container
+		req := func(sr string) {
+			out, err := client.ContainerLogs(context.Background(), resp.ID, types.ContainerLogsOptions{Since: sr, ShowStdout: true, ShowStderr: true})
+			if err != nil {
+				exitCh <- true
+			}
+			s := bufio.NewScanner(out)
+			for s.Scan() {
+				str := s.Text()
+				if b, sTrim := notExist(str); b {
+					idx := strings.Index(sTrim, util.ProgressPrefix)
+					if idx != -1 {
+						pU := common.ProgressUpdate{}
+						err = json.Unmarshal([]byte(sTrim[idx+len(util.ProgressPrefix):]), &pU)
+						if err != nil {
+							common.Logger.Println("Unable to parse progress update: " + err.Error())
+						} else if !common.Flags.Logging.ShouldOutputLogs() {
+							common.ShowProgress(pU)
+						}
+					} else if common.Flags.Logging.ShouldOutputLogs() {
+						fmt.Println(sTrim)
 					}
-					logMap[sTrim] = ""
-					return true, util.InstallerLogPrefix + sTrim
-				} else {
-					return true, s
 				}
 			}
+			err = out.Close()
+			if err != nil {
+				common.Logger.Println("Unable to close container log reader: " + err.Error())
+			}
+		}
+	Loop:
+		for {
+			select {
+			case <-exit:
+				// Last call to be sure to get the end of the logs content
+				now := time.Now()
+				now = now.Add(time.Second * -1)
+				sinceReq := strconv.FormatInt(now.Unix(), 10)
+				req(sinceReq)
+				break Loop
+			default:
+				// Running call to trace the container logs every 500ms
+				sinceReq := strconv.FormatInt(start.Unix(), 10)
+				start = start.Add(time.Millisecond * 500)
+				req(sinceReq)
+				time.Sleep(time.Millisecond * 500)
+			}
+		}
+	}(startedAt, exitCh)
 
-			// Request to get the logs content from the container
-			req := func(sr string) {
-				out, err := client.ContainerLogs(context.Background(), resp.ID, types.ContainerLogsOptions{Since: sr, ShowStdout: true, ShowStderr: true})
-				if err != nil {
-					exitCh <- true
-				}
-				s := bufio.NewScanner(out)
-				for s.Scan() {
-					str := s.Text()
-					if b, sTrim := notExist(str); b {
-						loggerNoHearder.Print(sTrim)
-					}
-				}
-				out.Close()
-			}
-		Loop:
-			for {
-				select {
-				case <-exit:
-					// Last call to be sure to get the end of the logs content
-					now := time.Now()
-					now = now.Add(time.Second * -1)
-					sinceReq := strconv.FormatInt(now.Unix(), 10)
-					req(sinceReq)
-					break Loop
-				default:
-					// Running call to trace the container logs every 500ms
-					sinceReq := strconv.FormatInt(start.Unix(), 10)
-					start = start.Add(time.Millisecond * 500)
-					req(sinceReq)
-					time.Sleep(time.Millisecond * 500)
-				}
-			}
-		}(startedAt, exitCh)
-	}
+	defer LogAllFromContainer(resp.ID, ef, done)
 
-	defer logAllFromContainer(resp.ID, ef, done)
 	if err := client.ContainerStart(context.Background(), resp.ID, types.ContainerStartOptions{}); err != nil {
 		panic(err)
 	}
 
 	statusCh, errCh := client.ContainerWait(context.Background(), resp.ID, container.WaitConditionNotRunning)
-
 	select {
 	case err := <-errCh:
-		if common.Flags.Logging.ShouldOutputLogs() {
-			exitCh <- true
-		}
+		exitCh <- true
 		panic(err)
-	case <-statusCh:
-		if common.Flags.Logging.ShouldOutputLogs() {
-			exitCh <- true
-		}
+	case status := <-statusCh:
+		exitCh <- true
+		return int(status.StatusCode)
 	}
+
+	return 1
 }
 
-func logAllFromContainer(id string, ef util.ExchangeFolder, done chan bool) {
-	if common.Flags.Logging.ShouldOutputLogs() {
-		out, err := client.ContainerLogs(context.Background(), id, types.ContainerLogsOptions{ShowStdout: true, ShowStderr: true})
-		if err != nil {
-			// we stop now (cannot fetch any more log)
-			done <- true
-			return
-		}
+func LogAllFromContainer(id string, ef util.ExchangeFolder, done chan bool) {
+	out, err := client.ContainerLogs(context.Background(), id, types.ContainerLogsOptions{ShowStdout: true, ShowStderr: true})
+	if err != nil {
+		// we stop now (cannot fetch any more log)
+		done <- true
+		return
+	}
 
-		logFile, err := containerLog(ef, common.Flags.Logging.File)
-		if err != nil {
-			panic(err)
-		}
-		defer logFile.Close()
+	logFile, err := containerLog(ef)
+	if err != nil {
+		panic(err)
+	}
+	defer logFile.Close()
 
-		_, err = io.Copy(logFile, out)
-		if err != nil {
-			panic(err)
-		}
-		common.Logger.Printf(common.LOG_CONTAINER_LOG_WRITTEN, logFile.Name())
+	_, err = stdcopy.StdCopy(logFile, logFile, out)
+	if err != nil {
+		panic(err)
 	}
 
 	// We are done!
+	common.Logger.Printf(common.LOG_CONTAINER_LOG_WRITTEN, logFile.Name())
 	done <- true
 }
 
@@ -343,7 +349,7 @@ func copyExtraParameters(file string, ef util.ExchangeFolder) {
 	}
 }
 
-func containerLog(ef util.ExchangeFolder, fileName string) (*os.File, error) {
+func containerLog(ef util.ExchangeFolder) (*os.File, error) {
 	f, e := os.Create(filepath.Join(ef.Output.Path(), common.Flags.Logging.File))
 	if e != nil {
 		return nil, e

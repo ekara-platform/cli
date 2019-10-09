@@ -1,12 +1,12 @@
 package main
 
 import (
-	"fmt"
+	"github.com/ekara-platform/cli/cmd"
+	"github.com/ekara-platform/cli/common"
 	"os"
 	"os/signal"
 	"syscall"
-
-	"github.com/ekara-platform/cli/cmd"
+	"time"
 )
 
 //go:generate go run generate/generate.go
@@ -16,16 +16,22 @@ func main() {
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-c
-		fmt.Fprintln(os.Stderr, "Interrupted by user")
+		common.ShowError("Interrupted by user after %s!", common.HumanizeDuration(time.Since(common.StartTime)))
+		common.NoProgress = true
 		cmd.StopCurrentContainerIfRunning()
-		os.Exit(1)
+		os.Exit(124)
 	}()
 
 	defer func() { //catch or finally
 		if err := recover(); err != nil { //catch
-			fmt.Fprintf(os.Stderr, "Exception: %v\n", err)
-			os.Exit(1)
+			common.ShowError("Panic: %v", err)
+			cmd.StopCurrentContainerIfRunning()
+			os.Exit(125)
+		} else {
+			cmd.StopCurrentContainerIfRunning()
+			os.Exit(0)
 		}
 	}()
+
 	cmd.Execute()
 }
