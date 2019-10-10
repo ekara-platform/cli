@@ -9,10 +9,6 @@ import (
 	"os"
 )
 
-const (
-	dumpExchangeFolder string = "dump"
-)
-
 func init() {
 	// This is a descriptor-based command
 	applyDescriptorFlags(dumpCmd)
@@ -25,10 +21,10 @@ var dumpCmd = &cobra.Command{
 	Short: "Dump an existing environment descriptor.",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		common.Logger.Printf(common.LOG_VALIDATING_ENV, args[0])
+		common.ShowWorking(common.LOG_DUMPING_ENV)
 		dir, err := ioutil.TempDir(os.TempDir(), "ekara_dump")
 		if err != nil {
-			fmt.Println("unable to create temporary directory", err)
+			common.ShowError("Unable to create temporary directory: %s", err.Error())
 			os.Exit(1)
 		}
 		defer os.RemoveAll(dir)
@@ -36,25 +32,21 @@ var dumpCmd = &cobra.Command{
 		e := initLocalEngine(dir, args[0])
 		res, err := e.ActionManager().Run(action.DumpActionID)
 		if err != nil {
-			fmt.Println("unable to run dump action", err)
+			common.ShowError("Unable to run dump action: %s", err.Error())
 			os.Exit(1)
 		}
 
 		text, err := res.AsPlainText()
 		if err != nil {
-			fmt.Println("unable to format text result from dump action", err)
+			common.ShowError("Unable to format text result from dump action: %s", err.Error())
 			os.Exit(1)
 		}
+
 		if len(text) > 0 {
+			fmt.Println("---")
 			for _, line := range text {
 				fmt.Println(line)
 			}
-		} else {
-			fmt.Println("No result")
-		}
-
-		if !res.IsSuccess() {
-			os.Exit(2)
 		}
 		os.Exit(0)
 	},

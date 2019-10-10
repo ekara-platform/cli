@@ -57,6 +57,14 @@
   revision = "edc3ab29cdff8694dd6feb85cfeb4b5f1b38ed9c"
 
 [[projects]]
+  digest = "1:77c74b43bddc342f33b174384b771c66bff5858b79fa60dfca0ffbfc78db7f5b"
+  name = "github.com/docker/docker"
+  packages = ["pkg/stdcopy"]
+  pruneopts = "UT"
+  revision = "092cba3727bb9b4a2f0e922cd6c0f93ea270e363"
+  version = "v1.13.1"
+
+[[projects]]
   digest = "1:b6b5c3e8da0fb8073cd2886ba249a40f4402b4391ca6eba905a142cceea97a12"
   name = "github.com/docker/go-connections"
   packages = [
@@ -77,7 +85,8 @@
   version = "v0.3.3"
 
 [[projects]]
-  digest = "1:2f76905b562415c992cda5528ec8428d08a1c05662b80b86f7a077304eb66b17"
+  branch = "master"
+  digest = "1:61ebdc7e703a263dced86a24571db8d931aeb2aca70903fb19e8ecac3fa67be0"
   name = "github.com/ekara-platform/engine"
   packages = [
     ".",
@@ -90,8 +99,7 @@
     "util",
   ]
   pruneopts = "UT"
-  revision = "3aaa2dc6c500999d4ec5a6e5ba217615e0dcb3af"
-  version = "v1.0.0"
+  revision = "709395498fda36edfcbf515f28d7fdd32d2f3d5e"
 
 [[projects]]
   digest = "1:509ded6b49c3206dd83c904d6ff98ee6714c9b0498dabc495dd20368b1a419f5"
@@ -115,6 +123,14 @@
   pruneopts = "UT"
   revision = "1615341f118ae12f353cc8a983f35b584342c9b3"
   version = "v1.12.0"
+
+[[projects]]
+  digest = "1:865079840386857c809b72ce300be7580cb50d3d3129ce11bf9aa6ca2bc1934a"
+  name = "github.com/fatih/color"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "5b77d2a35fb0ede96d138fc9a99f5c9b6aef11b4"
+  version = "v1.7.0"
 
 [[projects]]
   digest = "1:9ae31ce33b4bab257668963e844d98765b44160be4ee98cafc44637a213e530d"
@@ -164,6 +180,22 @@
   pruneopts = "UT"
   revision = "6cfae18c12b8934b1afba3ce8159476fdef666ba"
   version = "1.0"
+
+[[projects]]
+  digest = "1:c658e84ad3916da105a761660dcaeb01e63416c8ec7bc62256a9b411a05fcd67"
+  name = "github.com/mattn/go-colorable"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "167de6bfdfba052fa6b2d3664c8f5272e23c9072"
+  version = "v0.0.9"
+
+[[projects]]
+  digest = "1:d62282425ffb75047679d7e2c3b980eea7f82c05ef5fb9142ee617ebac6e7432"
+  name = "github.com/mattn/go-isatty"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "88ba11cfdc67c7588b30042edf244b2875f892b6"
+  version = "v0.0.10"
 
 [[projects]]
   digest = "1:5d231480e1c64a726869bc4142d270184c419749d34f167646baa21008eb0a79"
@@ -271,7 +303,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:1a1faf2ed72743398882e02b5ec6a01416a9f2e78c6ad8068357345c495d8588"
+  digest = "1:2d4cab5a9ea650aa99394d7e768e280f0cfc1d0b7c0fa08f2447391ab1eb5480"
   name = "golang.org/x/crypto"
   packages = [
     "cast5",
@@ -290,6 +322,7 @@
     "ssh",
     "ssh/agent",
     "ssh/knownhosts",
+    "ssh/terminal",
   ]
   pruneopts = "UT"
   revision = "4def268fd1a49955bfb3dda92fe3db4f924f2285"
@@ -407,13 +440,17 @@
     "docker.io/go-docker/api/types",
     "docker.io/go-docker/api/types/container",
     "docker.io/go-docker/api/types/mount",
+    "github.com/docker/docker/pkg/stdcopy",
     "github.com/docker/go-connections/tlsconfig",
     "github.com/ekara-platform/engine",
     "github.com/ekara-platform/engine/action",
     "github.com/ekara-platform/engine/util",
     "github.com/ekara-platform/model",
+    "github.com/fatih/color",
+    "github.com/pkg/errors",
     "github.com/spf13/cobra",
     "github.com/stretchr/testify/assert",
+    "golang.org/x/crypto/ssh/terminal",
     "golang.org/x/net/context",
   ]
   solver-name = "gps-cdcl"
