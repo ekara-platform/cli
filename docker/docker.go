@@ -315,12 +315,18 @@ func getImages() []types.ImageSummary {
 // The completion of the download will be notified using the chanel
 func ImagePull(taggedName string, done chan bool) {
 	if img := imageExistsByName(taggedName); !img {
-		if _, err := client.ImagePull(context.Background(), taggedName, types.ImagePullOptions{}); err != nil {
+		if r, err := client.ImagePull(context.Background(), taggedName, types.ImagePullOptions{}); err != nil {
 			panic(err)
+		} else {
+			defer r.Close()
 		}
+		common.ShowProgress(common.ProgressUpdate{
+			Key:     "cli.docker.download",
+			Message: "Downloading installer image",
+		})
 		for {
 			common.Logger.Printf(common.LOG_WAITING_DOWNLOAD)
-			time.Sleep(500 * time.Millisecond)
+			time.Sleep(1000 * time.Millisecond)
 			if img := imageExistsByName(taggedName); img {
 				common.Logger.Printf(common.LOG_DOWNLOAD_COMPLETED)
 				done <- true
