@@ -1,8 +1,7 @@
 package cmd
 
 import (
-	"log"
-
+	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
 
@@ -18,12 +17,14 @@ func init() {
 
 var (
 	versionString = "{{.Version}}"
-	versionCmd = &cobra.Command{
+	versionCmd    = &cobra.Command{
 		Use:   "version",
 		Short: "Displays the version of Ekara.",
 		Run: func(cmd *cobra.Command, args []string) {
-			log.Printf("CLI executable version: %s\n", versionString)
-			log.Printf("Installer image: %s\n", starterImageName)
+			color.New(color.FgHiWhite).Print("CLI executable version: ")
+			color.New(color.FgCyan).Println(versionString)
+			color.New(color.FgHiWhite).Print("Installer image: ")
+			color.New(color.FgCyan).Println(starterImageName)
 		},
 	}
 )

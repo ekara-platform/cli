@@ -2,7 +2,10 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/ekara-platform/model"
+	"github.com/fatih/color"
 	"io/ioutil"
+	"math"
 	"os"
 
 	"github.com/ekara-platform/cli/common"
@@ -22,10 +25,10 @@ var validateCmd = &cobra.Command{
 	Short: "Validate an existing environment descriptor.",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		common.ShowWorking(common.LOG_VALIDATING_ENV)
+		color.New(color.FgHiWhite).Println(common.LOG_VALIDATING_ENV)
 		dir, err := ioutil.TempDir(os.TempDir(), "ekara_validate")
 		if err != nil {
-			common.ShowError("Unable to create temporary directory: %s", err.Error())
+			common.CliFeedbackNotifier.Error("Unable to create temporary directory: %s", err.Error())
 			os.Exit(1)
 		}
 		defer os.RemoveAll(dir)
@@ -33,24 +36,23 @@ var validateCmd = &cobra.Command{
 		e := initLocalEngine(dir, args[0])
 		res, err := e.ActionManager().Run(action.ValidateActionID)
 		if err != nil {
-			common.ShowError("Unable to run validate action: %s", err.Error())
+			common.CliFeedbackNotifier.Error("Unable to run validate action: %s", err.Error())
 			os.Exit(1)
 		}
 
-		text, err := res.AsPlainText()
-		if err != nil {
-			common.ShowError("Unable to format text result from validate action: %s", err.Error())
-			os.Exit(1)
-		}
-
-		if len(text) > 0 {
-			for _, line := range text {
-				fmt.Println(line)
+		errCount := len(res.(action.ValidateResult).Errors)
+		if errCount > 0 {
+			fmt.Println("Validation problem(s) were encountered")
+			for _, vErr := range res.(action.ValidateResult).Errors {
+				if vErr.ErrorType == model.Error {
+					color.New(color.FgHiRed).Printf("ERROR " + vErr.Message)
+				} else {
+					color.New(color.FgHiYellow).Printf("WARN  " + vErr.Message)
+				}
 			}
-			common.ShowDone("Validation problem(s) were encountered")
-			os.Exit(2)
+			os.Exit(int(math.Min(float64(errCount), 99)))
 		} else {
-			common.ShowDone("No validation problem encountered")
+			color.New(color.FgHiWhite).Println("No validation problem encountered")
 			os.Exit(0)
 		}
 	},
