@@ -10,6 +10,7 @@ import (
 type (
 	//cliContext simulates the LaunchContext
 	cliContext struct {
+		pN                   util.FeedbackNotifier
 		logger               *log.Logger
 		ef                   util.ExchangeFolder
 		descriptorName       string
@@ -21,6 +22,11 @@ type (
 		extVars              model.Parameters
 	}
 )
+
+//Progress implements the corresponding method in LaunchContext
+func (lC cliContext) Progress() util.FeedbackNotifier {
+	return lC.pN
+}
 
 //DescriptorName implements the corresponding method in LaunchContext
 func (lC cliContext) DescriptorName() string {

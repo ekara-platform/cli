@@ -32,12 +32,12 @@ var (
 			if common.Flags.Logging.ShouldOutputLogs() {
 				common.Logger = log.New(os.Stdout, "CLI  > ", log.Ldate|log.Ltime)
 				color.NoColor = true
-				common.NoProgress = true
+				common.NoFeedback = true
 			} else {
 				info, e := os.Stdout.Stat()
 				if e != nil {
 					color.NoColor = true
-					common.NoProgress = true
+					common.NoFeedback = true
 					return
 				} else if (info.Mode() & os.ModeCharDevice) == os.ModeCharDevice {
 					// this comes from http://www.kammerl.de/ascii/AsciiSignature.php
@@ -54,7 +54,7 @@ var (
 					fmt.Println("")
 				} else {
 					color.NoColor = true
-					common.NoProgress = true
+					common.NoFeedback = true
 				}
 			}
 		},
@@ -81,17 +81,20 @@ func init() {
 }
 
 // Execute launch the command
-func Execute() {
+func Execute() error {
 	if err := rootCmd.Execute(); err != nil {
-		panic(err)
+		return err
 	}
+	return nil
 }
 
 func StopCurrentContainerIfRunning() {
-	if id, running := docker.ContainerRunningByImageName(starterImageName); running {
+	if id, running, _ := docker.ContainerRunningByImageName(starterImageName); running {
 		done := make(chan bool, 1)
+		// ok to ignore error
 		go docker.LogAllFromContainer(id, ef, done)
 		<-done
+		// ok to ignore error
 		go docker.StopContainerById(id, done)
 		<-done
 	}
@@ -136,6 +139,7 @@ func initLocalEngine(workDir string, descriptorURL string) engine.Ekara {
 	}
 
 	e, err := engine.Create(&cliContext{
+		pN:             common.CliFeedbackNotifier,
 		ef:             ef,
 		logger:         common.Logger,
 		location:       descriptorURL,

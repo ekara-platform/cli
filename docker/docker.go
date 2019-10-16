@@ -3,6 +3,7 @@ package docker
 import (
 	"bufio"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/ekara-platform/engine/action"
 	"io/ioutil"
@@ -76,42 +77,52 @@ func EnsureDockerInit() {
 
 // ContainerRunningByImageName returns true if a container, built
 // on the given image, is running
-func ContainerRunningByImageName(name string) (string, bool) {
-	containers := getContainers()
-	for _, container := range containers {
-		if container.Image == name || container.Image+":latest" == name {
-			return container.ID, true
+func ContainerRunningByImageName(name string) (string, bool, error) {
+	containers, err := getContainers()
+	if err != nil {
+		return "", false, nil
+	}
+	for _, c := range containers {
+		if c.Image == name || c.Image+":latest" == name {
+			return c.ID, true, nil
 		}
 	}
-	return "", false
+	return "", false, nil
 }
 
 //containerRunningById returns true if a container with the given id is running
-func containerRunningById(id string) bool {
-	containers := getContainers()
-	for _, container := range containers {
-		if container.ID == id {
-			return true
+func containerRunningById(id string) (bool, error) {
+	containers, err := getContainers()
+	if err != nil {
+		return false, err
+	}
+	for _, c := range containers {
+		if c.ID == id {
+			return true, nil
 		}
 	}
-	return false
+	return false, nil
 }
 
 //stopContainerById stops a container corresponding to the provider id
-func StopContainerById(id string, done chan bool) {
+func StopContainerById(id string, done chan bool) error {
 	if err := client.ContainerStop(context.Background(), id, nil); err != nil {
-		panic(err)
+		return err
 	}
 	if err := client.ContainerRemove(context.Background(), id, types.ContainerRemoveOptions{}); err != nil {
-		panic(err)
+		return err
 	}
 	for {
 		common.Logger.Printf(common.LOG_WAITING_STOP)
 		time.Sleep(500 * time.Millisecond)
-		if stillRunning := containerRunningById(id); stillRunning == false {
+		stillRunning, err := containerRunningById(id)
+		if err != nil {
+			return err
+		}
+		if !stillRunning {
 			common.Logger.Printf(common.LOG_STOPPED)
 			done <- true
-			return
+			return nil
 		}
 	}
 }
@@ -120,7 +131,7 @@ func StopContainerById(id string, done chan bool) {
 // Once built the container will be started.
 // The method will wait until the container is started and
 // will notify it using the chanel
-func StartContainer(url string, imageName string, done chan bool, ef util.ExchangeFolder, a action.ActionID) int {
+func StartContainer(url string, imageName string, done chan bool, ef util.ExchangeFolder, a action.ActionID) (int, error) {
 	envVar := []string{}
 	envVar = append(envVar, util.StarterEnvVariableKey+"="+url)
 	envVar = append(envVar, util.StarterEnvNameVariableKey+"="+common.Flags.Descriptor.File)
@@ -161,11 +172,11 @@ func StartContainer(url string, imageName string, done chan bool, ef util.Exchan
 	}, nil, "")
 
 	if err != nil {
-		panic(err)
+		return 0, err
 	}
 
 	// Chan used to turn off the rolling log
-	exitCh := make(chan bool)
+	stopLogReading := make(chan bool)
 
 	// Rolling output of the container logs
 	go func(start time.Time, exit chan bool) {
@@ -189,20 +200,20 @@ func StartContainer(url string, imageName string, done chan bool, ef util.Exchan
 		req := func(sr string) {
 			out, err := client.ContainerLogs(context.Background(), resp.ID, types.ContainerLogsOptions{Since: sr, ShowStdout: true, ShowStderr: true})
 			if err != nil {
-				exitCh <- true
+				stopLogReading <- true
 			}
 			s := bufio.NewScanner(out)
 			for s.Scan() {
 				str := s.Text()
 				if b, sTrim := notExist(str); b {
-					idx := strings.Index(sTrim, util.ProgressPrefix)
+					idx := strings.Index(sTrim, util.FeedbackPrefix)
 					if idx != -1 {
-						pU := common.ProgressUpdate{}
-						err = json.Unmarshal([]byte(sTrim[idx+len(util.ProgressPrefix):]), &pU)
+						fU := util.FeedbackUpdate{}
+						err = json.Unmarshal([]byte(sTrim[idx+len(util.FeedbackPrefix):]), &fU)
 						if err != nil {
 							common.Logger.Println("Unable to parse progress update: " + err.Error())
 						} else if !common.Flags.Logging.ShouldOutputLogs() {
-							common.ShowProgress(pU)
+							common.CliFeedbackNotifier.Progress(fU.Key, fU.Message, fU.Goal)
 						}
 					} else if common.Flags.Logging.ShouldOutputLogs() {
 						fmt.Println(sTrim)
@@ -232,112 +243,131 @@ func StartContainer(url string, imageName string, done chan bool, ef util.Exchan
 				time.Sleep(time.Millisecond * 500)
 			}
 		}
-	}(startedAt, exitCh)
+	}(startedAt, stopLogReading)
 
-	defer LogAllFromContainer(resp.ID, ef, done)
+	defer func() {
+		if err := LogAllFromContainer(resp.ID, ef, done); err != nil {
+			common.Logger.Println("Unable to fetch logs from container")
+		}
+	}()
 
 	if err := client.ContainerStart(context.Background(), resp.ID, types.ContainerStartOptions{}); err != nil {
-		panic(err)
+		common.CliFeedbackNotifier.Error("Unable to start container: %s", err.Error())
+		return 0, err
 	}
 
 	statusCh, errCh := client.ContainerWait(context.Background(), resp.ID, container.WaitConditionNotRunning)
 	select {
 	case err := <-errCh:
-		exitCh <- true
-		panic(err)
+		stopLogReading <- true
+		return 0, err
 	case status := <-statusCh:
-		exitCh <- true
-		return int(status.StatusCode)
+		stopLogReading <- true
+		return int(status.StatusCode), nil
 	}
-
-	return 1
 }
 
-func LogAllFromContainer(id string, ef util.ExchangeFolder, done chan bool) {
+func LogAllFromContainer(id string, ef util.ExchangeFolder, done chan bool) error {
 	out, err := client.ContainerLogs(context.Background(), id, types.ContainerLogsOptions{ShowStdout: true, ShowStderr: true})
 	if err != nil {
 		// we stop now (cannot fetch any more log)
 		done <- true
-		return
+		return err
 	}
 
 	logFile, err := containerLog(ef)
 	if err != nil {
-		panic(err)
+		// we stop now (cannot fetch any more log)
+		done <- true
+		return err
 	}
 	defer logFile.Close()
 
 	_, err = stdcopy.StdCopy(logFile, logFile, out)
 	if err != nil {
-		panic(err)
+		// we stop now (cannot fetch any more log)
+		done <- true
+		return err
 	}
 
 	// We are done!
 	common.Logger.Printf(common.LOG_CONTAINER_LOG_WRITTEN, logFile.Name())
 	done <- true
+	return nil
 }
 
 // getContainers returns the detail of all running containers
-func getContainers() []types.Container {
+func getContainers() ([]types.Container, error) {
 	containers, err := client.ContainerList(context.Background(), types.ContainerListOptions{})
 	if err != nil {
-		panic(err)
+		return []types.Container{}, err
 	}
-	return containers
+	return containers, nil
 }
 
 // imageExistsByName returns true if an image corresponding
 // to the given name has been already downloaded
-func imageExistsByName(name string) bool {
-	images := getImages()
+func imageExistsByName(name string) (bool, error) {
+	images, err := getImages()
+	if err != nil {
+		return false, err
+	}
 	for _, image := range images {
 		for _, tag := range image.RepoTags {
 			if tag == name {
-				return true
+				return true, nil
 			}
 		}
 	}
-	return false
+	return false, nil
 }
 
 // getImages returns the summary of all images already downloaded
-func getImages() []types.ImageSummary {
+func getImages() ([]types.ImageSummary, error) {
 	images, err := client.ImageList(context.Background(), types.ImageListOptions{})
 	if err != nil {
-		panic(err)
+		return []types.ImageSummary{}, err
 	}
-	return images
+	return images, nil
 }
 
 // ImagePull pulls the image corresponding to th given name
 // and wait for the download to be completed.
 //
 // The completion of the download will be notified using the chanel
-func ImagePull(taggedName string, done chan bool) {
-	if img := imageExistsByName(taggedName); !img {
+func ImagePull(taggedName string, done chan bool) error {
+	img, err := imageExistsByName(taggedName)
+	if err != nil {
+		return err
+	}
+	if !img {
 		if r, err := client.ImagePull(context.Background(), taggedName, types.ImagePullOptions{}); err != nil {
-			panic(err)
+			return err
 		} else {
 			defer r.Close()
 		}
-		common.ShowProgress(common.ProgressUpdate{
-			Key:     "cli.docker.download",
-			Message: "Downloading installer image",
-		})
+		common.CliFeedbackNotifier.Progress("cli.docker.download", "Downloading installer image")
 		for {
 			common.Logger.Printf(common.LOG_WAITING_DOWNLOAD)
 			time.Sleep(1000 * time.Millisecond)
-			if img := imageExistsByName(taggedName); img {
+			img, err := imageExistsByName(taggedName)
+			if err != nil {
+				return err
+			}
+			if img {
 				common.Logger.Printf(common.LOG_DOWNLOAD_COMPLETED)
+				break
+			} else {
 				done <- true
-				return
+				return errors.New("unable to download installer image")
 			}
 		}
 	}
 	done <- true
+	return nil
 }
 
-func copyExtraParameters(file string, ef util.ExchangeFolder) {
+func copyExtraParameters(file string, ef util.ExchangeFolder) error {
 	if _, err := os.Stat(file); err != nil {
 		if os.IsNotExist(err) {
 			common.Logger.Fatalf(common.ERROR_UNREACHABLE_PARAM_FILE, file)
@@ -346,13 +376,15 @@ func copyExtraParameters(file string, ef util.ExchangeFolder) {
 
 	b, err := ioutil.ReadFile(file)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	err = ef.Location.Write(b, util.ExternalVarsFilename)
 	if err != nil {
-		panic(err)
+		return err
 	}
+
+	return nil
 }
 
 func containerLog(ef util.ExchangeFolder) (*os.File, error) {

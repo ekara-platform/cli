@@ -5,6 +5,7 @@ import (
 	"github.com/ekara-platform/cli/docker"
 	"github.com/ekara-platform/engine/action"
 	"github.com/ekara-platform/engine/util"
+	"github.com/fatih/color"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"io"
@@ -44,25 +45,29 @@ var applyCmd = &cobra.Command{
 	Long:  `The apply command will ensure that everything declared in the descriptor matches reality by taking the necessary actions.`,
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		common.ShowWorking(common.LOG_APPLYING_ENV)
+		color.New(color.FgHiWhite).Println(common.LOG_APPLYING_ENV)
 		if common.Flags.SSH.PrivateSSHKey != "" && common.Flags.SSH.PublicSSHKey != "" {
 			// Move the ssh keys into the exchange folder input
 			err := copyFile(common.Flags.SSH.PublicSSHKey, filepath.Join(ef.Input.Path(), util.SSHPuplicKeyFileName))
 			if err != nil {
-				common.ShowError("Error copying the SSH public key")
+				common.CliFeedbackNotifier.Error("Error copying the SSH public key")
 				os.Exit(1)
 			}
 			err = copyFile(common.Flags.SSH.PrivateSSHKey, filepath.Join(ef.Input.Path(), util.SSHPrivateKeyFileName))
 			if err != nil {
-				common.ShowError("Error copying the SSH private key")
+				common.CliFeedbackNotifier.Error("Error copying the SSH private key")
 				os.Exit(1)
 			}
 		}
-		status := starterStart(args[0], ef, action.ApplyActionID)
+		status, err := execAndWait(args[0], ef, action.ApplyActionID)
+		if err != nil {
+			common.CliFeedbackNotifier.Error("Unable to start installer: %s", err.Error())
+			return
+		}
 		if status == 0 {
-			common.ShowDone("Done in %s!", common.HumanizeDuration(time.Since(common.StartTime)))
+			common.CliFeedbackNotifier.Info("Done in %s!", common.HumanizeDuration(time.Since(common.StartTime)))
 		} else {
-			common.ShowError("Errored (%d) after %s!", status, common.HumanizeDuration(time.Since(common.StartTime)))
+			common.CliFeedbackNotifier.Error("Errored (%d) after %s!", status, common.HumanizeDuration(time.Since(common.StartTime)))
 		}
 	},
 }
@@ -79,28 +84,44 @@ func getEnvDockerHost() string {
 	return host
 }
 
-func starterStart(url string, ef util.ExchangeFolder, action action.ActionID) int {
+func execAndWait(url string, ef util.ExchangeFolder, action action.ActionID) (int, error) {
 	docker.EnsureDockerInit()
 
-	done := make(chan bool, 1)
-	go docker.ImagePull(starterImageName, done)
-	<-done
+	// check if container already running
+	id, running, err := docker.ContainerRunningByImageName(starterImageName)
+	if err != nil {
+		return 0, err
+	}
 
-	if id, running := docker.ContainerRunningByImageName(starterImageName); running {
-		text := common.ShowPrompt(common.PROMPT_RESTART)
+	if running {
+		text := common.CliFeedbackNotifier.Prompt(common.PROMPT_RESTART)
 		if strings.ToUpper(strings.TrimSpace(text)) == "Y" {
 			done := make(chan bool, 1)
-			go docker.StopContainerById(id, done)
+			go func() {
+				if err := docker.StopContainerById(id, done); err != nil {
+					common.CliFeedbackNotifier.Error("Unable to stop running container: %s", err.Error())
+				}
+			}()
 			<-done
 		} else {
-			panic(errors.New(common.LOG_FAIL_ON_PROMPT_RESTART))
+			return 0, errors.New(common.LOG_FAIL_ON_PROMPT_RESTART)
 		}
 	}
 
-	done = make(chan bool, 1)
-	status := docker.StartContainer(url, starterImageName, done, ef, action)
+	// check again
+	id, running, err = docker.ContainerRunningByImageName(starterImageName)
+	if err != nil {
+		return 0, err
+	}
+
+	done := make(chan bool, 1)
+	status, err := docker.StartContainer(url, starterImageName, done, ef, action)
+	if err != nil {
+		common.CliFeedbackNotifier.Error("Unable to start container: %s", err.Error())
+		return 0, err
+	}
 	<-done
-	return status
+	return status, nil
 }
 
 func copyFile(src, dst string) error {

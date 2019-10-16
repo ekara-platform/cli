@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/ekara-platform/cli/common"
 	"github.com/ekara-platform/engine/action"
+	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 	"io/ioutil"
 	"os"
@@ -21,10 +22,10 @@ var dumpCmd = &cobra.Command{
 	Short: "Dump an existing environment descriptor.",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		common.ShowWorking(common.LOG_DUMPING_ENV)
+		color.New(color.FgHiWhite).Println(common.LOG_DUMPING_ENV)
 		dir, err := ioutil.TempDir(os.TempDir(), "ekara_dump")
 		if err != nil {
-			common.ShowError("Unable to create temporary directory: %s", err.Error())
+			common.CliFeedbackNotifier.Error("Unable to create temporary directory: %s", err.Error())
 			os.Exit(1)
 		}
 		defer os.RemoveAll(dir)
@@ -32,13 +33,13 @@ var dumpCmd = &cobra.Command{
 		e := initLocalEngine(dir, args[0])
 		res, err := e.ActionManager().Run(action.DumpActionID)
 		if err != nil {
-			common.ShowError("Unable to run dump action: %s", err.Error())
+			common.CliFeedbackNotifier.Error("Unable to run dump action: %s", err.Error())
 			os.Exit(1)
 		}
 
 		text, err := res.AsPlainText()
 		if err != nil {
-			common.ShowError("Unable to format text result from dump action: %s", err.Error())
+			common.CliFeedbackNotifier.Error("Unable to format text result from dump action: %s", err.Error())
 			os.Exit(1)
 		}
 

@@ -1,8 +1,7 @@
 package cmd
 
 import (
-	"log"
-
+	"github.com/ekara-platform/cli/common"
 	"github.com/spf13/cobra"
 )
 
@@ -18,12 +17,12 @@ func init() {
 
 var (
 	versionString = "Unknown"
-	versionCmd = &cobra.Command{
+	versionCmd    = &cobra.Command{
 		Use:   "version",
-		Short: "Displays the version of Ekara.",
+		Short: "Displays the version of Ekara and its installer.",
 		Run: func(cmd *cobra.Command, args []string) {
-			log.Printf("CLI executable version: %s\n", versionString)
-			log.Printf("Installer image: %s\n", starterImageName)
+			common.CliFeedbackNotifier.Info("CLI executable version: %s", versionString)
+			common.CliFeedbackNotifier.Info("Installer image: %s", starterImageName)
 		},
 	}
 )
