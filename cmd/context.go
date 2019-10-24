@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/ekara-platform/cli/common"
 	"log"
 
 	"github.com/ekara-platform/engine/util"
@@ -21,6 +22,11 @@ type (
 		extVars              model.Parameters
 	}
 )
+
+//DescriptorName implements the corresponding method in LaunchContext
+func (lC cliContext) Verbosity() int {
+	return common.Flags.Logging.VerbosityLevel()
+}
 
 //DescriptorName implements the corresponding method in LaunchContext
 func (lC cliContext) DescriptorName() string {

@@ -126,7 +126,7 @@ func StartContainer(url string, imageName string, done chan bool, ef util.Exchan
 	envVar = append(envVar, util.StarterEnvNameVariableKey+"="+common.Flags.Descriptor.File)
 	envVar = append(envVar, util.StarterEnvLoginVariableKey+"="+common.Flags.Descriptor.Login)
 	envVar = append(envVar, util.StarterEnvPasswordVariableKey+"="+common.Flags.Descriptor.Password)
-
+	envVar = append(envVar, util.StarterVerbosityVariableKey+"="+strconv.Itoa(common.Flags.Logging.VerbosityLevel()))
 	envVar = append(envVar, util.ActionEnvVariableKey+"="+a.String())
 	envVar = append(envVar, "http_proxy="+common.Flags.Proxy.HTTP)
 	envVar = append(envVar, "https_proxy="+common.Flags.Proxy.HTTPS)

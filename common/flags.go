@@ -49,6 +49,17 @@ func (l LoggingFlags) ShouldOutputLogs() bool {
 	return l.Verbose || l.VeryVerbose
 }
 
+// VerbosityLevel returns the numeric verbosity level (0, 1 or 2)
+func (l LoggingFlags) VerbosityLevel() int {
+	verbosity := 0
+	if l.VeryVerbose {
+		verbosity = 2
+	} else if l.Verbose {
+		verbosity = 1
+	}
+	return verbosity
+}
+
 // SSHFlags regroups SSH-related flags
 type SSHFlags struct {
 	// The public SSH key used to log on the created environment

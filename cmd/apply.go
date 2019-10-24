@@ -47,7 +47,7 @@ var applyCmd = &cobra.Command{
 		common.ShowWorking(common.LOG_APPLYING_ENV)
 		if common.Flags.SSH.PrivateSSHKey != "" && common.Flags.SSH.PublicSSHKey != "" {
 			// Move the ssh keys into the exchange folder input
-			err := copyFile(common.Flags.SSH.PublicSSHKey, filepath.Join(ef.Input.Path(), util.SSHPuplicKeyFileName))
+			err := copyFile(common.Flags.SSH.PublicSSHKey, filepath.Join(ef.Input.Path(), util.SSHPublicKeyFileName))
 			if err != nil {
 				common.ShowError("Error copying the SSH public key")
 				os.Exit(1)
