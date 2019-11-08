@@ -2,16 +2,16 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/ekara-platform/cli/docker"
-	"github.com/fatih/color"
-	"log"
-	"os"
-
 	"github.com/ekara-platform/cli/common"
+	"github.com/ekara-platform/cli/docker"
 	"github.com/ekara-platform/engine"
+	"github.com/ekara-platform/engine/ansible"
 	"github.com/ekara-platform/engine/util"
 	"github.com/ekara-platform/model"
+	"github.com/fatih/color"
 	"github.com/spf13/cobra"
+	"log"
+	"os"
 )
 
 const (
@@ -32,12 +32,12 @@ var (
 			if common.Flags.Logging.ShouldOutputLogs() {
 				common.Logger = log.New(os.Stdout, "CLI  > ", log.Ldate|log.Ltime)
 				color.NoColor = true
-				common.NoProgress = true
+				common.NoFeedback = true
 			} else {
 				info, e := os.Stdout.Stat()
 				if e != nil {
 					color.NoColor = true
-					common.NoProgress = true
+					common.NoFeedback = true
 					return
 				} else if (info.Mode() & os.ModeCharDevice) == os.ModeCharDevice {
 					// this comes from http://www.kammerl.de/ascii/AsciiSignature.php
@@ -54,7 +54,7 @@ var (
 					fmt.Println("")
 				} else {
 					color.NoColor = true
-					common.NoProgress = true
+					common.NoFeedback = true
 				}
 			}
 		},
@@ -81,17 +81,20 @@ func init() {
 }
 
 // Execute launch the command
-func Execute() {
+func Execute() error {
 	if err := rootCmd.Execute(); err != nil {
-		panic(err)
+		return err
 	}
+	return nil
 }
 
 func StopCurrentContainerIfRunning() {
-	if id, running := docker.ContainerRunningByImageName(starterImageName); running {
+	if id, running, _ := docker.ContainerRunningByImageName(starterImageName); running {
 		done := make(chan bool, 1)
+		// ok to ignore error
 		go docker.LogAllFromContainer(id, ef, done)
 		<-done
+		// ok to ignore error
 		go docker.StopContainerById(id, done)
 		<-done
 	}
@@ -136,6 +139,7 @@ func initLocalEngine(workDir string, descriptorURL string) engine.Ekara {
 	}
 
 	e, err := engine.Create(&cliContext{
+		fN:             common.CliFeedbackNotifier,
 		ef:             ef,
 		logger:         common.Logger,
 		location:       descriptorURL,
@@ -154,4 +158,24 @@ func initLocalEngine(workDir string, descriptorURL string) engine.Ekara {
 	}
 
 	return e
+}
+
+func showInventory(i ansible.Inventory) {
+	fmt.Println()
+	fmt.Println("--------------------------------------------------------------------------------")
+	fmt.Println("Nodeset      | Hostname                                                | Public ")
+	fmt.Println("--------------------------------------------------------------------------------")
+	for _, host := range i.Hosts {
+		if nodeset, ok := host.Vars["nodeset"]; ok {
+			fmt.Printf("%-12s | ", nodeset)
+		} else {
+			fmt.Printf("%-12s | ", "?")
+		}
+		fmt.Printf("%-55s | ", host.Name)
+		if _, ok := host.Vars["public_ip"]; ok {
+			fmt.Printf("%-5s | ", "Yes")
+		}
+		fmt.Println("")
+	}
+	fmt.Println("--------------------------------------------------------------------------------")
 }

@@ -16,6 +16,7 @@ type AllFlags struct {
 	Logging    LoggingFlags
 	Proxy      ProxyFlags
 	SSH        SSHFlags
+	Skipping   SkippingFlags
 }
 
 func (p AllFlags) checkAndLog(logger *log.Logger) error {
@@ -99,4 +100,23 @@ type ProxyFlags struct {
 	HTTP       string
 	HTTPS      string
 	Exclusions string
+}
+
+// SkippingFlags regroups flags that control the apply process
+type SkippingFlags struct {
+	SkipCreate  bool
+	SkipInstall bool
+	SkipDeploy  bool
+}
+
+func (s SkippingFlags) SkippingLevel() int {
+	if s.SkipDeploy {
+		return 3
+	} else if s.SkipInstall {
+		return 2
+	} else if s.SkipCreate {
+		return 1
+	} else {
+		return 0
+	}
 }
