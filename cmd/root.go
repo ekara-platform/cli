@@ -62,7 +62,7 @@ var (
 )
 
 func isDescriptorCommand(cmd *cobra.Command, args []string) bool {
-	return len(args) > 0 && (cmd.Name() == "apply" || cmd.Name() == "dump" || cmd.Name() == "validate")
+	return len(args) > 0 && (cmd.Name() == "apply" || cmd.Name() == "destroy" || cmd.Name() == "dump" || cmd.Name() == "validate")
 }
 
 func init() {
