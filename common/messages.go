@@ -10,6 +10,7 @@ const (
 	LOG_VALIDATING_ENV = "Validating environment..."
 	LOG_DUMPING_ENV    = "Dumping environment..."
 	LOG_APPLYING_ENV   = "Applying environment..."
+	LOG_DESTROYING_ENV   = "Destroying environment..."
 
 	//DOCKER IMAGE AND CONTAINER
 	LOG_WAITING_DOWNLOAD      = "Waiting for the download to be completed"

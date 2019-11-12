@@ -34,6 +34,8 @@ github.com/ekara-platform/engine v1.0.1-0.20191105095853-585dd3146a79 h1:ckZz1Aw
 github.com/ekara-platform/engine v1.0.1-0.20191105095853-585dd3146a79/go.mod h1:5gznG9BKJDyRhjshjAD5sYeO7XobMTbUnAPl6yLJ1rI=
 github.com/ekara-platform/engine v1.0.1-0.20191108120946-d75aa787e63f h1:/+2EklZB6yxbPyJCVdsdntTNQUGPGrXs+0/yzT7AvaU=
 github.com/ekara-platform/engine v1.0.1-0.20191108120946-d75aa787e63f/go.mod h1:5gznG9BKJDyRhjshjAD5sYeO7XobMTbUnAPl6yLJ1rI=
+github.com/ekara-platform/engine v1.0.1-0.20191112183645-c5db9eb30fa0 h1:RQZqBvuxJO7ysK5OvBfYGOhI75BAFpquJRg2HeWPraI=
+github.com/ekara-platform/engine v1.0.1-0.20191112183645-c5db9eb30fa0/go.mod h1:5gznG9BKJDyRhjshjAD5sYeO7XobMTbUnAPl6yLJ1rI=
 github.com/ekara-platform/model v1.0.0 h1:pbHaImZ5WyyxkmbCESt6Jt0l26iyxRLktjJCrJfCazI=
 github.com/ekara-platform/model v1.0.0/go.mod h1:6Bog+i7MeFHng1R1Aj2kLi+F+4umrjjCY3dl2fy3u8Y=
 github.com/ekara-platform/model v1.0.1-0.20191104224758-2bc53be181e0 h1:/Kq1B2ANjtHaTXOMJlhkt4zIhIZINaFUDjTAMwqh2qY=
