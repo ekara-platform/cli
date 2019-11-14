@@ -69,9 +69,9 @@ var destroyCmd = &cobra.Command{
 					common.CliFeedbackNotifier.Error("Unable to parse destroy result: %s", err.Error())
 					return
 				}
-			} else {
-				common.CliFeedbackNotifier.Error("Errored (%d) after %s!", status, common.HumanizeDuration(time.Since(common.StartTime)))
 			}
+		} else {
+			common.CliFeedbackNotifier.Error("Errored (%d) after %s!", status, common.HumanizeDuration(time.Since(common.StartTime)))
 		}
 	},
 }

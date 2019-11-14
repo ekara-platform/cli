@@ -86,9 +86,9 @@ var applyCmd = &cobra.Command{
 					return
 				}
 				showInventory(applyResult.Inventory)
-			} else {
-				common.CliFeedbackNotifier.Error("Errored (%d) after %s!", status, common.HumanizeDuration(time.Since(common.StartTime)))
 			}
+		} else {
+			common.CliFeedbackNotifier.Error("Errored (%d) after %s!", status, common.HumanizeDuration(time.Since(common.StartTime)))
 		}
 	},
 }
