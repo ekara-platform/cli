@@ -37,6 +37,7 @@ proxy/proxy_env.yml
 
 # Output content
 out*/
+ekara/
 
 # VS code
 .vscode/
