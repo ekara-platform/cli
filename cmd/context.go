@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/ekara-platform/cli/common"
 	"log"
 
 	"github.com/ekara-platform/engine/util"
@@ -10,6 +11,7 @@ import (
 type (
 	//cliContext simulates the LaunchContext
 	cliContext struct {
+		fN                   util.FeedbackNotifier
 		logger               *log.Logger
 		ef                   util.ExchangeFolder
 		descriptorName       string
@@ -21,6 +23,21 @@ type (
 		extVars              model.Parameters
 	}
 )
+
+//Progress implements the corresponding method in LaunchContext
+func (lC cliContext) Feedback() util.FeedbackNotifier {
+	return lC.fN
+}
+
+//Skip implements the corresponding method in LaunchContext
+func (lC cliContext) Skipping() int {
+	return common.Flags.Skipping.SkippingLevel()
+}
+
+//Verbosity implements the corresponding method in LaunchContext
+func (lC cliContext) Verbosity() int {
+	return common.Flags.Logging.VerbosityLevel()
+}
 
 //DescriptorName implements the corresponding method in LaunchContext
 func (lC cliContext) DescriptorName() string {

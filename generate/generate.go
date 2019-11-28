@@ -23,7 +23,7 @@ func main() {
 		if commit != "" {
 			c.Version = "Commit:" + commit
 		} else {
-			c.Version = "Unknown"
+			c.Version = "<none>"
 		}
 	}
 

@@ -16,6 +16,7 @@ type AllFlags struct {
 	Logging    LoggingFlags
 	Proxy      ProxyFlags
 	SSH        SSHFlags
+	Skipping   SkippingFlags
 }
 
 func (p AllFlags) checkAndLog(logger *log.Logger) error {
@@ -47,6 +48,17 @@ type LoggingFlags struct {
 // ShouldOutputLogs returns true if (very) verbose mode is enabled
 func (l LoggingFlags) ShouldOutputLogs() bool {
 	return l.Verbose || l.VeryVerbose
+}
+
+// VerbosityLevel returns the numeric verbosity level (0, 1 or 2)
+func (l LoggingFlags) VerbosityLevel() int {
+	verbosity := 0
+	if l.VeryVerbose {
+		verbosity = 2
+	} else if l.Verbose {
+		verbosity = 1
+	}
+	return verbosity
 }
 
 // SSHFlags regroups SSH-related flags
@@ -88,4 +100,23 @@ type ProxyFlags struct {
 	HTTP       string
 	HTTPS      string
 	Exclusions string
+}
+
+// SkippingFlags regroups flags that control the apply process
+type SkippingFlags struct {
+	SkipCreate  bool
+	SkipInstall bool
+	SkipDeploy  bool
+}
+
+func (s SkippingFlags) SkippingLevel() int {
+	if s.SkipDeploy {
+		return 3
+	} else if s.SkipInstall {
+		return 2
+	} else if s.SkipCreate {
+		return 1
+	} else {
+		return 0
+	}
 }

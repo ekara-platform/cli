@@ -7,9 +7,10 @@ const (
 	LOG_SSH_CONFIRMATION  = "Using specified SSH keys"
 
 	//Actions
-	LOG_VALIDATING_ENV = "Validating environment"
-	LOG_DUMPING_ENV    = "Dumping environment"
-	LOG_APPLYING_ENV   = "Applying environment"
+	LOG_VALIDATING_ENV = "Validating environment..."
+	LOG_DUMPING_ENV    = "Dumping environment..."
+	LOG_APPLYING_ENV   = "Applying environment..."
+	LOG_DESTROYING_ENV   = "Destroying environment..."
 
 	//DOCKER IMAGE AND CONTAINER
 	LOG_WAITING_DOWNLOAD      = "Waiting for the download to be completed"
@@ -20,7 +21,7 @@ const (
 
 	// Prompt messages
 	PROMPT_RESTART             = "Are you sure you want to recreate the starter container now (y/n) ? "
-	LOG_FAIL_ON_PROMPT_RESTART = "Cannot go further if you refuse to stop the running container!"
+	LOG_FAIL_ON_PROMPT_RESTART = "cannot go further if you refuse to stop the running container"
 
 	LOG_PASSING_CONTAINER_ENVARS = "Env passed to the container %v\n"
 
