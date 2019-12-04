@@ -3,12 +3,13 @@ package common
 import (
 	"bufio"
 	"fmt"
-	"github.com/ekara-platform/engine/util"
-	"github.com/fatih/color"
-	"golang.org/x/crypto/ssh/terminal"
 	"math"
 	"os"
 	"strings"
+
+	"github.com/ekara-platform/engine/util"
+	"github.com/fatih/color"
+	"golang.org/x/crypto/ssh/terminal"
 )
 
 type (
@@ -30,7 +31,7 @@ var (
 )
 
 func init() {
-	w, _, err := terminal.GetSize(int(os.Stdin.Fd()))
+	w, _, err := terminal.GetSize(int(os.Stdout.Fd()))
 	if err != nil {
 		// Assume 80 columns
 		termWidth = 80
@@ -142,5 +143,6 @@ func (l *consoleFeedbackNotifier) displayMessage(message string, goal int) {
 }
 
 func (l *consoleFeedbackNotifier) clearLine() {
-	fmt.Printf("\r%s\r", strings.Repeat(" ", termWidth))
+	s := "\r%s\r"
+	fmt.Printf(s, strings.Repeat(" ", termWidth-len(s)))
 }
