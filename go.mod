@@ -9,12 +9,10 @@ require (
 	github.com/docker/docker v1.13.1
 	github.com/docker/go-connections v0.3.0
 	github.com/docker/go-units v0.3.3 // indirect
-	github.com/ekara-platform/engine v1.0.1-0.20191112183645-c5db9eb30fa0
-	github.com/ekara-platform/model v1.0.1-0.20191104224758-2bc53be181e0
+	github.com/ekara-platform/engine v1.0.1-0.20200106135443-d8e60a01d586
+	github.com/ekara-platform/model v1.0.1-0.20200106134733-22de1a51be0e
 	github.com/fatih/color v1.7.0
 	github.com/gogo/protobuf v0.0.0-20170307180453-100ba4e88506 // indirect
-	github.com/mattn/go-colorable v0.0.9 // indirect
-	github.com/mattn/go-isatty v0.0.10 // indirect
 	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
 	github.com/opencontainers/image-spec v1.0.1 // indirect
 	github.com/spf13/cobra v0.0.5
