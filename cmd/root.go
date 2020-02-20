@@ -72,8 +72,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&common.Flags.Proxy.Exclusions, "no-proxy", os.Getenv(envNoProxy), "Proxy exclusion(s)")
 
 	// Logging flags
-	rootCmd.PersistentFlags().BoolVar(&common.Flags.Logging.Verbose, "verbose", false, "Verbose standard output")
-	rootCmd.PersistentFlags().BoolVar(&common.Flags.Logging.VeryVerbose, "very-verbose", false, "Very verbose standard output")
+	rootCmd.PersistentFlags().IntVar(&common.Flags.Logging.Verbose, "verbose", 0, "Verbose standard output from 1 to 5")
 	rootCmd.PersistentFlags().StringVar(&common.Flags.Logging.File, "logfile", defaultLogFileName, "Installer logfile")
 
 	// Debug flags

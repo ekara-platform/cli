@@ -40,25 +40,22 @@ type DescriptorFlags struct {
 
 // LoggingFlags regroups logging-related flags
 type LoggingFlags struct {
-	Verbose     bool
-	VeryVerbose bool
-	File        string
+	Verbose int
+	File    string
 }
 
 // ShouldOutputLogs returns true if (very) verbose mode is enabled
 func (l LoggingFlags) ShouldOutputLogs() bool {
-	return l.Verbose || l.VeryVerbose
+	return l.Verbose > 0
 }
 
 // VerbosityLevel returns the numeric verbosity level (0, 1 or 2)
 func (l LoggingFlags) VerbosityLevel() int {
-	verbosity := 0
-	if l.VeryVerbose {
-		verbosity = 2
-	} else if l.Verbose {
-		verbosity = 1
+	if l.Verbose > 5 {
+		// Max 5 will be equal to -vvvv for ansible
+		return 5
 	}
-	return verbosity
+	return l.Verbose
 }
 
 // SSHFlags regroups SSH-related flags
