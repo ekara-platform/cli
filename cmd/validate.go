@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"github.com/ekara-platform/model"
 	"github.com/fatih/color"
 	"io/ioutil"
@@ -25,7 +24,7 @@ var validateCmd = &cobra.Command{
 	Short: "Validate an existing environment descriptor.",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		color.New(color.FgHiWhite).Println(common.LOG_VALIDATING_ENV)
+		common.CliFeedbackNotifier.Progress("validation", common.LOG_VALIDATING_ENV)
 		dir, err := ioutil.TempDir(os.TempDir(), "ekara_validate")
 		if err != nil {
 			common.CliFeedbackNotifier.Error("Unable to create temporary directory: %s", err.Error())
@@ -42,12 +41,12 @@ var validateCmd = &cobra.Command{
 
 		errCount := len(res.(action.ValidateResult).Errors)
 		if errCount > 0 {
-			fmt.Println("Validation problem(s) were encountered")
+			common.CliFeedbackNotifier.Error("")
 			for _, vErr := range res.(action.ValidateResult).Errors {
 				if vErr.ErrorType == model.Error {
-					color.New(color.FgHiRed).Printf("ERROR " + vErr.Message)
+					color.New(color.FgRed).Printf("ERROR %s (@%s)\n", vErr.Message, vErr.Location.Path)
 				} else {
-					color.New(color.FgHiYellow).Printf("WARN  " + vErr.Message)
+					color.New(color.FgYellow).Printf("WARN  %s (@%s)\n", vErr.Message, vErr.Location.Path)
 				}
 			}
 			os.Exit(int(math.Min(float64(errCount), 99)))

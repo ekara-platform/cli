@@ -40,20 +40,24 @@ func init() {
 	}
 }
 
-func (l *consoleFeedbackNotifier) Error(msg string, v ...interface{}) {
+func (l *consoleFeedbackNotifier) Error(message string, v ...interface{}) {
 	if NoFeedback {
 		return
 	}
 	l.switchMessage("✗", color.FgHiRed)
-	color.New(color.FgRed).Printf("%s\n", fmt.Sprintf(msg, v...))
+	if message != "" {
+		color.New(color.FgRed).Printf("%s\n", fmt.Sprintf(message, v...))
+	}
 }
 
-func (l *consoleFeedbackNotifier) Info(msg string, v ...interface{}) {
+func (l *consoleFeedbackNotifier) Info(message string, v ...interface{}) {
 	if NoFeedback {
 		return
 	}
 	l.switchMessage("✓", color.FgHiGreen)
-	color.New(color.FgGreen).Printf("%s\n", fmt.Sprintf(msg, v...))
+	if message != "" {
+		color.New(color.FgGreen).Printf("%s\n", fmt.Sprintf(message, v...))
+	}
 }
 
 func (l *consoleFeedbackNotifier) Progress(key string, message string, v ...interface{}) {
@@ -84,7 +88,9 @@ func (l *consoleFeedbackNotifier) ProgressG(key string, goal int, message string
 func (l *consoleFeedbackNotifier) Detail(message string, v ...interface{}) {
 	l.clearLine()
 	l.displayMessage(l.last.message, l.last.count)
-	color.New(color.FgWhite).Printf(" %s", fmt.Sprintf(message, v...))
+	if message != "" {
+		color.New(color.FgWhite).Printf(" %s", fmt.Sprintf(message, v...))
+	}
 }
 
 func (l *consoleFeedbackNotifier) Prompt(msg string, v ...interface{}) string {

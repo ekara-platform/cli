@@ -9,8 +9,8 @@ require (
 	github.com/docker/docker v1.13.1
 	github.com/docker/go-connections v0.3.0
 	github.com/docker/go-units v0.3.3 // indirect
-	github.com/ekara-platform/engine v1.0.1-0.20200226145759-8a60b2833327
-	github.com/ekara-platform/model v1.0.1-0.20200214092618-53f62fb07250
+	github.com/ekara-platform/engine v1.0.1-0.20200227174114-77fea9e5b9bd
+	github.com/ekara-platform/model v1.0.1-0.20200227174022-a451d2e5d22b
 	github.com/fatih/color v1.7.0
 	github.com/gogo/protobuf v0.0.0-20170307180453-100ba4e88506 // indirect
 	github.com/mattn/go-colorable v0.1.4 // indirect

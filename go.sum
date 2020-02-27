@@ -45,6 +45,8 @@ github.com/ekara-platform/engine v1.0.1-0.20200106135443-d8e60a01d586 h1:pGemHJ8
 github.com/ekara-platform/engine v1.0.1-0.20200106135443-d8e60a01d586/go.mod h1:+vTwjNi0r6tmgyw9mq2Q5C+8mC4vdLrMguqrmCE6uaI=
 github.com/ekara-platform/engine v1.0.1-0.20200226145759-8a60b2833327 h1:ZjS68Kd8DYSzzHMhu0ySnG36mF7AebJIfakZmuw8Vfs=
 github.com/ekara-platform/engine v1.0.1-0.20200226145759-8a60b2833327/go.mod h1:cB3ag2FWxzXXqp/r4Bq6Zgc8vppsIhW6XF9T2pa9aAs=
+github.com/ekara-platform/engine v1.0.1-0.20200227174114-77fea9e5b9bd h1:3T2Q1a2w0QWkS2oSPCJAm6c4/YREbLn1o5bB/3VvKFc=
+github.com/ekara-platform/engine v1.0.1-0.20200227174114-77fea9e5b9bd/go.mod h1:KNVsT4W5ZRlUX1O9gXqkFVEbQcwK0qpZvG1xT038bR4=
 github.com/ekara-platform/model v1.0.0 h1:pbHaImZ5WyyxkmbCESt6Jt0l26iyxRLktjJCrJfCazI=
 github.com/ekara-platform/model v1.0.0/go.mod h1:6Bog+i7MeFHng1R1Aj2kLi+F+4umrjjCY3dl2fy3u8Y=
 github.com/ekara-platform/model v1.0.1-0.20191104224758-2bc53be181e0 h1:/Kq1B2ANjtHaTXOMJlhkt4zIhIZINaFUDjTAMwqh2qY=
@@ -54,6 +56,8 @@ github.com/ekara-platform/model v1.0.1-0.20200106134733-22de1a51be0e h1:MtkjwQZF
 github.com/ekara-platform/model v1.0.1-0.20200106134733-22de1a51be0e/go.mod h1:0nVOf6MOkq+u+5PFkAe7zTw7/IZHsy187b/uTT3c1ig=
 github.com/ekara-platform/model v1.0.1-0.20200214092618-53f62fb07250 h1:TtUC2GA/SHj8Lk5RmOyQifu3dnM0XkW/yrl/esRUfGY=
 github.com/ekara-platform/model v1.0.1-0.20200214092618-53f62fb07250/go.mod h1:eMxe6bPQF7mZKXlmJkkZSCAR0KTGBbgj1hKuY4y5S5Y=
+github.com/ekara-platform/model v1.0.1-0.20200227174022-a451d2e5d22b h1:NC3O7mji//ZypbcE7k5D4h2gStys0a9zi9lGx5BRpl4=
+github.com/ekara-platform/model v1.0.1-0.20200227174022-a451d2e5d22b/go.mod h1:eMxe6bPQF7mZKXlmJkkZSCAR0KTGBbgj1hKuY4y5S5Y=
 github.com/emirpasic/gods v1.9.0/go.mod h1:YfzfFFoVP/catgzJb4IKIqXjX78Ha8FMSDh3ymbK86o=
 github.com/emirpasic/gods v1.12.0 h1:QAUIPSaCu4G+POclxeqb3F+WPpdKqFGlw36+yOzGlrg=
 github.com/emirpasic/gods v1.12.0/go.mod h1:YfzfFFoVP/catgzJb4IKIqXjX78Ha8FMSDh3ymbK86o=
