@@ -4,7 +4,7 @@ go 1.13
 
 require (
 	docker.io/go-docker v1.0.0
-	github.com/GroupePSA/componentizer v0.0.0-20200904130629-ff73bcafc2a0
+	github.com/GroupePSA/componentizer v0.0.0-20200904133353-8a957401d69d
 	github.com/Microsoft/go-winio v0.4.14 // indirect
 	github.com/coreos/go-etcd v2.0.0+incompatible // indirect
 	github.com/cpuguy83/go-md2man v1.0.10 // indirect
@@ -12,7 +12,7 @@ require (
 	github.com/docker/docker v1.13.1
 	github.com/docker/go-connections v0.4.0
 	github.com/docker/go-units v0.4.0 // indirect
-	github.com/ekara-platform/engine v1.0.1-0.20200904130921-94c4b8498d23
+	github.com/ekara-platform/engine v1.0.1-0.20200904133550-7c34fd538206
 	github.com/fatih/color v1.9.0
 	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/google/uuid v1.1.2 // indirect

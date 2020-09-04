@@ -8,6 +8,8 @@ github.com/GroupePSA/componentizer v0.0.0-20200904074711-6001dbb137ca h1:b2f7xBd
 github.com/GroupePSA/componentizer v0.0.0-20200904074711-6001dbb137ca/go.mod h1:U2805794XXgTdMvVYHDonsdNnrni/sh/NsPwz3jojP8=
 github.com/GroupePSA/componentizer v0.0.0-20200904130629-ff73bcafc2a0 h1:HCeHfz1vZCXLH+vSE1UnQ5fJ9JxUm9hDiuFGcdF1qzA=
 github.com/GroupePSA/componentizer v0.0.0-20200904130629-ff73bcafc2a0/go.mod h1:U2805794XXgTdMvVYHDonsdNnrni/sh/NsPwz3jojP8=
+github.com/GroupePSA/componentizer v0.0.0-20200904133353-8a957401d69d h1:DVBDIIZCwSI1pBBt38epclds9vkM7oQinuqycckaUOg=
+github.com/GroupePSA/componentizer v0.0.0-20200904133353-8a957401d69d/go.mod h1:U2805794XXgTdMvVYHDonsdNnrni/sh/NsPwz3jojP8=
 github.com/Microsoft/go-winio v0.4.13 h1:Hmi80lzZuI/CaYmlJp/b+FjZdRZhKu9c2mDVqKlLWVs=
 github.com/Microsoft/go-winio v0.4.13/go.mod h1:qXqCSQ3Xa7+6tgxaGTIe4Kpcdsi+P8jBhyzoq1bpyYA=
 github.com/Microsoft/go-winio v0.4.14 h1:+hMXMk01us9KgxGb7ftKQt2Xpf5hH/yky+TDA+qxleU=
@@ -80,6 +82,8 @@ github.com/ekara-platform/engine v1.0.1-0.20200904080709-28576cc57981 h1:IpEuEBx
 github.com/ekara-platform/engine v1.0.1-0.20200904080709-28576cc57981/go.mod h1:OimxUTxF3WsJKPGO6WaPq1fEcvu5M/9hXq9pNXIdtSY=
 github.com/ekara-platform/engine v1.0.1-0.20200904130921-94c4b8498d23 h1:XBXrZgGS1EERmFMJt35GurIolZf4zfts1xg37MdxiuI=
 github.com/ekara-platform/engine v1.0.1-0.20200904130921-94c4b8498d23/go.mod h1:gstNnndhGF719n6vms6mRTEUDdVbcyTGDcDV4tA2N34=
+github.com/ekara-platform/engine v1.0.1-0.20200904133550-7c34fd538206 h1:ZGxt52XS35E7nmPyk50IyyI/k4xoONzx88ADZHg2ef8=
+github.com/ekara-platform/engine v1.0.1-0.20200904133550-7c34fd538206/go.mod h1:LfVCa/jkUoCNwVAD/h01rFQu/A7yrdVHzM8fzGBUkHM=
 github.com/ekara-platform/model v1.0.0 h1:pbHaImZ5WyyxkmbCESt6Jt0l26iyxRLktjJCrJfCazI=
 github.com/ekara-platform/model v1.0.0/go.mod h1:6Bog+i7MeFHng1R1Aj2kLi+F+4umrjjCY3dl2fy3u8Y=
 github.com/ekara-platform/model v1.0.1-0.20191104224758-2bc53be181e0 h1:/Kq1B2ANjtHaTXOMJlhkt4zIhIZINaFUDjTAMwqh2qY=
