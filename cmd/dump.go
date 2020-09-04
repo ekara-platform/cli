@@ -31,7 +31,7 @@ var dumpCmd = &cobra.Command{
 		defer os.RemoveAll(dir)
 
 		e := initLocalEngine(dir, args[0])
-		res, err := e.ActionManager().Run(action.DumpActionID)
+		res, err := e.Execute(action.DumpActionID)
 		if err != nil {
 			common.CliFeedbackNotifier.Error("Unable to run dump action: %s", err.Error())
 			os.Exit(1)

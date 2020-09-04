@@ -33,7 +33,7 @@ var validateCmd = &cobra.Command{
         defer os.RemoveAll(dir)
 
         e := initLocalEngine(dir, args[0])
-        res, err := e.ActionManager().Run(action.ValidateActionID)
+        res, err := e.Execute(action.ValidateActionID)
         if err != nil {
             common.CliFeedbackNotifier.Error("Unable to run validate action: %s", err.Error())
             os.Exit(1)
