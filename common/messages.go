@@ -25,11 +25,11 @@ const (
 
 	LOG_PASSING_CONTAINER_ENVARS = "Env passed to the container %v\n"
 
-	ERROR_REQUIRED_DESCRIPTOR_URL = "The \"descriptor url\" should be defined"
-	ERROR_REQUIRED_FLAG           = "The flag \"%s\" should be defined"
-	ERROR_REQUIRED_ENV            = "The environment variable \"%s\" should be defined"
-	ERROR_REQUIRED_SSH_PUBLIC     = "The flag \"public_ssh\" must be defined"
-	ERROR_REQUIRED_SSH_PRIVATE    = "The flag \"private_ssh\" must be defined"
+	INVALID_DESCRIPTOR_URL     = "Invalid descriptor URL: %s\n"
+	ERROR_REQUIRED_FLAG        = "The flag \"%s\" should be defined"
+	ERROR_REQUIRED_ENV         = "The environment variable \"%s\" should be defined"
+	ERROR_REQUIRED_SSH_PUBLIC  = "The flag \"public_ssh\" must be defined"
+	ERROR_REQUIRED_SSH_PRIVATE = "The flag \"private_ssh\" must be defined"
 
 	ERROR_CREATING_EXCHANGE_FOLDER  = "error creating the exchange folder %s"
 	ERROR_UNREACHABLE_PARAM_FILE    = "error, the file \"%s\" cannot be located"
