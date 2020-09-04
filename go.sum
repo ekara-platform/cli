@@ -57,6 +57,7 @@ github.com/docker/go-units v0.3.3/go.mod h1:fgPhTUdO+D/Jk86RDLlptpiXQzgHJF7gydDD
 github.com/docker/go-units v0.4.0 h1:3uh0PgVws3nIA0Q+MwDC8yjEPf9zjRfZZWXZYDct3Tw=
 github.com/docker/go-units v0.4.0/go.mod h1:fgPhTUdO+D/Jk86RDLlptpiXQzgHJF7gydDDbaIK4Dk=
 github.com/ekara-platform/api v0.0.0-20181113124350-eed1555e6eb7/go.mod h1:qfiEpPWTfwHXI1sh/RHA/VGTezMdfq+Cp/+QGJ3gNrw=
+github.com/ekara-platform/engine v1.0.0 h1:OhB5fAEKrMtRx4gSEW9dlvuQ9xt5h28y/STix89qEvI=
 github.com/ekara-platform/engine v1.0.1-0.20191010202418-709395498fda h1:pIzORzFmg609ibYcUFuEAeg6bX0r1LYZkgA4KVNLvQQ=
 github.com/ekara-platform/engine v1.0.1-0.20191010202418-709395498fda/go.mod h1:WSv3+VHfkmNibCA1Nd0BsEOJj4u9gtvSw5TRKrWyJNU=
 github.com/ekara-platform/engine v1.0.1-0.20191024085750-e77e9ef0e12d h1:7t8gq0sU/jcg/LahmCq3pm8skTe/zL+oIN1f3zRi9uM=
@@ -73,6 +74,8 @@ github.com/ekara-platform/engine v1.0.1-0.20200226145759-8a60b2833327 h1:ZjS68Kd
 github.com/ekara-platform/engine v1.0.1-0.20200226145759-8a60b2833327/go.mod h1:cB3ag2FWxzXXqp/r4Bq6Zgc8vppsIhW6XF9T2pa9aAs=
 github.com/ekara-platform/engine v1.0.1-0.20200227174114-77fea9e5b9bd h1:3T2Q1a2w0QWkS2oSPCJAm6c4/YREbLn1o5bB/3VvKFc=
 github.com/ekara-platform/engine v1.0.1-0.20200227174114-77fea9e5b9bd/go.mod h1:KNVsT4W5ZRlUX1O9gXqkFVEbQcwK0qpZvG1xT038bR4=
+github.com/ekara-platform/engine v1.0.1-0.20200904080709-28576cc57981 h1:IpEuEBxhEk1otaC8TvI+wycoloK1kfV6pKpAcClGoyY=
+github.com/ekara-platform/engine v1.0.1-0.20200904080709-28576cc57981/go.mod h1:OimxUTxF3WsJKPGO6WaPq1fEcvu5M/9hXq9pNXIdtSY=
 github.com/ekara-platform/model v1.0.0 h1:pbHaImZ5WyyxkmbCESt6Jt0l26iyxRLktjJCrJfCazI=
 github.com/ekara-platform/model v1.0.0/go.mod h1:6Bog+i7MeFHng1R1Aj2kLi+F+4umrjjCY3dl2fy3u8Y=
 github.com/ekara-platform/model v1.0.1-0.20191104224758-2bc53be181e0 h1:/Kq1B2ANjtHaTXOMJlhkt4zIhIZINaFUDjTAMwqh2qY=
@@ -350,6 +353,7 @@ golang.org/x/sys v0.0.0-20191026070338-33540a1f6037 h1:YyJpGZS1sBuBCzLAR1VEpK193
 golang.org/x/sys v0.0.0-20191026070338-33540a1f6037/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20200116001909-b77594299b42/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20200223170610-d5e6a3e2c0ae/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
+golang.org/x/sys v0.0.0-20200323222414-85ca7c5b95cd h1:xhmwyvizuTgC2qz7ZlMluP20uW+C3Rm0FD/WLDX8884=
 golang.org/x/sys v0.0.0-20200323222414-85ca7c5b95cd/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20200831180312-196b9ba8737a h1:i47hUS795cOydZI4AwJQCKXOr4BvxzvikwDoDtHhP2Y=
 golang.org/x/sys v0.0.0-20200831180312-196b9ba8737a/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
@@ -372,6 +376,7 @@ gopkg.in/alecthomas/kingpin.v2 v2.2.6/go.mod h1:FMv+mEhP44yOT+4EoQTLFTRgOQ1FBLks
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 h1:qIbj1fsPNlZgppZ+VLlY7N33q108Sa+fhmuc+sWQYwY=
 gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
+gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 h1:YR8cESwS4TdDjEe65xsg0ogRM/Nc3DYOhEAlW+xobZo=
 gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/resty.v1 v1.12.0/go.mod h1:mDo4pnntr5jdWRML875a/NmxYqAlA73dVijT2AXvQQo=
 gopkg.in/src-d/go-billy.v4 v4.2.1/go.mod h1:tm33zBoOwxjYHZIE+OV8bxTWFMJLrconzFMd38aARFk=
@@ -400,6 +405,7 @@ gopkg.in/yaml.v2 v2.2.8 h1:obN1ZagJSUGI0Ek/LBmuj4SNLPfIny3KsKFopxRdj10=
 gopkg.in/yaml.v2 v2.2.8/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=
 gopkg.in/yaml.v2 v2.3.0 h1:clyUAQHOM3G0M3f5vQj7LuJrETvjVot3Z5el9nffUtU=
 gopkg.in/yaml.v2 v2.3.0/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=
+gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c h1:dUUwHk2QECo/6vqA44rthZ8ie2QXMNeKRTHCNY2nXvo=
 gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=
 gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776 h1:tQIYjPdBoyREyB9XMu+nnTclpTYkz2zFM+lzLJFO4gQ=
 gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=
